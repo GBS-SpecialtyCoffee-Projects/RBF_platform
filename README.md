@@ -39,4 +39,19 @@ Follow these steps to get the project up and running on your local machine:
    git clone https://github.com/Kei-Nie/RBF_platform.git
    cd RBF_platform
 
-2. **
+2. **Create a virtual environment:**
+   ```bash
+   python -m venv venv
+3. **Activate the virtual environment:**
+   ```bash
+   source venv/bin/activate
+4. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+5. **Apply migrations:**
+   ```bash
+   python manage.py migrate
+6. **Run the development server:**
+   ```bash
+   python manage.py runserver
+
