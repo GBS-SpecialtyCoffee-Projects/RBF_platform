@@ -19,7 +19,7 @@ The RBF Platform is a web application built using Django that helps farmers and 
 - **Backend**: Django (Python)
 - **Frontend**: HTML5, CSS3, JavaScript
 - **Styling Framework**: Bootstrap (or Tailwind CSS, choose one based on your project)
-- **Database**: SQLite (default, can be changed to PostgreSQL, MySQL, etc.)
+- **Database**: MySQL
 - **Version Control**: Git, GitHub
 
 ## Getting Started
@@ -36,5 +36,5 @@ Follow these steps to get the project up and running on your local machine:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/rbf_platform.git
-   cd rbf_platform
+   git clone https://github.com/Kei-Nie/RBF_platform.git
+   cd RBF_platform
