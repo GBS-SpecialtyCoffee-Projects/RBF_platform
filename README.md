@@ -18,7 +18,7 @@ The RBF Platform is a web application built using Django that helps farmers and 
 
 - **Backend**: Django (Python)
 - **Frontend**: HTML5, CSS3, JavaScript
-- **Styling Framework**: Bootstrap (or Tailwind CSS, choose one based on your project)
+- **Styling Framework**: Bootstrap, Jquery
 - **Database**: MySQL
 - **Version Control**: Git, GitHub
 
