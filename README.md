@@ -64,13 +64,16 @@ Follow these steps to get the project up and running on your local machine:
         "PORT": "3306",
     }
 }
+
 6. **Apply migrations:**
    ```bash
    python manage.py makemigrations base
    python manage.py migrate
+
 7. **create an admin class to manage**
    ```bash
    python manage.py createsuperuser
+   
 8. **Run the development server:**
    ```bash
    python manage.py runserver
