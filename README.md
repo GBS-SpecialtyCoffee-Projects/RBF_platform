@@ -28,9 +28,10 @@ Follow these steps to get the project up and running on your local machine:
 
 ### Prerequisites
 
-- Python 3.x
-- Django 4.x
+- Python 3.9
+- Django 4.1
 - Git
+- mysql installed
 
 ### Installation
 
@@ -42,14 +43,30 @@ Follow these steps to get the project up and running on your local machine:
 2. **Create a virtual environment:**
    ```bash
    python -m venv venv
-3. **Activate the virtual environment:**
+3. **Activate the virtual environment(using conda will be much easier):**
    ```bash
    source venv/bin/activate
-4. **Install dependencies:**
+4. **Install dependencies(using conda will be easier):**
    ```bash
    pip install -r requirements.txt
-5. **Apply migrations:**
+5. **Login to mysql and create a database named rbf_platform.**
    ```bash
+   create database rbf_platform;
+6. **Go to setting.py and change the password to your mysql password.**
+   ```bash
+   DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "rbf_platform",
+        "USER": "root",
+        "PASSWORD": "yourpassword",
+        "HOST": "127.0.0.1",
+        "PORT": "3306",
+    }
+}
+6. **Apply migrations:**
+   ```bash
+   python manage.py makemigrations base
    python manage.py migrate
 6. **Run the development server:**
    ```bash
