@@ -52,7 +52,7 @@ Follow these steps to get the project up and running on your local machine:
 5. **Login to mysql and create a database named rbf_platform.**
    ```bash
    create database rbf_platform;
-6. **Go to setting.py and change the password to your mysql password.**
+6. **Go to setting.py and change 'yourpassword' to your mysql password.**
    ```bash
    DATABASES = {
     "default": {
@@ -68,7 +68,10 @@ Follow these steps to get the project up and running on your local machine:
    ```bash
    python manage.py makemigrations base
    python manage.py migrate
-6. **Run the development server:**
+7. **create an admin class to manage**
+   ```bash
+   python manage.py createsuperuser
+8. **Run the development server:**
    ```bash
    python manage.py runserver
 
