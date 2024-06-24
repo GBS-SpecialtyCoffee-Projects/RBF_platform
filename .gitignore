@@ -88,3 +88,16 @@ local_settings.py
 .env
 db.sqlite3
 /.venv
+base/migrations/0001_initial.py
+venv/pyvenv.cfg
+venv/Scripts/activate
+venv/Scripts/activate.bat
+venv/Scripts/Activate.ps1
+venv/Scripts/deactivate.bat
+venv/Scripts/django-admin.exe
+venv/Scripts/pip.exe
+venv/Scripts/pip3.12.exe
+venv/Scripts/pip3.exe
+venv/Scripts/python.exe
+venv/Scripts/pythonw.exe
+venv/Scripts/sqlformat.exe
