@@ -52,6 +52,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'base.middleware.auth.AuthMiddleware'
 ]
 
 ROOT_URLCONF = "rbf_platform.urls"
@@ -82,8 +83,8 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
         "NAME": "rbf_platform",
-        "USER": "sa",
-        "PASSWORD": "password123",
+        "USER": "root",
+        "PASSWORD": "yourpassword",
         "HOST": "127.0.0.1",
         "PORT": "3306",
     }
@@ -133,3 +134,5 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+#AUTHENTICATION_BACKENDS = ['base.backend.EmailBackend']
