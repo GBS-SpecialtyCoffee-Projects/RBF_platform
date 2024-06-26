@@ -1,0 +1,14 @@
+<!-- user_management/templates/farmer_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Roaster Dashboard</title>
+</head>
+<body>
+    {% csrf_token %}
+    <h1>Roaster Dashboard</h1>
+    <a href="{% url 'add_roaster_photo' %}">add photo</a>
+    <a href="{% url 'signout' %}">sign out</a>
+</body>
+</html>
