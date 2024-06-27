@@ -1,12 +1,7 @@
 {% extends 'base/main.html' %}
 
-{% block title %}Language{% endblock %}
-
-<a
-    name=""
-    id=""
-    class="btn btn-primary"
-    href="#"
-    role="button"
-    >English</a
->
+{% block content %}
+    <h1>Language Select</h1>
+    <a href="{% url 'landing_page' %}">English</a>
+    <a href="#">Spanish</a>
+{% endblock %}
