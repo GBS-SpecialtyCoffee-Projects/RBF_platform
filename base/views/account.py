@@ -10,6 +10,9 @@ from django.contrib.auth import get_user_model
 def landing_page(request):
     return render(request, 'base/landing_page.html')
 
+def language_select(request):
+    return render(request, 'base/language_select.html')
+
 
 
 User = get_user_model()

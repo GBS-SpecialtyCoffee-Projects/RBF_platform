@@ -30,3 +30,6 @@ def add_roaster_photo(request):
 
 def add_roaster_photo_success(request):
     return render(request, 'base/add_roaster_photo_success.html')
+
+def language_select(request):
+    return render(request, 'base/language_select.html')

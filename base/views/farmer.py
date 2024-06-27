@@ -17,3 +17,6 @@ def upload_photo(request):
 
 def upload_success(request):
     return render(request, 'base/upload_success.html')
+
+def language_select(request):
+    return render(request, 'base/language_select.html')

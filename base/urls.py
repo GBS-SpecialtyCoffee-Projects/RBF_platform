@@ -16,6 +16,7 @@ urlpatterns = [
     path('signin/', account.signin_view, name='signin'),
     path('signout/', account.signout_view, name='signout'),
     path('reset_password/', account.password_reset_view, name='reset_password'),
+    path('language_select/', account.language_select, name='language_select')
     #    path('signout/', account.signout_view, name='signout'),
 ]
 
