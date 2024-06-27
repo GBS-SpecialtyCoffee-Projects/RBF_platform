@@ -14,5 +14,8 @@ urlpatterns = [
     path('add_roaster/success/', views.add_roaster_success, name='add_roaster_success'),
     path('add_roaster_photo/', views.add_roaster_photo, name='add_roaster_photo'),
     path('add_roaster_photo/success/', views.add_roaster_photo_success, name='add_roaster_photo_success'),
+    path('email_verify/', views.email_verify, name='email_verify'),
+    path('verify_email/', views.verify_email, name='verify_email'),
+    path('activate/<uidb64>/<token>', views.activate, name='activate')
 ]
 
