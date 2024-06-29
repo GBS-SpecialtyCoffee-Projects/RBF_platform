@@ -73,6 +73,7 @@ def email_verify(request):
 
 def verify_email(request):
     try:
+        # get the user 
         user = User.objects.get(email='israelwhiz@gmail.com')
     except User.DoesNotExist:
         messages.error(request, 'User does not exist')
@@ -106,7 +107,7 @@ def activate(request, uidb64, token):
         user.save()
 
         messages.success(request, "Thank you for your email confirmation. Now you can login your account.")
-        return redirect('login')
+        return redirect('landing_page')
     else:
         messages.error(request, "Activation link is invalid!")
 
