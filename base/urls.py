@@ -3,6 +3,9 @@ from django.urls import path
 from .views import account, farmer,roaster
 
 urlpatterns = [
+    path('email_verify/', account.email_verify, name='email_verify'),
+    path('verify_email/', account.verify_email, name='verify_email'),
+    path('activate/<uidb64>/<token>', account.activate, name='activate'),
     path('', account.landing_page, name='landing_page'),
     path('farmer_dashboard/', farmer.farmer_dashboard, name='farmer_dashboard'),
     path('roaster_dashboard/', roaster.roaster_dashboard, name='roaster_dashboard'),
@@ -17,5 +20,6 @@ urlpatterns = [
     path('signout/', account.signout_view, name='signout'),
     path('reset_password/', account.password_reset_view, name='reset_password'),
     #    path('signout/', account.signout_view, name='signout'),
+
 ]
 
