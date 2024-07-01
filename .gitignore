@@ -88,3 +88,9 @@ local_settings.py
 .env
 db.sqlite3
 /.venv
+/venv
+/.anima
+.anima/conventions.json
+.anima/workspace.json
+base/migrations/0001_initial.py
+rbf_platform/settings.py
