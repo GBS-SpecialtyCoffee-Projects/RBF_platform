@@ -11,6 +11,8 @@ class AuthMiddleware(MiddlewareMixin):
             resolve_url('signin'),
             resolve_url('signup'),
             resolve_url('reset_password'),
+            resolve_url('email_verify'),
+            resolve_url('verify_email'),
             settings.STATIC_URL,  # Exclude static files
             settings.MEDIA_URL,  # Exclude media files if you serve them in development
         ]

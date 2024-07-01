@@ -5,6 +5,13 @@ from django.contrib import messages
 from .forms import SignupForm, SigninForm, PasswordResetForm
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.sites.shortcuts import get_current_site
+from base.tokens import account_activation_token
+from django.core.mail import EmailMessage
+from django.utils.encoding import force_bytes, force_str
+from base.models import User
 
 
 def landing_page(request):
@@ -82,3 +89,48 @@ def password_reset_view(request):
         form = PasswordResetForm()
 
     return render(request, 'base/password_reset.html', {'form': form})
+
+def email_verify(request):
+    return render(request, 'base/email_verify.html')
+
+def verify_email(request):
+    try:
+        # get the user 
+        user = User.objects.get(email='israelwhiz@gmail.com')
+    except User.DoesNotExist:
+        messages.error(request, 'User does not exist')
+    mail_subject = 'Verify your email'
+    message = render_to_string('base/template_verify_email.html', {
+        'user': user.username,
+        'domain': get_current_site(request).domain,
+        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+        'token': account_activation_token.make_token(user),
+        'protocol': 'https' if request.is_secure() else 'http'
+    })
+    email = EmailMessage(
+        mail_subject, message, to=[user.email]
+    )
+    if email.send(): 
+       messages.success(request, f'Dear {user.username}, please check your email to confirm your registration.')
+    else:
+       messages.error(request, 'Something went wrong. Please try again.')
+    return render(request, 'base/email_verify.html')
+
+def activate(request, uidb64, token):
+    User = get_user_model()
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except:
+        user = None
+
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.save()
+
+        messages.success(request, "Thank you for your email confirmation. Now you can login your account.")
+        return redirect('landing_page')
+    else:
+        messages.error(request, "Activation link is invalid!")
+
+    return redirect('email_verify')
