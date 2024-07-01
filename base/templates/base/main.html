@@ -7,11 +7,12 @@
         <title></title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link href="{% static 'bootstrap.min.css' %}" rel="stylesheet">
-        <link rel="stylesheet" href="">
+        <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+        <link rel="stylesheet" href="{% static 'bootstrap.min.css' %}" >
+       
     </head>
     <body>
-        {% include 'base/navbar.html' %}
+        <!-- {% include 'base/navbar.html' %} -->
         {% block content %}
         {% endblock %}
         <script src="{% static 'jquery-3.7.1.min.js' %}"></script>
