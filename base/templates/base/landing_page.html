@@ -5,13 +5,13 @@
         
     {% include "base/navbar.html" %}
 
-    <div style="margin-top: 150px" class="">
+    <div style="margin-top: 100px" class="">
         <div class="text-center" >
             <h1 style="color: white; font-weight: bolder; font-size: 60px;;">Quality coffee,<br>straight from the<br> source. </h1>
             <p class="mt-3" style="color: ghostwhite; font-size: 20px;">Connecting Farmers and Roaster across<br> the globe directly.</p>
         </div>
         <div class="text-center">
-            <button style="background-color: #303C50; color: white;font-weight: bold;"  type="button" class="btn mt-3 ml-3 px-4 py-2">Start Now </button> 
+            <a href="{% url 'signup' %}" class="btn mt-3 ml-3 px-4 py-2" style="background-color: #303C50; color: white; font-weight: bold;">Start Now</a>
         </div>
         <div class="text-center">
             <button style="color: white;font-weight: lighter;" type="button" class="btn mt-3 ml-3 px-4 py-2 ">learn more</button>
