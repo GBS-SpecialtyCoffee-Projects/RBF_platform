@@ -1,0 +1,12 @@
+{% extends 'base/main.html' %}
+
+{% block title %}Enter Email{% endblock %}
+
+{% block content %}
+<h1>Enter Your Email</h1>
+<form method="post" action="{% url 'enter_email' %}">
+    {% csrf_token %}
+    <input type="email" name="email" placeholder="Enter your email" required>
+    <button type="submit">Submit</button>
+</form>
+{% endblock %}

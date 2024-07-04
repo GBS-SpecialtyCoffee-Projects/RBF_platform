@@ -1,0 +1,134 @@
+{% extends 'base/main.html' %}
+
+{% block title %}Signup{% endblock %}
+
+{% block head %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Lobster&display=swap');
+
+    body, html {
+        height: 100%;
+        margin: 0;
+        font-family: 'Lobster', cursive; /* Applied Lobster font */
+        overflow: auto; /* Allow scrolling */
+    }
+
+    .background-image {
+        background: url('../static/image/background.png') no-repeat center center;
+        background-size: cover;
+        position: fixed; /* Fixed position to cover the viewport */
+        top: 0;
+        left: 0;
+        width: 50vw; /* Cover half the width of the viewport */
+        height: 100vh; /* Full viewport height */
+        z-index: 1; /* Place it behind the form container */
+    }
+
+    .form-container {
+        background-color: #C5BCB0; /* New solid background color */
+        display: flex; /* Flexbox layout */
+        flex-direction: column; /* Stack children vertically */
+        justify-content: center; /* Center children vertically */
+        align-items: center; /* Center children horizontally */
+        height: 100vh; /* Full viewport height */
+        width: 50vw; /* Half the width of the viewport */
+        z-index: 2; /* Place it above the background image */
+        position: relative; /* Relative positioning for stacking context */
+        padding: 20px; /* Padding inside the container */
+        margin-left: auto; /* Align to the right */
+        box-sizing: border-box; /* Ensure padding is included in width */
+    }
+
+    .signup-form {
+        color: #add8e6;
+        width: 100%; /* Full width */
+        max-width: 400px; /* Maximum width */
+        margin: 0 auto; /* Center horizontally */
+    }
+
+    .signup-form h1 {
+        margin-bottom: 10px; /* Space below the header */
+        font-weight: bold; /* Bold text */
+        color: #333; /* Dark text color */
+    }
+
+    .signup-form form {
+        display: flex; /* Flexbox layout */
+        flex-direction: column; /* Stack children vertically */
+    }
+
+    .signup-form .form-label {
+        margin-bottom: 5px; /* Space below the label */
+        font-weight: bold; /* Bold text */
+    }
+
+    .signup-form .form-control {
+        margin-bottom: 10px; /* Space below the control */
+        padding: 10px; /* Padding inside the control */
+        font-size: 16px; /* Font size */
+        border: 1px solid #ccc; /* Border color and style */
+        border-radius: 5px; /* Rounded corners */
+    }
+
+    .signup-form .btn {
+        background-color: #3b5998; /* Button background color */
+        color: white; /* Button text color */
+        border: none; /* No border */
+        width: 150px; /* Fixed width */
+    }
+
+    .signup-form .btn:hover {
+        background-color: #2d4373; /* Darker background on hover */
+    }
+
+    .container-fluid {
+        padding: 0 !important; /* Remove padding */
+        margin: 0 !important; /* Remove margin */
+        height: 100vh; /* Full viewport height */
+        width: 100vw; /* Full viewport width */
+        display: flex; /* Flexbox layout */
+        align-items: center; /* Center children vertically */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row no-gutters" style="height: 100vh; width: 100vw; margin: 0;">
+        <div class="col-lg-6 d-none d-lg-block">
+            <div class="background-image"></div>
+        </div>
+        <div class="col-12 col-lg-6 form-container">
+            <div class="signup-form">
+                <h1 class="text-center">Create Account</h1>
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+                    <div class="mb-0">
+                        <label class="form-label">{{ form.username.label_tag }}</label> {{ form.username }}
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">{{ form.email.label_tag }}</label> {{ form.email }}
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">{{ form.confirm_email.label_tag }}</label> {{ form.confirm_email }}
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">{{ form.group.label_tag }}</label> {{ form.group }}
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">{{ form.password.label_tag }}</label> {{ form.password }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.confirm_password.label_tag }}</label> {{ form.confirm_password }}
+                    </div>
+
+                    <div class="d-grid justify-content-center">
+                        <button type="submit" class="btn btn-primary" style="width: 150px;">Sign Up</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
