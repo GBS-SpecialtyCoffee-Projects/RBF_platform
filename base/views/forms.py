@@ -24,20 +24,43 @@ class RoasterPhotoForm(forms.ModelForm):
 
 User = get_user_model()
 
+
+
 class SignupForm(forms.ModelForm):
-    password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
-    password2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput)
+    confirm_email = forms.EmailField(label="Confirm email address", widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    password1 = forms.CharField(label='Password', widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    password2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'group', 'password1', 'password2')
+        fields = ['username', 'email', 'group', 'password1', 'password2']
+        labels = {
+            'username': 'Username',
+            'email': 'Email',
+            'group': 'Group',
+            'password1': 'Password',
+            'password2': 'Confirm Password',
+        }
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'group': forms.Select(attrs={'class': 'form-control'}),
+        }
 
-    def clean_password2(self):
-        password1 = self.cleaned_data.get('password1')
-        password2 = self.cleaned_data.get('password2')
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        confirm_email = cleaned_data.get('confirm_email')
+        password1 = cleaned_data.get('password1')
+        password2 = cleaned_data.get('password2')
+
+        if email and confirm_email and email != confirm_email:
+            self.add_error('confirm_email', "Emails don't match")
+
         if password1 and password2 and password1 != password2:
-            raise ValidationError("Passwords don't match")
-        return password2
+            self.add_error('password2', "Passwords don't match")
+
+        return cleaned_data
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -45,6 +68,7 @@ class SignupForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
 
 class SigninForm(forms.Form):
     email = forms.EmailField(label='Email', max_length=254, required=True)
@@ -62,8 +86,18 @@ class SigninForm(forms.Form):
                 raise ValidationError('Invalid email or password.')
         return self.cleaned_data
 
+    def authenticate_user(self):
+        email = self.cleaned_data.get('email')
+        password = self.cleaned_data.get('password')
+        try:
+            user = User.objects.get(email=email)
+            if user.check_password(password):
+                return user
+        except User.DoesNotExist:
+            return None
+
+
 class PasswordResetForm(forms.Form):
-    email = forms.CharField(label='Email', max_length=254, required=True)
     password = forms.CharField(label='New Password', widget=forms.PasswordInput, required=True)
     confirm_password = forms.CharField(label='Confirm New Password', widget=forms.PasswordInput, required=True)
 
