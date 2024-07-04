@@ -52,6 +52,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'django.middleware.locale.LocaleMiddleware',
     'base.middleware.auth.AuthMiddleware'
 ]
 
@@ -84,7 +85,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.mysql",
         "NAME": "rbf_platform",
         "USER": "root",
-        "PASSWORD": "yourpassword",
+        "PASSWORD": "njw030910",
         "HOST": "127.0.0.1",
         "PORT": "3306",
     }
@@ -109,7 +110,16 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = 'en-us'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('zh-hans', 'Simplified Chinese'),
+]
+
 
 TIME_ZONE = "UTC"
 
@@ -136,3 +146,22 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 #AUTHENTICATION_BACKENDS = ['base.backend.EmailBackend']
+
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
+
+
+
+# Emailing settings
+# Emailing settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_FROM = 'israelwhiz@gmail.com'
+EMAIL_HOST_USER = 'israelwhiz@gmail.com'
+EMAIL_HOST_PASSWORD = 'rcmlvhjskqdjvlhi'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+PASSWORD_RESET_TIMEOUT = 14400
