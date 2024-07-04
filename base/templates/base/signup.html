@@ -27,24 +27,24 @@
                     {% csrf_token %}
                     {{ form.non_field_errors }}
                     <div class="mb-0">
-                        <label class="form-label">{{ form.username.label_tag }}</label> {{ form.username }}
+                        <label class="form-label">Username</label> {{ form.username }}
                         <div id="username-error" class="text-danger"></div>
                     </div>
                     <div class="mb-0">
-                        <label class="form-label">{{ form.email.label_tag }}</label> {{ form.email }}
+                        <label class="form-label">Email address</label> {{ form.email }}
                         <div id="email-error" class="text-danger"></div>
                     </div>
                     <div class="mb-0">
-                        <label class="form-label">{{ form.confirm_email.label_tag }}</label> {{ form.confirm_email }}
+                        <label class="form-label">Confirm email address </label> {{ form.confirm_email }}
                     </div>
                     <div class="mb-0">
-                        <label class="form-label">{{ form.group.label_tag }}</label> {{ form.group }}
+                        <label class="form-label">Select group</label> {{ form.group }}
                     </div>
                     <div class="mb-0">
-                        <label class="form-label">{{ form.password1.label_tag }}</label> {{ form.password1 }}
+                        <label class="form-label">Password</label> {{ form.password1 }}
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">{{ form.password2.label_tag }}</label> {{ form.password2 }}
+                        <label class="form-label">Confirm password</label> {{ form.password2 }}
                     </div>
 
                     <div class="d-grid justify-content-center">
