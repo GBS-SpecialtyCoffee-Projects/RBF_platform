@@ -1,12 +1,108 @@
 {% extends 'base/main.html' %}
 
+{% load static %}
+
 {% block title %}Signup{% endblock %}
 
+{% block head %}
+<link href="{% static 'signup.css' %}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<h1>Signup</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Signup</button>
-</form>
+<div class="container-fluid">
+    <div class="row no-gutters" style="height: 100vh; width: 100vw; margin: 0;">
+        <div class="col-lg-6 d-none d-lg-block">
+            <div class="background-image">
+                <div class="text-overlay">
+                    <p>SPECIALTY</p>
+                    <p>COFFEE</p>
+                    <p>CONNECT</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6 form-container">
+            <div class="signup-form">
+                <h1 class="text-center">Create Account</h1>
+                <form method="post" id="signupForm">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+                    <div class="mb-0">
+                        <label class="form-label">{{ form.username.label_tag }}</label> {{ form.username }}
+                        <div id="username-error" class="text-danger"></div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">{{ form.email.label_tag }}</label> {{ form.email }}
+                        <div id="email-error" class="text-danger"></div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">{{ form.confirm_email.label_tag }}</label> {{ form.confirm_email }}
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">{{ form.group.label_tag }}</label> {{ form.group }}
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">{{ form.password1.label_tag }}</label> {{ form.password1 }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.password2.label_tag }}</label> {{ form.password2 }}
+                    </div>
+
+                    <div class="d-grid justify-content-center">
+                        <button type="submit" class="btn btn-primary">Sign Up</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Client-Side Validation -->
+<script>
+    document.getElementById('signupForm').addEventListener('submit', function(event) {
+        var email = document.getElementById('{{ form.email.id_for_label }}').value;
+        var confirmEmail = document.getElementById('{{ form.confirm_email.id_for_label }}').value;
+        var password1 = document.getElementById('{{ form.password1.id_for_label }}').value;
+        var password2 = document.getElementById('{{ form.password2.id_for_label }}').value;
+
+        if (email !== confirmEmail) {
+            alert("Email addresses don't match");
+            event.preventDefault();
+        }
+
+        if (password1 !== password2) {
+            alert("Passwords don't match");
+            event.preventDefault();
+        }
+    });
+
+    document.getElementById('{{ form.username.id_for_label }}').addEventListener('blur', function() {
+        var username = this.value;
+        if (username) {
+            fetch(`{% url 'check_user' %}?username=${username}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.username_exists) {
+                        document.getElementById('username-error').innerText = 'Username already exists';
+                    } else {
+                        document.getElementById('username-error').innerText = '';
+                    }
+                });
+        }
+    });
+
+    document.getElementById('{{ form.email.id_for_label }}').addEventListener('blur', function() {
+        var email = this.value;
+        if (email) {
+            fetch(`{% url 'check_user' %}?email=${email}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.email_exists) {
+                        document.getElementById('email-error').innerText = 'Email already exists';
+                    } else {
+                        document.getElementById('email-error').innerText = '';
+                    }
+                });
+        }
+    });
+</script>
 {% endblock %}
