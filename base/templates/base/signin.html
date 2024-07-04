@@ -1,13 +1,31 @@
 {% extends 'base/main.html' %}
 
-{% block title %}Signin{% endblock %}
+{% load static %}
+
+{% block title %}Sign In{% endblock %}
+
+{% block head %}
+    <link href="{% static 'signin.css' %}" rel="stylesheet">
+{% endblock %}
 
 {% block content %}
-<h1>Signin</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Signin</button>
-</form>
-<a href="{% url 'reset_password' %}">Forget Password?</a>
+<div class="background-image">
+    <div class="text-container">
+        <h1>SPECIALTY</h1>
+        <h1>COFFEE</h1>
+        <h1>CONNECT</h1>
+    </div>
+    <div class="signin-container">
+        <h1>SIGN IN</h1>
+        <div id="error-message" style="color: red;"></div>
+        <form id="signin-form" method="post" action="{% url 'signin' %}">
+            {% csrf_token %}
+            <input type="email" name="email" placeholder="Email" required autocomplete="email">
+            <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
+            <button type="submit">Sign In</button>
+        </form>
+        <a href="{% url 'enter_email' %}">Forgot password?</a>
+    </div>
+</div>
+<script src="{% static 'signin.js' %}"></script>
 {% endblock %}
