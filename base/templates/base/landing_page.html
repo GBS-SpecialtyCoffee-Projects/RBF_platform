@@ -1,26 +1,107 @@
 {% extends 'base/main.html' %}
+{% load static %}
 
 {% block content %}
-    <div class="container-fluid main-bg">
+    <div class="container-fluid main-bg pb-5">
         
     {% include "base/navbar.html" %}
 
-    <div style="margin-top: 100px" class="">
-        <div class="text-center" >
-            <h1 style="color: white; font-weight: bolder; font-size: 60px;;">Quality coffee,<br>straight from the<br> source. </h1>
-            <p class="mt-3" style="color: ghostwhite; font-size: 20px;">Connecting Farmers and Roaster across<br> the globe directly.</p>
+        
+
+        <div style="margin-top: 100px" class="">
+            <div class="text-center" >
+                <h1 style="color: white; font-weight: bolder; font-size: 60px;;">Quality coffee,<br>straight from the<br> source. </h1>
+                <p class="pt-3" style="color: ghostwhite; font-size: 20px;">Connecting Farmers and Roaster across<br> the globe directly.</p>
+            </div>
+            <div class="text-center">
+                <a href="{% url 'signup' %}" class="btn px-4 py-2" style="background-color: #303C50; color: white; font-weight: bold;">Start Now</a>
+            </div>
+            <div class="text-center">
+                <button style="color: white;font-weight: lighter;" type="button" class="btn mt-3 ml-3">Learn More</button>
+            </div>
+        
         </div>
-        <div class="text-center">
-            <a href="{% url 'signup' %}" class="btn mt-3 ml-3 px-4 py-2" style="background-color: #303C50; color: white; font-weight: bold;">Start Now</a>
-        </div>
-        <div class="text-center">
-            <button style="color: white;font-weight: lighter;" type="button" class="btn mt-3 ml-3 px-4 py-2 ">learn more</button>
-        </div>
-       
     </div>
 
+    <div 
+    class="container-fluid d-flex justify-content-center align-items-center vh-100" 
+    style="background-color:#212529">
+        <div 
+        class="container">
+            <div class="row justify-content-start align-items-start">
+                <div class="col-lg-6 text-light my-3">
+                    <h1 class="fs-2" style="font-weight: 700;">
+                        Understanding The <br>
+                        Specialty Coffee Collective
+                    </h1>
+                    <p class="fs-5 py-2">It allows farmers whose identities are normally lost in 
+                        the supply chain the chance to be seen and heard the way 
+                        they want to be, without curation, censorship, or marketing filter. 
+                        It allows roasters to connect directly with farmers who normally 
+                        would never find, even if they travel to farming communities.</p>
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                    >
+                        Button
+                    </button>
+                </div>
+                
+                
+                <div class="col-lg-6 my-3">
+                    <div class = "container-fluid">
+                        <img src="{% static 'img/landingpagevideothumbnail.png' %}" class="img-fluid">
+                        </img>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+
     </div>
-    <div class="container-fluid p-0" style="background-color:#303C50">
-       
+    <div class="container-fluid vh-100 p-5" style="background-color:#F4F4F4">
+        <div class="row pt-3 px-2 pb-5">
+            <div class="col-12 text-center text-success fw-bold pb-3">Connecting, not trading</div>
+            <div class="col-12 text-center text-dark h1 fw-bold">You don't need transparency when there are no barriers</div>
+        </div>
+        <div class="row row-cols-md-3 justify-content-evenly gx-5">
+            <div class="col">
+                <div class="card h-100 text-center shadow rounded border-0">
+                    <img class="card-img-top" src="{% static 'img/esteban-benites-OEBkWvCLRvA-unsplash.jpg' %}" alt="Title"/>
+                    <div class="card-body">
+                        <h4 class="card-title fw-bold">What It Is</h4>
+                        <p class="card-text fs-6">A means for farmers who only have access to local intermediaries to connect with roasters
+                            A way for roasters to meet farmers authentically, with no curation or staging
+                            </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card h-100 text-center shadow rounded border-0">
+                    <img class="card-img-top" src="{% static 'img/danurwendho-adyakusuma-dYxx-jPaF34-unsplash.jpg' %}" alt="Title"/>
+                    <div class="card-body">
+                        <h4 class="card-title fw-bold">What It Does</h4>
+                        <p class="card-text fs-6">
+                            Provides farmers with a space to make themselves visible and known
+Facilitates direct communication and collaboration between smallholder farmers and roasters
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card h-100 text-center shadow rounded border-0">
+                    <img class="card-img-top img-fluid" src="{% static 'img/joel-friedrich-iWX4pBztAbE-unsplash.jpg' %}" alt="Title" hei/>
+                    <div class="card-body">
+                        <h4 class="card-title fw-bold">What It Isn't</h4>
+                        <p class="card-text fs-6">The attempt to make an amazon of coffee
+                            A trading company
+                            A “direct trading” platform
+                            A profit-making business</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
     </div>
 {% endblock %}
