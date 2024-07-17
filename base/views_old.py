@@ -1,6 +1,4 @@
-# user_management/views.py
-from django.shortcuts import render, redirect
-from django.conf import settings
+
 from .forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -11,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from .tokens import account_activation_token
 from .models import User
+
 
 def landing_page(request):
     return render(request, 'base/landing_page.html')
@@ -27,7 +26,7 @@ def create_account(request):
 def farmer_dashboard(request):
     return render(request, 'base/farmer_dashboard.html')
 
-# views.py
+
 
 def upload_photo(request):
     if request.method == 'POST':
@@ -67,6 +66,7 @@ def add_roaster_photo(request):
 
 def add_roaster_photo_success(request):
     return render(request, 'base/add_roaster_photo_success.html')
+
 
 def email_verify(request):
     return render(request, 'base/email_verify.html')
@@ -113,3 +113,4 @@ def activate(request, uidb64, token):
 
     return redirect('email_verify')
     
+

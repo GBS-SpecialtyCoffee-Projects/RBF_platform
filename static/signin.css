@@ -1,0 +1,124 @@
+@font-face {
+    font-family: 'Montserrat';
+    src: url('../static/fonts/Montserrat/Montserrat-VariableFont_wght.ttf') format('truetype');
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    overflow: auto;
+}
+
+.background-image {
+    background: url('/static/image/SignIn.png') no-repeat center center fixed;
+    background-size: cover;
+    height: 100vh;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-right: 200px;
+}
+
+.signin-container {
+    background-color: #2B2F32;
+    padding: 30px;
+    border-radius: 39px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    color: white;
+    width: 500px;
+    height: 400px;
+}
+
+.signin-container h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #F4F4F9;
+}
+
+.signin-container form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.signin-container input {
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 5px;
+    border: none;
+    width: 80%; /* Adjust the width as needed */
+}
+
+.signin-container button {
+    padding: 5px;
+    border: none;
+    border-radius: 5px;
+    background-color: #54B4D3;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 30%; /* Adjust the width as needed */
+    margin: 10px ; /* Add more margin outside of the button */
+}
+
+.signin-container button:hover {
+    background-color: #45a049;
+}
+
+.signin-container a {
+    color: white;
+    font-size: 15px;
+    text-align: center;
+    display: block;
+    margin-top: 10px;
+    text-decoration: none; /* Remove underline */
+}
+
+.text-container {
+    color: white; /* Adjust text color as needed */
+    max-width: 40%; /* Ensure the text container doesn't take too much space */
+    position: absolute; /* Use absolute positioning for precise control */
+    top: 31%; /* Adjust this value to move it vertically */
+    left: 250px; /* Adjust this value to move it horizontally */
+}
+
+.text-container h1 {
+    font-size: 64px; /* Adjust this value to make the text larger */
+    margin-bottom: 0px;
+    color: #C5BCB0;
+    text-align: left; /* Optional: Adjust alignment as needed */
+}
+
+/* Media query for mobile devices */
+@media (max-width: 1100px) {
+    .background-image {
+        background: none; /* Remove background image */
+        padding-right: 0;
+        justify-content: center; /* Center the sign-in container */
+    }
+
+    .text-container {
+        display: none; /* Hide the text container */
+    }
+
+    .signin-container {
+        width: 90%; /* Make the sign-in container responsive */
+        height: auto; /* Adjust height to content */
+        padding: 20px; /* Adjust padding */
+    }
+
+    .signin-container h1 {
+        font-size: 1.5rem; /* Adjust font size for mobile */
+    }
+
+    .signin-container input {
+        width: 100%; /* Full width for inputs */
+    }
+
+    .signin-container button {
+        width: 100%; /* Full width for button */
+    }
+}
