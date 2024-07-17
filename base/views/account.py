@@ -28,7 +28,6 @@ def language_select(request):
     return render(request, 'base/language_select.html')
 
 
-
 User = get_user_model()
 
 
@@ -257,4 +256,7 @@ def activate_email(request, uidb64, token):
         messages.error(request, "Activation link is invalid!")
 
     return redirect('email_verify')
+
+def farmer_onboarding(request):
+    return render(request, 'base/onboarding.html')
 
