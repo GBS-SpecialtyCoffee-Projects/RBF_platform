@@ -18,7 +18,6 @@ def landing_page(request):
     return render(request, 'base/landing_page.html')
 
 
-
 User = get_user_model()
 
 def signup_view(request):
@@ -131,3 +130,6 @@ def activate(request, uidb64, token):
         messages.error(request, "Activation link is invalid!")
 
     return redirect('email_verify')
+
+def farmer_onboarding(request):
+    return render(request, 'base/onboarding.html')
