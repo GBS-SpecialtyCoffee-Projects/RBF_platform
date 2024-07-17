@@ -1,7 +1,7 @@
 # forms.py
 
 from django import forms
-from base.models import FarmerPhoto,Roaster, RoasterPhoto, User
+from base.models import FarmerPhoto,Roaster, RoasterPhoto, User, Farmer, MeetingRequest
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -10,17 +10,25 @@ from django.contrib.auth import authenticate
 class FarmerPhotoForm(forms.ModelForm):
     class Meta:
         model = FarmerPhoto
-        fields = ['user', 'photo', 'order']
+        fields = ['photo', 'order']
+
+class FarmerForm(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['farm_name', 'location', 'bio', 'size', 'affiliation']
+
 
 class RoasterForm(forms.ModelForm):
     class Meta:
         model = Roaster
-        fields = ['user', 'company_name', 'location', 'bio']
+        fields = ['company_name', 'location', 'bio',
+            'min_lot_size', 'annual_throughput',
+            'origins_interested', 'coffee_types_interested']
 
 class RoasterPhotoForm(forms.ModelForm):
     class Meta:
         model = RoasterPhoto
-        fields = ['user', 'photo', 'order']
+        fields = [ 'photo', 'order']
 
 User = get_user_model()
 
@@ -37,7 +45,7 @@ class SignupForm(forms.ModelForm):
         labels = {
             'username': 'Username',
             'email': 'Email',
-            'group': 'Group',
+            'group': 'Select Group',
             'password1': 'Password',
             'password2': 'Confirm Password',
         }
@@ -67,7 +75,14 @@ class SignupForm(forms.ModelForm):
         user.set_password(self.cleaned_data['password1'])
         if commit:
             user.save()
+            # Create farmer or roaster based on group selection
+            if self.cleaned_data['group'] == 'farmer':
+                Farmer.objects.create(user=user)
+            elif self.cleaned_data['group'] == 'roaster':
+                Roaster.objects.create(user=user)
+
         return user
+
 
 
 class SigninForm(forms.Form):
@@ -96,7 +111,6 @@ class SigninForm(forms.Form):
         except User.DoesNotExist:
             return None
 
-
 class PasswordResetForm(forms.Form):
     password = forms.CharField(label='New Password', widget=forms.PasswordInput, required=True)
     confirm_password = forms.CharField(label='Confirm New Password', widget=forms.PasswordInput, required=True)
@@ -110,3 +124,41 @@ class PasswordResetForm(forms.Form):
             raise ValidationError("Passwords do not match.")
 
         return cleaned_data
+
+
+class MeetingRequestForm(forms.ModelForm):
+    class Meta:
+        model = MeetingRequest
+        fields = ['proposed_date', 'message']
+        widgets = {
+            'proposed_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'message': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter your message here'}),
+        }
+
+
+class FarmerProfileForm(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['farm_name', 'location', 'bio', 'size', 'affiliation']
+        widgets = {
+            'farm_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'bio': forms.Textarea(attrs={'class': 'form-control'}),
+            'size': forms.TextInput(attrs={'class': 'form-control'}),
+            'affiliation': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+class RoasterProfileForm(forms.ModelForm):
+    class Meta:
+        model = Roaster
+        fields = ['company_name', 'location', 'bio', 'min_lot_size', 'annual_throughput', 'origins_interested', 'coffee_types_interested']
+        widgets = {
+            'company_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'bio': forms.Textarea(attrs={'class': 'form-control'}),
+            'min_lot_size': forms.TextInput(attrs={'class': 'form-control'}),
+            'annual_throughput': forms.TextInput(attrs={'class': 'form-control'}),
+            'origins_interested': forms.TextInput(attrs={'class': 'form-control'}),
+            'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+

@@ -58,38 +58,40 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Farmer(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farmer_profile')
-    farm_name = models.CharField(max_length=255)
-    location = models.CharField(max_length=255)
-    bio = models.TextField(blank=True, null=True)
-    size = models.CharField(max_length=255)
-    affiliation = models.CharField(max_length=255, blank=True, null=True)
+    farm_name = models.CharField(max_length=255, blank=False, null=True)
+    location = models.CharField(max_length=255, blank=False, null=True)
+    bio = models.TextField(blank=False, null=True)
+    size = models.CharField(max_length=255, blank=False, null=True)
+    affiliation = models.CharField(max_length=255, blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.farm_name
 
-    def clean(self):
-        if self.user.group != 'farmer':
-            raise ValidationError('The user must be a farmer to add a FarmerProfile.')
+    # def clean(self):
+    #     if self.user.group != 'farmer':
+    #         raise ValidationError('The user must be a farmer to add a FarmerProfile.')
 
 class Roaster(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='roaster_profile')
-    company_name = models.CharField(max_length=255)
-    location = models.CharField(max_length=255)
-    bio = models.TextField(blank=True, null=True)
+    company_name = models.CharField(max_length=255, blank=False, null=True)
+    location = models.CharField(max_length=255, blank=False, null=True)
+    bio = models.TextField(blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    min_lot_size = models.PositiveIntegerField(blank=False, null=True)
+    annual_throughput = models.PositiveIntegerField(blank=False, null=True)
+    origins_interested = models.TextField(blank=False, null=True)
+    coffee_types_interested = models.TextField(blank=False, null=True)
 
     def __str__(self):
         return self.company_name
 
-    def clean(self):
-        if self.user.group != 'roaster':
-            raise ValidationError('The user must be a roaster to add a RoasterProfile.')
-
-
+    # def clean(self):
+    #     if self.user.group != 'roaster':
+    #         raise ValidationError('The user must be a roaster to add a RoasterProfile.')
 # third table: farmerphoto is related with user by userid, one can only input data into it if user group is farmer
 class FarmerPhoto(models.Model):
     id = models.AutoField(primary_key=True)
@@ -100,9 +102,9 @@ class FarmerPhoto(models.Model):
     def __str__(self):
         return f"Photo {self.id} for {self.user.username}"
 
-    def clean(self):
-        if self.user.group != 'farmer':
-            raise ValidationError('The user must be a farmer to add a FarmerPhoto.')
+    # def clean(self):
+    #     if self.user.group != 'farmer':
+    #         raise ValidationError('The user must be a farmer to add a FarmerPhoto.')
 
 
 class RoasterPhoto(models.Model):
@@ -114,9 +116,9 @@ class RoasterPhoto(models.Model):
     def __str__(self):
         return f"Photo {self.id} for {self.user.username}"
 
-    def clean(self):
-        if self.user.group != 'roaster':
-            raise ValidationError('The user must be a roaster to add a RoasterPhoto.')
+    # def clean(self):
+    #     if self.user.group != 'roaster':
+    #         raise ValidationError('The user must be a roaster to add a RoasterPhoto.')
 
 #Table 4: meeting request, a mutual table for both farmer and roaster
 class MeetingRequest(models.Model):
@@ -127,23 +129,21 @@ class MeetingRequest(models.Model):
     ]
 
     id = models.AutoField(primary_key=True)
-    farmer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='meeting_requests_as_farmer')
-    roaster = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='meeting_requests_as_roaster')
+    requester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='meeting_requests_made')
+    requestee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='meeting_requests_received')
     proposed_date = models.DateTimeField()
+    message = models.TextField(blank=True, null=True)  # Add this line to include the message field
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Meeting request from {self.farmer.username} to {self.roaster.username}"
+        return f"Meeting request from {self.requester.username} to {self.requestee.username}"
 
-    def clean(self):
-        if self.farmer.group != 'farmer':
-            raise ValidationError('The user must be in the farmer group.')
-        if self.roaster.group != 'roaster':
-            raise ValidationError('The user must be in the roaster group.')
+    # def clean(self):
+    #     if self.requester.group == self.requestee.group:
+    #         raise ValidationError('Meeting requests must be between a farmer and a roaster.')
 
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
-

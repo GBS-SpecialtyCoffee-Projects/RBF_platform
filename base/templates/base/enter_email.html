@@ -1,12 +1,26 @@
-{% extends 'base/main.html' %}
+{% extends 'base/main_nonav.html' %}
+{% load static %}
 
-{% block title %}Enter Email{% endblock %}
+{% block title %}Forgot your password?{% endblock %}
+
+{% block head %}
+<link href="{% static 'enter_email.css' %}" rel="stylesheet">
+{% endblock %}
 
 {% block content %}
-<h1>Enter Your Email</h1>
-<form method="post" action="{% url 'enter_email' %}">
-    {% csrf_token %}
-    <input type="email" name="email" placeholder="Enter your email" required>
-    <button type="submit">Submit</button>
-</form>
+<div class="text-container">
+        <h1>SPECIALTY</h1>
+        <h1>COFFEE</h1>
+        <h1>CONNECT</h1>
+    </div>
+<div class="password-reset-container">
+    <a href="{% url 'signin' %}" class="close-button">close  x</a>
+    <h1>Forgot your password?</h1>
+    <p>Enter the email address associated with your account and we'll send you a link to reset your password.</p>
+    <form method="post" action="{% url 'enter_email' %}">
+        {% csrf_token %}
+        <input type="email" name="email" placeholder="Enter your email" required>
+        <button type="submit">Send Link</button>
+    </form>
+</div>
 {% endblock %}

@@ -1,11 +1,14 @@
 # user_management/urls.py
 from django.urls import path
 from .views import account, farmer,roaster
-
+from django.conf import settings
+from django.conf.urls.static import static
 urlpatterns = [
     path('', account.landing_page, name='landing_page'),
     path('farmer_dashboard/', farmer.farmer_dashboard, name='farmer_dashboard'),
     path('roaster_dashboard/', roaster.roaster_dashboard, name='roaster_dashboard'),
+    path('request_meeting/<int:user_id>/', roaster.request_meeting, name='request_meeting'),
+    path('manage_meeting_request/<int:meeting_id>/<str:action>/', roaster.manage_meeting_request,name='manage_meeting_request'),
     path('upload/', farmer.upload_photo, name='upload_photo'),
     path('upload/success/', farmer.upload_success, name='upload_success'),
     path('add_roaster/', roaster.add_roaster, name='add_roaster'),
@@ -25,6 +28,10 @@ urlpatterns = [
     path('activate/<uidb64>/<token>', account.activate, name='activate'),
     path('enter_email/', account.enter_email, name='enter_email'),
     path('translation-test/', account.translation_test_view, name='translation_test'),
-    path('test/',account.test,name='test')
+    path('test/',account.test,name='test'),
+    path('farmer/details/', account.farmer_details, name='farmer_details'),
+    path('roaster/details/', account.roaster_details, name='roaster_details'),
 ]
 
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

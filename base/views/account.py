@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
-from .forms import SignupForm, SigninForm, PasswordResetForm
+from .forms import SignupForm, SigninForm, PasswordResetForm, FarmerForm
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
@@ -13,7 +13,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from .tokens import account_activation_token
-from base.models import User
+from base.models import User,Farmer,Roaster
 from django.utils import translation
 from django.conf import settings
 from django.http import JsonResponse
@@ -50,10 +50,44 @@ def signup_view(request):
             user = form.save()
             login(request, user)
             request.session['username'] = user.username
-            return redirect('signin')
+            request.session['group'] = user.group
+            if user.group == 'farmer':
+                return redirect('farmer_details')
+            elif user.group == 'roaster':
+                return redirect('roaster_details')
     else:
         form = SignupForm()
     return render(request, 'base/signup.html', {'form': form})
+
+def farmer_details(request):
+    try:
+        farmer = request.user.farmer_profile
+    except Farmer.DoesNotExist:
+        return redirect('signup')  # If the farmer profile does not exist, redirect to signup
+
+    if request.method == 'POST':
+        form = FarmerForm(request.POST, instance=farmer)
+        if form.is_valid():
+            form.save()
+            return redirect('signin')  # Redirect to farmer dashboard after successful update
+    else:
+        form = FarmerForm(instance=farmer)
+    return render(request, 'base/farmer_signup.html', {'form': form})
+
+def roaster_details(request):
+    try:
+        roaster = request.user.roaster_profile
+    except Roaster.DoesNotExist:
+        return redirect('signup')  # If the roaster profile does not exist, redirect to signup
+
+    if request.method == 'POST':
+        form = RoasterForm(request.POST, instance=roaster)
+        if form.is_valid():
+            form.save()
+            return redirect('signin')  # Redirect to roaster dashboard after successful update
+    else:
+        form = RoasterForm(instance=roaster)
+    return render(request, 'base/roaster_signup.html', {'form': form})
 
 
 def signin_view(request):
@@ -166,9 +200,6 @@ def enter_email(request):
         email = request.POST['email']
         return redirect('verify_email', email=email)
     return render(request, 'base/enter_email.html')
-
-
-
 
 
 
