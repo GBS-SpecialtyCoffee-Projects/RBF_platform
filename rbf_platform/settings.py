@@ -106,6 +106,16 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
 ]
 
+# Emailing settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_FROM = 'israelwhiz@gmail.com'
+EMAIL_HOST_USER = 'israelwhiz@gmail.com'
+EMAIL_HOST_PASSWORD = 'rcmlvhjskqdjvlhi'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+PASSWORD_RESET_TIMEOUT = 14400
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
@@ -146,22 +156,8 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 #AUTHENTICATION_BACKENDS = ['base.backend.EmailBackend']
-
-
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
 ]
 
 
-
-# Emailing settings
-# Emailing settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_FROM = 'israelwhiz@gmail.com'
-EMAIL_HOST_USER = 'israelwhiz@gmail.com'
-EMAIL_HOST_PASSWORD = 'rcmlvhjskqdjvlhi'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-
-PASSWORD_RESET_TIMEOUT = 14400

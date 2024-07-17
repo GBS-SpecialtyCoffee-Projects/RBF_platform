@@ -5,6 +5,7 @@
     <title>Farmer Dashboard</title>
 </head>
 <body>
+    {% csrf_token %}
     <h1>Farmer Dashboard</h1>
     <p>Welcome, {{ request.user.username }}!</p>
     <a href="{% url 'upload_photo' %}">Add photo</a>

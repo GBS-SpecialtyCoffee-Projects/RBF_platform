@@ -43,6 +43,7 @@ def farmer_dashboard(request):
         'can_request_meetings': can_request_meetings,
         'form': form,
     })
+
 def upload_photo(request):
     if request.method == 'POST':
         form = FarmerPhotoForm(request.POST, request.FILES)
@@ -55,5 +56,6 @@ def upload_photo(request):
     else:
         form = FarmerPhotoForm()
     return render(request, 'base/upload_photo.html', {'form': form})
+
 def upload_success(request):
     return render(request, 'base/upload_success.html')

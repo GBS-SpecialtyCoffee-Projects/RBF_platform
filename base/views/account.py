@@ -21,10 +21,6 @@ from django.urls import reverse
 from django.contrib.auth.tokens import default_token_generator
 
 
-
-
-
-
 def landing_page(request):
     return render(request, 'base/landing_page.html')
 
@@ -32,7 +28,9 @@ def language_select(request):
     return render(request, 'base/language_select.html')
 
 
+
 User = get_user_model()
+
 
 def check_user(request):
     username = request.GET.get('username', None)
@@ -42,6 +40,7 @@ def check_user(request):
         'email_exists': User.objects.filter(email=email).exists() if email else False
     }
     return JsonResponse(data)
+
 
 def signup_view(request):
     if request.method == 'POST':
@@ -55,6 +54,7 @@ def signup_view(request):
                 return redirect('farmer_details')
             elif user.group == 'roaster':
                 return redirect('roaster_details')
+  
     else:
         form = SignupForm()
     return render(request, 'base/signup.html', {'form': form})
@@ -154,10 +154,11 @@ def password_reset_view(request, uidb64, token):
         return redirect('email_verify')
 
 
+
 def email_verify(request):
     return render(request, 'base/email_verify.html')
 
-
+#rename to password reset email
 def verify_email(request, email):
     try:
         user = User.objects.get(email=email)
@@ -177,6 +178,30 @@ def verify_email(request, email):
     except User.DoesNotExist:
         messages.error(request, 'No user is associated with this email address.')
     return redirect('email_verify')
+
+
+def verify_email(request):
+    try:
+        # get the user 
+        user = User.objects.get(email='israelwhiz@gmail.com')
+    except User.DoesNotExist:
+        messages.error(request, 'User does not exist')
+    mail_subject = 'Verify your email'
+    message = render_to_string('base/template_verify_email.html', {
+        'user': user.username,
+        'domain': get_current_site(request).domain,
+        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+        'token': account_activation_token.make_token(user),
+        'protocol': 'https' if request.is_secure() else 'http'
+    })
+    email = EmailMessage(
+        mail_subject, message, to=[user.email]
+    )
+    if email.send(): 
+       messages.success(request, f'Dear {user.username}, please check your email to confirm your registration.')
+    else:
+       messages.error(request, 'Something went wrong. Please try again.')
+    return render(request, 'base/email_verify.html')
 
 
 def activate(request, uidb64, token):
@@ -204,10 +229,6 @@ def enter_email(request):
 
 
 
-
-
-
-
 def translation_test_view(request):
     user_language = 'zh-hans'  # Change this dynamically based on user preference if needed
     translation.activate(user_language)
@@ -216,3 +237,24 @@ def translation_test_view(request):
 
 def test(request):
     return render(request,'base/test.html')
+
+
+def activate_email(request, uidb64, token):
+    User = get_user_model()
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except:
+        user = None
+
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.save()
+
+        messages.success(request, "Thank you for your email confirmation. Now you can login your account.")
+        return redirect('landing_page')
+    else:
+        messages.error(request, "Activation link is invalid!")
+
+    return redirect('email_verify')
+

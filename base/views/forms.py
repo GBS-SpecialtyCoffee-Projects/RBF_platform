@@ -18,6 +18,7 @@ class FarmerForm(forms.ModelForm):
         fields = ['farm_name', 'location', 'bio', 'size', 'affiliation']
 
 
+
 class RoasterForm(forms.ModelForm):
     class Meta:
         model = Roaster
@@ -25,9 +26,11 @@ class RoasterForm(forms.ModelForm):
             'min_lot_size', 'annual_throughput',
             'origins_interested', 'coffee_types_interested']
 
+
 class RoasterPhotoForm(forms.ModelForm):
     class Meta:
         model = RoasterPhoto
+
         fields = [ 'photo', 'order']
 
 User = get_user_model()
@@ -70,11 +73,13 @@ class SignupForm(forms.ModelForm):
 
         return cleaned_data
 
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password1'])
         if commit:
             user.save()
+
             # Create farmer or roaster based on group selection
             if self.cleaned_data['group'] == 'farmer':
                 Farmer.objects.create(user=user)
@@ -82,6 +87,7 @@ class SignupForm(forms.ModelForm):
                 Roaster.objects.create(user=user)
 
         return user
+
 
 
 
@@ -100,6 +106,7 @@ class SigninForm(forms.Form):
             except User.DoesNotExist:
                 raise ValidationError('Invalid email or password.')
         return self.cleaned_data
+
 
     def authenticate_user(self):
         email = self.cleaned_data.get('email')
@@ -122,6 +129,7 @@ class PasswordResetForm(forms.Form):
 
         if password != confirm_password:
             raise ValidationError("Passwords do not match.")
+
 
         return cleaned_data
 

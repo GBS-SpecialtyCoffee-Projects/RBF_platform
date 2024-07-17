@@ -48,6 +48,7 @@ def roaster_dashboard(request):
     })
 
 
+
 def add_roaster(request):
     if request.method == 'POST':
         form = RoasterForm(request.POST)
@@ -73,12 +74,14 @@ def add_roaster_photo(request):
                 return redirect('add_roaster_photo_success')
             except ValidationError as e:
                 form.add_error(None, e)  # Add the validation error to the form
+
     else:
         form = RoasterPhotoForm()
     return render(request, 'base/add_roaster_photo.html', {'form': form})
 
 def add_roaster_photo_success(request):
     return render(request, 'base/add_roaster_photo_success.html')
+
 
 User = get_user_model()
 
@@ -122,3 +125,4 @@ def manage_meeting_request(request, meeting_id, action):
 
     meeting_request.save()
     return redirect('farmer_dashboard' if request.user.group == 'farmer' else 'roaster_dashboard')
+
