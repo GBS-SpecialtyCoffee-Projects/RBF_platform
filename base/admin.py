@@ -67,7 +67,7 @@ class RoasterPhotoAdmin(admin.ModelAdmin):
 
 @admin.register(MeetingRequest)
 class MeetingRequestAdmin(admin.ModelAdmin):
-    list_display = ('id', 'farmer', 'roaster', 'proposed_date', 'status', 'created_at', 'updated_at')
-    search_fields = ('farmer__username', 'roaster__username')
+    list_display = ('requester', 'requestee', 'proposed_date', 'status', 'created_at', 'updated_at')
+    search_fields = ('requester__username', 'requestee__username', 'status')
     list_filter = ('status', 'created_at')
     ordering = ('created_at',)

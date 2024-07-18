@@ -1,4 +1,107 @@
-<!-- user_management/templates/farmer_dashboard.html -->
+<!-- {% extends 'base/main.html' %}
+{% load static %}
+
+{% block content %}
+{% include 'base/profile_navbar.html' %}
+
+<div class="container-fluid profile-bg">
+    <div class="d-flex py-2" style="padding-left:60vh" >
+    <div class="">
+        <img class="rounded-circle" width="150px" height="150px" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="">
+    </div>
+    <div class="ms-4 mt-4" style="">
+        <div class="d-flex">
+            <h2>Israel Tomas</h2>
+            <svg class="ms-2 mt-2" xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="green" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+            </svg>
+
+        </div>
+        <span>Atlanta,Georgia</span>
+    </div>
+
+
+    </div>
+
+    <hr>
+
+    <div class="d-flex px-4">
+        <div>
+
+            <div class="px-4 py-2" style="background-color: red;width:1000px;">
+                <div class="d-flex">
+                    <h2> Israel Tomas's Story</h2>
+                    <button class="btn btn-primary btn-sm">Edit</button>
+                </div>
+                <p>
+                    Lorem ipsum dolor sit amet consectetur. Convallis leo semper neque fames scelerisque amet ullamcorper mauris sed. Id et elit dictum pellentesque nam ornare scelerisque elementum faucibus. Enim vulputate nibh felis iaculis consectetur aliquam. Arcu massa facilisis commodo mi. Hac sollicitudin habitant nulla interdum phasellus neque pellentesque massa morbi. Semper sed cras euismod aliquam. Libero eget facilisis ultricies pellentesque mauris. Consectetur pharetra pretium molestie vel at aenean aliquam. Nisi urna mattis odio placerat orci turpis sodales sit sed. In ut eget lacus pellentesque risus cursus euismod. Aliquam elit montes amet nunc sed amet. Laoreet tristique porttitor praesent scelerisque eros vulputate vitae arcu tortor.
+                </p>
+
+            </div>
+
+            <div>
+                <div class="d-flex">
+                    <img src="" alt="">
+                    <img src="" alt="">
+                    <img src="" alt="">
+                    <img src="" alt="">
+                </div>
+                <button class="btn btn-primary btn-sm">Edit Photos</button>
+
+
+
+
+            </div>
+
+        </div>
+
+        <div>
+            <div class="px-4 py-2 ms-3" style="background-color: green;">
+                <h2>Harvest</h2>
+                <div class="d-flex">
+                    <span>Origin:</span>
+                    <span>Costa Rica</span>
+                </div>
+                <div class="d-flex">
+                    <span>Variety:</span>
+                    <span>Arabica</span>
+                </div>
+                <div class="d-flex">
+                    <span>Cup Score:</span>
+                    <span>92</span>
+                </div>
+                <div class="d-flex">
+                    <span>Processing:</span>
+                    <span>Costa Rica</span>
+                </div>
+                <div class="d-flex">
+                    <span>Crop Year:</span>
+                    <span>2023</span>
+                </div>
+                <div class="d-flex">
+                    <span>Altitude:</span>
+                    <span>700ft</span>
+                </div>
+                <div class="d-flex">
+                    <span>Quantity Available:</span>
+                    <span>56lbs</span>
+                </div>
+                <div class="d-flex">
+                    <span>Notes:</span>
+                    <span>Chocolate,Citrus,Fruit</span>
+                </div>
+
+                <button class="btn btn-primary">Edit Harvest</button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+
+{% endblock %} -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +111,96 @@
 <body>
     {% csrf_token %}
     <h1>Farmer Dashboard</h1>
-    <a href="{% url 'upload_photo' %}">add photo</a>
-    <a href="{% url 'signout' %}">sign out</a>
+    <p>Welcome, {{ request.user.username }}!</p>
+    <a href="{% url 'upload_photo' %}">Add photo</a>
+    <a href="{% url 'signout' %}">Sign out</a>
+
+    {% if farmer_profile %}
+        <h2>Your Profile</h2>
+        <p>Farm Name: {{ farmer_profile.farm_name }}</p>
+        <p>Location: {{ farmer_profile.location }}</p>
+        <p>Bio: {{ farmer_profile.bio }}</p>
+        <p>Size: {{ farmer_profile.size }}</p>
+        <p>Affiliation: {{ farmer_profile.affiliation }}</p>
+    {% else %}
+        <p>No profile information available.</p>
+    {% endif %}
+
+    {% if farmer_profile %}
+        <h2>Edit Your Profile</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Save Changes</button>
+        </form>
+    {% else %}
+        <p>No profile information available.</p>
+    {% endif %}
+
+    <h2>Your Photos</h2>
+    <ul>
+        {% for photo in farmer_photos %}
+            <li><img src="{{ photo.photo.url }}" alt="Photo {{ photo.id }}" width="200" /></li>
+        {% endfor %}
+    </ul>
+
+    {% if not can_request_meetings %}
+        <div class="error">You can only have up to 5 pending or accepted meeting requests at a time.</div>
+    {% endif %}
+
+    <h2>Available Roasters</h2>
+    <ul>
+        {% for roaster in roasters %}
+            <li>
+                {{ roaster.user.username }}
+                {% if can_request_meetings %}
+                    <a href="{% url 'request_meeting' roaster.user.id %}">Request Meeting</a>
+                {% else %}
+                    <span>Cannot request more meetings</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <h2>Meeting Requests to You</h2>
+    <ul>
+        {% for meeting_request in meeting_requests_as_requestee %}
+            <li>
+                Meeting request from {{ meeting_request.requester.username }} on {{ meeting_request.proposed_date }}
+                <p>Message: {{ meeting_request.message }}</p>
+                {% if meeting_request.status == 'pending' %}
+                    <a href="{% url 'manage_meeting_request' meeting_request.id 'accept' %}">Accept</a>
+                    <a href="{% url 'manage_meeting_request' meeting_request.id 'reject' %}">Reject</a>
+                {% else %}
+                    Status: {{ meeting_request.status }}
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <h2>Your Meeting Requests</h2>
+    <ul>
+        {% for meeting_request in meeting_requests_as_requester %}
+            <li>
+                Meeting request to {{ meeting_request.requestee.username }} on {{ meeting_request.proposed_date }} - Status: {{ meeting_request.status }}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <h2>Pending Meetings</h2>
+    <ul>
+        {% for meeting in pending_meetings %}
+            <li>
+                Meeting with
+                {% if meeting.requester == request.user %}
+                    {{ meeting.requestee.username }}
+                {% else %}
+                    {{ meeting.requester.username }}
+                {% endif %}
+                on {{ meeting.proposed_date }} - Status: {{ meeting.status }}
+            </li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
+

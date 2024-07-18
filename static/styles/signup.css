@@ -1,0 +1,118 @@
+/* @font-face {
+    font-family: 'Montserrat';
+    src: url('../static/fonts/Montserrat/Montserrat-VariableFont_wght.ttf') format('truetype');
+} */
+
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    overflow: auto;
+}
+
+.background-image {
+    background: url('/static/image/background.png') no-repeat center center;
+    background-size: cover;
+    display: flex; /* Use flexbox for layout */
+    justify-content: flex-start; /* Align items to the left */
+    align-items: flex-start; /* Align items to the top */
+    width: 60vw;
+    height: 100vh;
+    z-index: 1;
+}
+
+.text-overlay {
+    color: #C5BCB0;
+    text-align: left;
+    font-weight: bold;
+    font-size: 15px;
+    line-height: 0;
+    z-index: 2;
+    margin: 20px; /* Add margin to move the text away from the edges */
+}
+
+.form-container {
+    background-color: #C5BCB0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 50vw;
+    z-index: 2;
+    position: relative;
+    padding: 20px;
+    margin-left: auto;
+    box-sizing: border-box;
+}
+
+.signup-form {
+    color: #333;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+
+}
+
+.signup-form h1 {
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #333;
+    text-transform: uppercase;
+    font-size: 24px;
+}
+
+.signup-form form {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center form items */
+}
+
+.signup-form .form-label {
+    margin-bottom: 0px;
+    font-size: 14px;
+}
+
+.signup-form .form-control {
+    margin-bottom: 10px;
+    padding: 5px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 350px; /* Ensure input fields take full width */
+
+}
+
+.signup-form .btn {
+    background-color: #54B4D3;
+    color: white;
+    border: none;
+    width: 150px;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.signup-form .btn:hover {
+    background-color: #333;
+}
+
+.container-fluid {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+}
+
+/* Media query for mobile devices */
+@media (max-width: 1000px) {
+    .background-image {
+        display: none; /* Hide the background image section */
+    }
+    .form-container {
+        width: 100vw; /* Make the form container take full width */
+    }}
