@@ -24,6 +24,21 @@
    
 }
 
+.hero-card:hover{
+    cursor: pointer;
+    transition: all 0.3s ease 0s;
+
+
+}
+
+.justify-card{
+    font-size: 20px;
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+
+}
+
 /* body{
     height: 100vh;
     background: url('/static/img/pablo-merchan-montes-SCbq6uKCyMY-unsplash.jpg') no-repeat center center fixed;
