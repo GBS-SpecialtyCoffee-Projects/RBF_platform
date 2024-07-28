@@ -1,0 +1,33 @@
+{% extends 'base/main.html' %}
+{% load static %}
+
+{% block content %}
+{% include 'base/profile_navbar.html' %}
+
+
+<div class="container-fluid">
+    <div class="row vh-100">
+        <div class="col-3 px-5 border-end">
+            <div class="pt-2">
+                <div class="pb-2 lg" style="font-size: 32px; font-weight: 600;">
+                    Orientation
+                </div>
+                <div class="progress">
+                    <div
+                        class="progress-bar bg-primary"
+                        role="progressbar"
+                        style="width: 25%;"
+                        aria-valuenow="25"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                    >
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="col">Column</div>
+    </div>
+</div>
+
+{% endblock %}

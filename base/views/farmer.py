@@ -62,3 +62,6 @@ def upload_success(request):
 
 def language_select(request):
     return render(request, 'base/language_select.html')
+
+def farmer_orientation(request):
+    return render(request, 'base/farmer_orientation.html')

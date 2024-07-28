@@ -260,3 +260,6 @@ def activate_email(request, uidb64, token):
 def farmer_onboarding(request):
     return render(request, 'base/onboarding.html')
 
+def farmer_orientation(request):
+    return render(request, 'base/farmer_orientation.html')
+
