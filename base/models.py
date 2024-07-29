@@ -66,6 +66,14 @@ class Farmer(models.Model):
     affiliation = models.CharField(max_length=255, blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    profile_completed = models.BooleanField(default=False)
+    storytelling_workshop = models.BooleanField(default=False)
+    video_pricing = models.BooleanField(default=False)
+    video_intl = models.BooleanField(default=False)
+    video_comm_tips = models.BooleanField(default=False)
+    video_relationships = models.BooleanField(default=False)
+    video_perceptions = models.BooleanField(default=False)
+
 
     def __str__(self):
         return self.farm_name

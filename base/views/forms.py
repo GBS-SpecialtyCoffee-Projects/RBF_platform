@@ -170,3 +170,22 @@ class RoasterProfileForm(forms.ModelForm):
             'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
+class OrientationTasksForm(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['profile_completed',
+                  'storytelling_workshop',
+                  'video_pricing',
+                  'video_intl',
+                  'video_comm_tips',
+                  'video_relationships',
+                  'video_perceptions']
+        widgets = {
+            'profile_completed': forms.CheckboxInput(),
+            'storytelling_workshop': forms.CheckboxInput(),
+            'video_pricing': forms.CheckboxInput(),
+            'video_intl': forms.CheckboxInput(),
+            'video_comm_tips': forms.CheckboxInput(),
+            'video_relationships': forms.CheckboxInput(),
+            'video_perceptions': forms.CheckboxInput(),
+        }

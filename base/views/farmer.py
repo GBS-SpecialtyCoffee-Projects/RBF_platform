@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm, RoasterProfileForm
+from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm, RoasterProfileForm, OrientationTasksForm
 from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto
 from django.contrib import messages
 
@@ -64,4 +64,48 @@ def language_select(request):
     return render(request, 'base/language_select.html')
 
 def farmer_orientation(request):
-    return render(request, 'base/farmer_orientation.html')
+    if request.user.group != 'farmer':
+        return redirect('roaster_dashboard')
+    farmer = request.user.farmer_profile
+
+    tasks_completed = [
+        farmer.profile_completed,
+        farmer.storytelling_workshop,
+        farmer.video_pricing,
+        farmer.video_intl,
+        farmer.video_comm_tips,
+        farmer.video_relationships,
+        farmer.video_perceptions,
+    ]
+    # Calculate the percentage of tasks completed
+    completed_count = sum(tasks_completed)
+    total_tasks = len(tasks_completed)
+    progress_percentage = (completed_count / total_tasks) * 100
+
+
+    if request.method == 'POST':
+        form = OrientationTasksForm(request.POST, instance=farmer)
+        if form.is_valid():
+            form.save()
+
+            tasks_completed = [
+                farmer.profile_completed,
+                farmer.storytelling_workshop,
+                farmer.video_pricing,
+                farmer.video_intl,
+                farmer.video_comm_tips,
+                farmer.video_relationships,
+                farmer.video_perceptions,
+            ]
+            completed_count = sum(tasks_completed)
+            progress_percentage = (completed_count / total_tasks) * 100
+
+            return redirect('farmer_dashboard')
+    else:
+        form = OrientationTasksForm(instance=farmer)
+        
+    context = {
+        'form': form,
+        'progress_percentage': progress_percentage,
+    }
+    return render(request, 'base/farmer_orientation.html', context)

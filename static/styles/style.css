@@ -39,6 +39,21 @@
 
 }
 
+.profile-navbar-item{
+    font-weight: 600;
+    color: black;
+}
+
+.profile-navbar-item:hover{
+    font-weight: 600;
+    color: #5C87B2;
+}
+
+.active-link {
+    color: #5C87B2; /* Bootstrap default blue color */
+}
+
+
 /* body{
     height: 100vh;
     background: url('/static/img/pablo-merchan-montes-SCbq6uKCyMY-unsplash.jpg') no-repeat center center fixed;
