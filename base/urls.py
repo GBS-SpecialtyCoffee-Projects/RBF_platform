@@ -5,6 +5,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 urlpatterns = [
     path('', account.landing_page, name='landing_page'),
+    path('onboarding/', account.farmer_onboarding, name='onboarding'),
     path('farmer_dashboard/', farmer.farmer_dashboard, name='farmer_dashboard'),
     path('roaster_dashboard/', roaster.roaster_dashboard, name='roaster_dashboard'),
     path('request_meeting/<int:user_id>/', roaster.request_meeting, name='request_meeting'),
