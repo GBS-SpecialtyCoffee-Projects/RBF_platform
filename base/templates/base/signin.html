@@ -6,7 +6,7 @@
 {% block title %}Sign In{% endblock %}
 
 {% block head %}
-    <link href="{% static 'signin.css' %}" rel="stylesheet">
+    <link href="{% static 'styles/signin.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -28,5 +28,5 @@
         <a href="{% url 'enter_email' %}">Forgot password?</a>
     </div>
 </div>
-<script src="{% static 'signin.js' %}"></script>
+<script src="{% static 'js/signin.js' %}"></script>
 {% endblock %}
