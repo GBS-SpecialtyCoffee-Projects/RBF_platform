@@ -9,6 +9,8 @@ class AuthMiddleware(MiddlewareMixin):
     def process_request(self, request):
         # Exclude certain paths from requiring authentication
         excluded_paths = [
+            resolve_url('onboarding'),
+            resolve_url('farmer_dashboard'),
             resolve_url('signin'),
             resolve_url('signup'),
             #resolve_url('reset_password'),
