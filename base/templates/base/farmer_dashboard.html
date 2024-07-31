@@ -13,6 +13,7 @@
 
     {% if farmer_profile %}
         <h2>Your Profile</h2>
+                <img src="{{ farmer_profile.profile_picture.url }}" alt="Profile Picture" width="200" />
         <p>Farm Name: {{ farmer_profile.farm_name }}</p>
         <p>Location: {{ farmer_profile.location }}</p>
         <p>Bio: {{ farmer_profile.bio }}</p>
@@ -36,7 +37,9 @@
     <h2>Your Photos</h2>
     <ul>
         {% for photo in farmer_photos %}
-            <li><img src="{{ photo.photo.url }}" alt="Photo {{ photo.id }}" width="200" /></li>
+            {% if photo.photo %}
+                <li><img src="{{ photo.photo.url }}" alt="Photo {{ photo.id }}" width="200" /></li>
+            {% endif %}
         {% endfor %}
     </ul>
 
