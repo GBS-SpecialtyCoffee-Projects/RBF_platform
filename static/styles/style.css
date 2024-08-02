@@ -40,12 +40,12 @@
 }
 
 .profile-navbar-item{
-    font-weight: 600;
+    font-weight: 500;
     color: black;
 }
 
 .profile-navbar-item:hover{
-    font-weight: 600;
+    font-weight: 500;
     color: #5C87B2;
 }
 
@@ -53,6 +53,9 @@
     color: #5C87B2; /* Bootstrap default blue color */
 }
 
+.oritentation-task:hover{
+    color: #5C87B2
+}
 
 /* body{
     height: 100vh;

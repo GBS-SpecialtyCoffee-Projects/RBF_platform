@@ -100,7 +100,7 @@ def farmer_orientation(request):
             completed_count = sum(tasks_completed)
             progress_percentage = (completed_count / total_tasks) * 100
 
-            return redirect('farmer_dashboard')
+            return redirect('farmer_orientation')
     else:
         form = OrientationTasksForm(instance=farmer)
         

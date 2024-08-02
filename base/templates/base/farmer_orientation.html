@@ -7,23 +7,119 @@
 
 <div class="container-fluid">
     <div class="row vh-100">
-        <div class="col-3 px-5 border-end">
-            <div class="pt-2">
-                <div class="pb-2 lg" style="font-size: 32px; font-weight: 600;">
-                    Orientation
+        <div class="col">            
+            <div class="row py-4 px-5 fs-5">
+                <div class="col">
+                    <h4> Getting started with CoffeeSpace </h4>
                 </div>
-                <div class="progress">
-                    <div class="progress-bar" role="progressbar" style="width: {{ progress_percentage }}%;" aria-valuenow="{{ progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                <div class="col fs-6">
+                    Lorem ipsum dolor sit amet consectetur. Convallis leo semper neque fames 
+                    scelerisque amet ullamcorper mauris sed. Id et elit dictum pellentesque 
+                    nam ornare scelerisque elementum faucibus. 
                 </div>
             </div>
 
+            
+            <div class="orientation-task row m-2 p-3 border rounded-2 bg-light">
+                <a href="{% url 'farmer_dashboard' %}" class="link-dark link-underline-opacity-0">
+                    <h5 class="text">Storytelling Workshop</h5>
+                </a>
+                <p>Lorem ipsum dolor sit amet consectetur. Convallis leo semper neque fames scelerisque amet ullamcorper mauris sed. 
+                Id et elit dictum pellentesque nam ornare scelerisque elementum faucibus. </p>
+
+                <!-- Button trigger modal -->
+                <button
+                    type="button"
+                    class="btn btn-primary btn-lg"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalId1"
+                >
+                    Complete Storytelling Workshop
+                </button>
+                
+                <!-- Modal -->
+                <div
+                    class="modal fade"
+                    id="modalId1"
+                    tabindex="-1"
+                    role="dialog"
+                    aria-labelledby="modalTitleId"
+                    aria-hidden="true"
+                >
+                    <div
+                        class="modal-dialog modal-sm modal-fullscreen"
+                        role="document"
+                    >
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modalTitleId">
+                                    Storytelling Workshop
+                                </h5>
+                                <button
+                                    type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"
+                                ></button>
+                            </div>
+                            <div class="modal-body">Here, you will learn to communicate your story ... </div>
+                            <div class="modal-footer">
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal"
+                                >
+                                    Close
+                                </button>
+                                <form action="" method="post" id="OrientationTasksForm">
+                                    {% csrf_token %}
+                                    <div>
+                                        {{ form.storytelling_workshop }}
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Save</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+
+            </div>
+
+            
+
+
+
+
+
+
+
+            
+            <div class="pt-2 col-4 justify-content-center">
+                <h6 class="lg text-center">
+                    Progress
+                </h6>
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: {{ progress_percentage }}%;" aria-valuenow="{{ progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="pt-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-success">Save Progress</button>
+                    </form>
+                </div>
+            </div>
+
+
+            
+
+
+
+            
+            
         </div>
-        <div class="col"><h1>Orientation Tasks</h1>
-            <form method="post">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-success">Save Progress</button>
-            </form></div>
+        
     </div>
 </div>
 
