@@ -181,11 +181,29 @@ class OrientationTasksForm(forms.ModelForm):
                   'video_relationships',
                   'video_perceptions']
         widgets = {
-            'profile_completed': forms.CheckboxInput(),
-            'storytelling_workshop': forms.CheckboxInput(),
-            'video_pricing': forms.CheckboxInput(),
+            'profile_completed': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',  # Bootstrap 5 checkbox class
+                'id': 'profileCheck'
+            }),
+            'storytelling_workshop': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',  # Bootstrap 5 checkbox class
+                'id': 'storytellingCheck'
+            }),
+            'video_pricing': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',  # Bootstrap 5 checkbox class
+                'id': 'pricingCheck'
+            }),
             'video_intl': forms.CheckboxInput(),
             'video_comm_tips': forms.CheckboxInput(),
             'video_relationships': forms.CheckboxInput(),
             'video_perceptions': forms.CheckboxInput(),
         }
+
+
+class StoryTellingCheck(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['storytelling_workshop']
+        widgets = {'storytelling_workshop': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',  # Bootstrap 5 checkbox class
+                'id': 'StoryTellingCheck'})}

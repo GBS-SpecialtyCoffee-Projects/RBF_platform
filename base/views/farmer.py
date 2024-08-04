@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm, RoasterProfileForm, OrientationTasksForm
+from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck
 from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto
 from django.contrib import messages
 
@@ -63,6 +63,13 @@ def upload_success(request):
 def language_select(request):
     return render(request, 'base/language_select.html')
 
+
+
+
+
+
+
+
 def farmer_orientation(request):
     if request.user.group != 'farmer':
         return redirect('roaster_dashboard')
@@ -81,7 +88,6 @@ def farmer_orientation(request):
     completed_count = sum(tasks_completed)
     total_tasks = len(tasks_completed)
     progress_percentage = (completed_count / total_tasks) * 100
-
 
     if request.method == 'POST':
         form = OrientationTasksForm(request.POST, instance=farmer)
@@ -107,5 +113,25 @@ def farmer_orientation(request):
     context = {
         'form': form,
         'progress_percentage': progress_percentage,
+        'completed': completed_count,
+        'total': total_tasks
     }
     return render(request, 'base/farmer_orientation.html', context)
+
+
+def save_profile_completion(request):
+    if request.method == 'POST':
+        farmer = request.user.farmer_profile
+        form = OrientationTasksForm(request.POST, instance=farmer, fields=['profile_completed'])
+        if form.is_valid():
+            form.save()
+            # Redirect or handle next step
+            return redirect('orientation_tasks.html')
+
+def storytelling_check(request):
+    if request.method == 'POST':
+        farmer = request.user.farmer_profile
+        form = StoryTellingCheck(request.POST, instance=farmer)
+        if form.is_valid():
+            form.save()
+            return redirect('farmer_orientation')

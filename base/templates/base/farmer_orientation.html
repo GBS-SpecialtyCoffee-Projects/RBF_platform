@@ -6,6 +6,23 @@
 
 
 <div class="container-fluid">
+    
+    
+    <div class="row">
+        <form method="POST" action="{% url 'storytelling_check' %}">
+            {% csrf_token %}
+                <label class="form-check-label pe-5">
+                    {{ form.storytelling_workshop }}
+                    Completed StoryTelling Workshop
+                </label>
+                <button name="storytelling" type="submit" class="btn btn-outline-primary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .5rem;">
+                    Save Orientation Progress
+                </button>
+        </form>
+    </div>
+
+
+
     <div class="row vh-100">
         <div class="col">            
             <div class="row py-4 px-5 fs-5">
@@ -19,65 +36,139 @@
                 </div>
             </div>
 
+
             
-            <div class="orientation-task row m-2 p-3 border rounded-2 bg-light">
-                <a href="{% url 'farmer_dashboard' %}" class="link-dark link-underline-opacity-0">
-                    <h5 class="text">Storytelling Workshop</h5>
-                </a>
-                <p>Lorem ipsum dolor sit amet consectetur. Convallis leo semper neque fames scelerisque amet ullamcorper mauris sed. 
-                Id et elit dictum pellentesque nam ornare scelerisque elementum faucibus. </p>
+    
+
+            
+            <div class="orientation-task card row m-2 p-3 border rounded-2 bg-light">
+                <h5 class="card-title">Complete your profile</h5>
+                <div class="card-body">
+                <p class="card-text"> If you previously left any required personal or farm information empty while creating your account, you may now fill it out here at your convenience.</p>
 
                 <!-- Button trigger modal -->
                 <button
                     type="button"
-                    class="btn btn-primary btn-lg"
+                    class="btn btn-secondary"
                     data-bs-toggle="modal"
                     data-bs-target="#modalId1"
                 >
-                    Complete Storytelling Workshop
+                    Complete your prof
                 </button>
                 
-                <!-- Modal -->
-                <div
-                    class="modal fade"
-                    id="modalId1"
-                    tabindex="-1"
-                    role="dialog"
-                    aria-labelledby="modalTitleId"
-                    aria-hidden="true"
-                >
+                    <!-- Modal -->
                     <div
-                        class="modal-dialog modal-sm modal-fullscreen"
-                        role="document"
+                        class="modal fade"
+                        id="modalId1"
+                        tabindex="-1"
+                        role="dialog"
+                        aria-labelledby="modalTitleId"
+                        aria-hidden="true"
                     >
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="modalTitleId">
-                                    Storytelling Workshop
-                                </h5>
-                                <button
-                                    type="button"
-                                    class="btn-close"
-                                    data-bs-dismiss="modal"
-                                    aria-label="Close"
-                                ></button>
-                            </div>
-                            <div class="modal-body">Here, you will learn to communicate your story ... </div>
-                            <div class="modal-footer">
-                                <button
-                                    type="button"
-                                    class="btn btn-secondary"
-                                    data-bs-dismiss="modal"
-                                >
-                                    Close
-                                </button>
-                                <form action="" method="post" id="OrientationTasksForm">
-                                    {% csrf_token %}
-                                    <div>
-                                        {{ form.storytelling_workshop }}
+                        <div
+                            class="modal-dialog modal-lg"
+                            role="document"
+                        >
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalTitleId">
+                                        Your Prof
+                                    </h5>
+                                    <button
+                                        type="button"
+                                        class="btn-close"
+                                        data-bs-dismiss="modal"
+                                        aria-label="Close"
+                                    ></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="container-fluid">
+                                        <div class="container mt-5">
+                                            <div class="d-flex mt-5 justify-content-between">
+                                                <div>
+                                                    <h3>Farm information</h3>
+                                                    <p>Provide information about your farm and production</p>
+                                                </div>
+                                    
+                                                <div>
+                                                    <form action="">
+                                                
+                                                        <div class="">
+                                                            <div>
+                                                                <input type="text" class="form-control col mt-3" placeholder="Farm name">
+                                                            </div>
+                                        
+                                                            <div>
+                                                                <input type="text" class="form-control mt-3" placeholder="Farm location">
+                                                            </div>
+                                    
+                                                            <div>
+                                                                <input type="text" class="form-control mt-5" placeholder="Production estimate in the last 12 months (kg)">
+                                                            </div>
+                                        
+                                                            
+                                                            <div class="row mt-3">
+                                                                <div class="col">
+                                                                    <input type="text" class="form-control" placeholder="Harvest season">
+                                                                </div>
+                                                                <div class="col">
+                                                                    <input type="text" class="form-control" placeholder="Cultivars">
+                                                                </div>
+                                                            </div>
+                                                            <div class="row mt-3">
+                                                                <div class="col">
+                                                                    <input type="text" class="form-control" placeholder="Cup scores received">
+                                                                </div>
+                                                                <div class="col">
+                                                                    <input type="text" class="form-control" placeholder="Source of scores">
+                                                                </div>
+                                                                <div class="col">
+                                                                    <input type="text" class="form-control" placeholder="Link to quality report">
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div>
+                                                                <input type="text" class="form-control mt-5" placeholder="Processing method">
+                                                            </div>
+                                                            <div class="mt-2">
+                                                                <textarea rows="5" cols="5" name="" class="form-control" placeholder="Processing description"></textarea>
+                                                            </div>
+                                                            
+                                        
+                                                            
+                                    
+                                                            <!-- <input hidden  type="file" class="form-control mt-2" placeholder="Upload Photo"> -->
+                                    
+                                                            <button class="btn btn-primary mt-2 float-end">Save and Continue</button>
+                                                            <div style="padding-bottom:200px">
+                                                            </div>
+                                                        </div>
+                                    
+                                                      
+                                                    </form>
+                                    
+                                                </div>
+                                    
+                                            </div>
+                                        </div>
+                                    
+                                    
                                     </div>
-                                    <button type="submit" class="btn btn-primary">Save</button>
-                                </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <form action="" method="post" id="OrientationTasksForm">
+                                        {% csrf_token %}
+                                        
+                                        <div class="form-check">
+                                            {{ form.profile_completed }}
+                                            <label class="form-check-label" for="profileCheck">
+                                                Complete Profile
+                                            </label>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary">Save</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -86,16 +177,185 @@
 
             </div>
 
+            <div class="orientation-task card row m-2 p-3 border rounded-2 bg-light">
+                <h5 class="card-title">Storytelling Workshop</h5>
+                <div class="card-body">
+                <p class="card-text">Lorem ipsum dolor sit amet consectetur. Convallis leo semper neque fames scelerisque amet ullamcorper mauris sed. 
+                Id et elit dictum pellentesque nam ornare scelerisque elementum faucibus. </p>
+
+                <!-- Button trigger modal -->
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalId2"
+                >
+                    Complete Storytelling Workshop
+                </button>
+                
+                    <!-- Modal -->
+                    <div
+                        class="modal fade"
+                        id="modalId2"
+                        tabindex="-1"
+                        role="dialog"
+                        aria-labelledby="modalTitleId"
+                        aria-hidden="true"
+                    >
+                        <div
+                            class="modal-dialog modal-lg"
+                            role="document"
+                        >
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalTitleId">
+                                        Storytelling Workshop
+                                    </h5>
+                                    <button
+                                        type="button"
+                                        class="btn-close"
+                                        data-bs-dismiss="modal"
+                                        aria-label="Close"
+                                    ></button>
+                                </div>
+                                <div class="modal-body">Here, you will learn to communicate your story ... </div>
+                                <div class="modal-footer">
+                                        <form method="POST" action="{% url 'storytelling_check' %}">
+                                            <div class="row">
+                                            {% csrf_token %}
+                                                <div class="col">
+                                                        <label class="form-check-label">
+                                                            {{ form.storytelling_workshop }}
+                                                            Completed StoryTelling Workshop
+                                                        </label>
+                                                </div>
+                                                <div class="col">
+                                                        <button name="storytelling" type="submit" class="btn btn-outline-primary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .5rem;">
+                                                            Save Orientation Progress
+                                                        </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+
+            </div>
+
+            <div class="orientation-task card row m-2 border rounded-2 bg-light">
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs" style="font-weight: 500;" id="myTab" role="tablist">
+
+                    <li class="nav-item" role="presentation">
+                        <button
+                            class="nav-link active"
+                            id="pricing-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#pricing"
+                            type="button"
+                            role="tab"
+                            aria-controls="pricing"
+                            aria-selected="true"
+                        >
+                            Pricing Your 
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button
+                            class="nav-link"
+                            id="profile-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#profile"
+                            type="button"
+                            role="tab"
+                            aria-controls="profile"
+                            aria-selected="false"
+                        >
+                            Profile
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button
+                            class="nav-link"
+                            id="messages-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#messages"
+                            type="button"
+                            role="tab"
+                            aria-controls="messages"
+                            aria-selected="false"
+                        >
+                            Messages
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Tab panes -->
+                <div class="tab-content">
+                    <div
+                        class="tab-pane active"
+                        id="home"
+                        role="tabpanel"
+                        aria-labelledby="home-tab"
+                    >
+                         home 
+                    </div>
+                    <div
+                        class="tab-pane"
+                        id="profile"
+                        role="tabpanel"
+                        aria-labelledby="profile-tab"
+                    >
+                         profile 
+                    </div>
+                    <div
+                        class="tab-pane"
+                        id="messages"
+                        role="tabpanel"
+                        aria-labelledby="messages-tab"
+                    >
+                         messages 
+                    </div>
+                </div>
+                
+                
+                <h5 class="card-title">
+                    Making the Most of CoffeeSpace
+                </h5>
+                <div class="card-body">
+                    <div class="col-1">
+                        Video 1
+                    </div>
+                    <div class="col-1">
+                        Video 2
+                    </div>
+                    <div class="col">
+                        Video 3
+                    </div>
+                    <div class="col">
+                        Video 4
+                    </div>
+                    <div class="col">
+                        Video 5
+                    </div>
+                </div>
+                
+            </div>
             
 
+            
 
+            <br>
 
 
 
 
 
             
-            <div class="pt-2 col-4 justify-content-center">
+            <div class="pt-2 col-4 offset-4 justify-content-center">
                 <h6 class="lg text-center">
                     Progress
                 </h6>

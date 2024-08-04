@@ -74,6 +74,13 @@ class Farmer(models.Model):
     video_relationships = models.BooleanField(default=False)
     video_perceptions = models.BooleanField(default=False)
 
+    def save(self):
+        if self.user and self.farm_name and self.location and self.bio and self.size:
+            self.profile_completed = True
+        else: self.profile_completed = False
+        super().save()
+
+
 
     def __str__(self):
         return self.farm_name

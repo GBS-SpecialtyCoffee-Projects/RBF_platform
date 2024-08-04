@@ -51,11 +51,29 @@
 
 .active-link {
     color: #5C87B2; /* Bootstrap default blue color */
+    text-decoration: underline;
 }
 
 .oritentation-task:hover{
     color: #5C87B2
 }
+
+
+.btn-blue{
+    --bs-btn-font-weight: 600;
+    --bs-btn-color: var(--bs-white);
+    --bs-btn-bg: #5C87B2;
+    --bs-btn-border-color: #5C87B2;
+    --bs-btn-hover-color: var(--bs-white);
+    --bs-btn-hover-bg: #{shade-color(#5C87B2, 10%)};
+    --bs-btn-hover-border-color: #{shade-color(#5C87B2, 10%)};
+    --bs-btn-focus-shadow-rgb: #5C87B2;
+    --bs-btn-active-color: var(--bs-btn-hover-color);
+    --bs-btn-active-bg: #{shade-color(#5C87B2, 20%)};
+    --bs-btn-active-border-color: #{shade-color(#5C87B2, 20%)}
+}
+
+
 
 /* body{
     height: 100vh;
