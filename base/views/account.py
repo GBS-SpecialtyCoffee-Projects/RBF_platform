@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm
+from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from .forms import SignupForm, SigninForm, PasswordResetForm, FarmerForm
@@ -13,7 +13,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from .tokens import account_activation_token
-from base.models import User,Farmer,Roaster
+from base.models import User,Farmer,Roaster, FarmerPhoto
 from django.utils import translation
 from django.conf import settings
 from django.http import JsonResponse
@@ -57,7 +57,6 @@ def signup_view(request):
     else:
         form = SignupForm()
     return render(request, 'base/signup.html', {'form': form})
-
 def farmer_details(request):
     try:
         farmer = request.user.farmer_profile
@@ -65,14 +64,18 @@ def farmer_details(request):
         return redirect('signup')  # If the farmer profile does not exist, redirect to signup
 
     if request.method == 'POST':
-        form = FarmerForm(request.POST, instance=farmer)
-        if form.is_valid():
-            form.save()
-            return redirect('signin')  # Redirect to farmer dashboard after successful update
-    else:
-        form = FarmerForm(instance=farmer)
-    return render(request, 'base/farmer_signup.html', {'form': form})
+        farmer_form = FarmerForm(request.POST, request.FILES, instance=farmer)
 
+        if farmer_form.is_valid():
+            farmer_form.save()
+            return redirect('signin')  # Redirect to signin after successful update
+        else:
+            # Print form errors for debugging
+            print(farmer_form.errors)
+    else:
+        farmer_form = FarmerForm(instance=farmer)
+
+    return render(request, 'base/farmer_signup.html', {'farmer_form': farmer_form})
 def roaster_details(request):
     try:
         roaster = request.user.roaster_profile
