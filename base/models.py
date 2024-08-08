@@ -66,8 +66,8 @@ class Farmer(models.Model):
     affiliation = models.CharField(max_length=255, blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    profile_completed = models.BooleanField(default=False)
-    storytelling_workshop = models.BooleanField(default=False)
+    profile_completed = models.BooleanField(default=False) # this + all bools below are used to indicate required orientation task completion
+    storytelling_workshop = models.BooleanField(default=False) 
     video_pricing = models.BooleanField(default=False)
     video_intl = models.BooleanField(default=False)
     video_comm_tips = models.BooleanField(default=False)
@@ -75,6 +75,13 @@ class Farmer(models.Model):
     video_perceptions = models.BooleanField(default=False)
 
     def save(self):
+        """ A method to automatically check 
+        off the profile_completed field once
+        all required fields are not empty
+        
+        * if condition to be modified when Farmer model is finalized
+
+        """
         if self.user and self.farm_name and self.location and self.bio and self.size:
             self.profile_completed = True
         else: self.profile_completed = False

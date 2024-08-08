@@ -7,354 +7,1015 @@
 
 <div class="container-fluid">
     
+    <!-- 
+
+    To-do:
     
+    - consider functionality to verify users watch videos, currently on 'honor' system
+    - change the directory of all the "here" links on cards for completed tasks
+        to respective info pages
+    - create initial task with basic orientation info, 'must complete all tasks to publish... etc'
+    - change progress bar and button colors to greyer blue
+    - remove form at bottom when done
+    - verify modals function properly
+    - add actual text / videos
+    - consider card structure / bg color, etc
+
+    -->
+
+    
+    
+
+
+
     <div class="row">
-        <form method="POST" action="{% url 'storytelling_check' %}">
-            {% csrf_token %}
-                <label class="form-check-label pe-5">
-                    {{ form.storytelling_workshop }}
-                    Completed StoryTelling Workshop
-                </label>
-                <button name="storytelling" type="submit" class="btn btn-outline-primary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .5rem;">
-                    Save Orientation Progress
-                </button>
-        </form>
-    </div>
-
-
-
-    <div class="row vh-100">
-        <div class="col">            
-            <div class="row py-4 px-5 fs-5">
-                <div class="col">
-                    <h4> Getting started with CoffeeSpace </h4>
+        <div class="task-tracker col-sm-4 p-0">
+            <div class="row pb-2 pt-4 px-5">
+                <h4 class="text">
+                    Task Tracker
+                </h4>
+            </div>
+            <div class="px-5">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: {{ progress_percentage }}%;" aria-valuenow="{{ progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-                <div class="col fs-6">
-                    Lorem ipsum dolor sit amet consectetur. Convallis leo semper neque fames 
-                    scelerisque amet ullamcorper mauris sed. Id et elit dictum pellentesque 
-                    nam ornare scelerisque elementum faucibus. 
+            </div>
+            
+            <hr>
+
+            <!-- Task tracker checks to see if the task field is completed, if it is it
+             will display the checked svg rather than the empty circle svg as well as change
+             the text -->
+
+            <div class="row ms-4 me-1 my-4 p-2 align-items-center">
+                <div class="col-auto border-end">
+                    {% if user.profile_completed %} 
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_check.svg' %}" alt="">
+                    {% else %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_empty.svg' %}" alt="">
+                    {% endif %}
+
+                </div>
+                <div class="col text fs-5">
+                    {% if user.profile_completed %}
+                    Profile Complete!
+                    {% else %}
+                    Complete your profile
+                    {% endif %}
                 </div>
             </div>
 
+            <div class="row ms-4 me-1 my-4 p-2 align-items-center">
+                <div class="col-auto border-end">
+                    {% if user.storytelling_workshop %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_check.svg' %}" alt="">
+                    {% else %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_empty.svg' %}" alt="">
+                    {% endif %}
+
+                </div>
+                <div class="col text fs-5">
+                    {% if user.storytelling_workshop %}
+                    StoryTelling Workshop Complete!
+                    {% else %}
+                    StoryTelling Workshop 
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row ms-4 me-1 my-4 p-2 align-items-center">
+                <div class="col-auto border-end">
+                    {% if user.video_pricing %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_check.svg' %}" alt="">
+                    {% else %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_empty.svg' %}" alt="">
+                    {% endif %}
+
+                </div>
+                <div class="col text fs-5">
+                    {% if user.video_pricing %}
+                    Pricing your Coffee
+                    {% else %}
+                    Video: Pricing your Coffee 
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row ms-4 me-1 my-4 p-2 align-items-center">
+                <div class="col-auto border-end">
+                    {% if user.video_intl %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_check.svg' %}" alt="">
+                    {% else %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_empty.svg' %}" alt="">
+                    {% endif %}
+
+                </div>
+                <div class="col text fs-5">
+                    {% if user.video_intl %}
+                    International Coffee Logistics
+                    {% else %}
+                    Video: International Coffee Logistics 
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row ms-4 me-1 my-4 p-2 align-items-center">
+                <div class="col-auto border-end">
+                    {% if user.video_comm_tips %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_check.svg' %}" alt="">
+                    {% else %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_empty.svg' %}" alt="">
+                    {% endif %}
+
+                </div>
+                <div class="col text fs-5">
+                    {% if user.video_comm_tips %}
+                    Considerate Communication Tips
+                    {% else %}
+                    Video: Considerate Communication Tips 
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row ms-4 me-1 my-4 p-2 align-items-center">
+                <div class="col-auto border-end">
+                    {% if user.video_relationships %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_check.svg' %}" alt="">
+                    {% else %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_empty.svg' %}" alt="">
+                    {% endif %}
+
+                </div>
+                <div class="col text fs-5">
+                    {% if user.video_relationships %}
+                    Forming Equitable Commercial Relationships
+                    {% else %}
+                    Video: Forming Equitable Commercial Relationships 
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row ms-4 me-1 my-4 p-2 align-items-center">
+                <div class="col-auto border-end">
+                    {% if user.video_perceptions %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_check.svg' %}" alt="">
+                    {% else %}
+                    <img class="rounded-circle" width="50px" height="50px" src="{% static 'image/task_empty.svg' %}" alt="">
+                    {% endif %}
+
+                </div>
+                <div class="col text fs-5">
+                    {% if user.video_perceptions %}
+                    Perceptions & Definition of Quality & Value
+                    {% else %}
+                    Video: Perceptions & Definition of Quality & Value
+                    {% endif %}
+                </div>
+            </div>
 
             
-    
-
             
-            <div class="orientation-task card row m-2 p-3 border rounded-2 bg-light">
-                <h5 class="card-title">Complete your profile</h5>
-                <div class="card-body">
-                <p class="card-text"> If you previously left any required personal or farm information empty while creating your account, you may now fill it out here at your convenience.</p>
 
-                <!-- Button trigger modal -->
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modalId1"
-                >
-                    Complete your prof
-                </button>
-                
-                    <!-- Modal -->
-                    <div
-                        class="modal fade"
-                        id="modalId1"
-                        tabindex="-1"
-                        role="dialog"
-                        aria-labelledby="modalTitleId"
-                        aria-hidden="true"
-                    >
-                        <div
-                            class="modal-dialog modal-lg"
-                            role="document"
-                        >
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="modalTitleId">
-                                        Your Prof
-                                    </h5>
-                                    <button
-                                        type="button"
-                                        class="btn-close"
-                                        data-bs-dismiss="modal"
-                                        aria-label="Close"
-                                    ></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="container-fluid">
-                                        <div class="container mt-5">
-                                            <div class="d-flex mt-5 justify-content-between">
-                                                <div>
-                                                    <h3>Farm information</h3>
-                                                    <p>Provide information about your farm and production</p>
-                                                </div>
-                                    
-                                                <div>
-                                                    <form action="">
-                                                
-                                                        <div class="">
-                                                            <div>
-                                                                <input type="text" class="form-control col mt-3" placeholder="Farm name">
-                                                            </div>
-                                        
-                                                            <div>
-                                                                <input type="text" class="form-control mt-3" placeholder="Farm location">
-                                                            </div>
-                                    
-                                                            <div>
-                                                                <input type="text" class="form-control mt-5" placeholder="Production estimate in the last 12 months (kg)">
-                                                            </div>
-                                        
-                                                            
-                                                            <div class="row mt-3">
-                                                                <div class="col">
-                                                                    <input type="text" class="form-control" placeholder="Harvest season">
-                                                                </div>
-                                                                <div class="col">
-                                                                    <input type="text" class="form-control" placeholder="Cultivars">
-                                                                </div>
-                                                            </div>
-                                                            <div class="row mt-3">
-                                                                <div class="col">
-                                                                    <input type="text" class="form-control" placeholder="Cup scores received">
-                                                                </div>
-                                                                <div class="col">
-                                                                    <input type="text" class="form-control" placeholder="Source of scores">
-                                                                </div>
-                                                                <div class="col">
-                                                                    <input type="text" class="form-control" placeholder="Link to quality report">
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div>
-                                                                <input type="text" class="form-control mt-5" placeholder="Processing method">
-                                                            </div>
-                                                            <div class="mt-2">
-                                                                <textarea rows="5" cols="5" name="" class="form-control" placeholder="Processing description"></textarea>
-                                                            </div>
-                                                            
-                                        
-                                                            
-                                    
-                                                            <!-- <input hidden  type="file" class="form-control mt-2" placeholder="Upload Photo"> -->
-                                    
-                                                            <button class="btn btn-primary mt-2 float-end">Save and Continue</button>
-                                                            <div style="padding-bottom:200px">
-                                                            </div>
-                                                        </div>
-                                    
-                                                      
-                                                    </form>
-                                    
-                                                </div>
-                                    
-                                            </div>
-                                        </div>
-                                    
-                                    
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <form action="" method="post" id="OrientationTasksForm">
-                                        {% csrf_token %}
-                                        
-                                        <div class="form-check">
-                                            {{ form.profile_completed }}
-                                            <label class="form-check-label" for="profileCheck">
-                                                Complete Profile
-                                            </label>
-                                        </div>
+        </div>
 
-                                        <button type="submit" class="btn btn-primary">Save</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
 
-            </div>
 
-            <div class="orientation-task card row m-2 p-3 border rounded-2 bg-light">
-                <h5 class="card-title">Storytelling Workshop</h5>
-                <div class="card-body">
-                <p class="card-text">Lorem ipsum dolor sit amet consectetur. Convallis leo semper neque fames scelerisque amet ullamcorper mauris sed. 
-                Id et elit dictum pellentesque nam ornare scelerisque elementum faucibus. </p>
+        <div class="orientation-tasks col-sm-8 border-start">
 
-                <!-- Button trigger modal -->
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modalId2"
-                >
-                    Complete Storytelling Workshop
-                </button>
-                
-                    <!-- Modal -->
-                    <div
-                        class="modal fade"
-                        id="modalId2"
-                        tabindex="-1"
-                        role="dialog"
-                        aria-labelledby="modalTitleId"
-                        aria-hidden="true"
-                    >
-                        <div
-                            class="modal-dialog modal-lg"
-                            role="document"
-                        >
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="modalTitleId">
-                                        Storytelling Workshop
-                                    </h5>
-                                    <button
-                                        type="button"
-                                        class="btn-close"
-                                        data-bs-dismiss="modal"
-                                        aria-label="Close"
-                                    ></button>
-                                </div>
-                                <div class="modal-body">Here, you will learn to communicate your story ... </div>
-                                <div class="modal-footer">
-                                        <form method="POST" action="{% url 'storytelling_check' %}">
-                                            <div class="row">
-                                            {% csrf_token %}
-                                                <div class="col">
-                                                        <label class="form-check-label">
-                                                            {{ form.storytelling_workshop }}
-                                                            Completed StoryTelling Workshop
-                                                        </label>
-                                                </div>
-                                                <div class="col">
-                                                        <button name="storytelling" type="submit" class="btn btn-outline-primary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .5rem;">
-                                                            Save Orientation Progress
-                                                        </button>
-                                                </div>
-                                            </div>
-                                        </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
+            {% if not remaining %}
 
-            </div>
+            <!-- Display message when all tasks are completed, prompting user to start connecting, and to publish profile 
+             as well as revisit tasks and info at info page-->
 
-            <div class="orientation-task card row m-2 border rounded-2 bg-light">
-                <!-- Nav tabs -->
-                <ul class="nav nav-tabs" style="font-weight: 500;" id="myTab" role="tablist">
-
-                    <li class="nav-item" role="presentation">
-                        <button
-                            class="nav-link active"
-                            id="pricing-tab"
-                            data-bs-toggle="tab"
-                            data-bs-target="#pricing"
-                            type="button"
-                            role="tab"
-                            aria-controls="pricing"
-                            aria-selected="true"
-                        >
-                            Pricing Your 
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button
-                            class="nav-link"
-                            id="profile-tab"
-                            data-bs-toggle="tab"
-                            data-bs-target="#profile"
-                            type="button"
-                            role="tab"
-                            aria-controls="profile"
-                            aria-selected="false"
-                        >
-                            Profile
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button
-                            class="nav-link"
-                            id="messages-tab"
-                            data-bs-toggle="tab"
-                            data-bs-target="#messages"
-                            type="button"
-                            role="tab"
-                            aria-controls="messages"
-                            aria-selected="false"
-                        >
-                            Messages
-                        </button>
-                    </li>
-                </ul>
-                
-                <!-- Tab panes -->
-                <div class="tab-content">
-                    <div
-                        class="tab-pane active"
-                        id="home"
-                        role="tabpanel"
-                        aria-labelledby="home-tab"
-                    >
-                         home 
-                    </div>
-                    <div
-                        class="tab-pane"
-                        id="profile"
-                        role="tabpanel"
-                        aria-labelledby="profile-tab"
-                    >
-                         profile 
-                    </div>
-                    <div
-                        class="tab-pane"
-                        id="messages"
-                        role="tabpanel"
-                        aria-labelledby="messages-tab"
-                    >
-                         messages 
-                    </div>
-                </div>
-                
-                
+            <div class="orientation-task card row mx-5 my-4 p-4 border rounded-2 bg-success bg-opacity-75 text-light shadow-sm">
                 <h5 class="card-title">
-                    Making the Most of CoffeeSpace
+                    Congratulations, you have completed all orientation tasks!
                 </h5>
                 <div class="card-body">
-                    <div class="col-1">
-                        Video 1
+                    You are now ready to publish your profile, and start connecting with Specialty Coffee Roasters.
+                    
+                    <p></p>
+
+                    If you would like to make any changes to your profile, or any of your information, 
+                    visit your <a href="{% url 'farmer_dashboard' %}" class="link-light link-underline-opacity-50 link-underline-opacity-100-hover">profile</a> here. 
+                    Furthermore, if you'd like to revisit any of the information, or rewatch any of the videos covered throughout orientation, you may visit our 
+                    <a href="{% url 'farmer_dashboard' %}" class="link-light link-underline-opacity-50 link-underline-opacity-100-hover">information page</a>, where
+                    you can learn more about CoffeeSpace, and the team behind it. <!-- change links in completed tasks to respective info pages -->
+                </div>
+
+            </div>
+
+
+            {% else %}
+
+            <div class="profile-completed-task">
+
+                {% if user.profile_completed %}
+
+                <div class="orientation-task card row mx-5 my-4 p-4 border rounded-2 bg-success bg-opacity-75 text-light shadow-sm">
+                    <h5 class="card-title">
+                        Your profile is complete!
+                    </h5>
+                    <div class="card-body">
+                        If you would like to make any changes to your profile, or any of your information, 
+                        visit your <a href="{% url 'farmer_dashboard' %}" class="link-light link-underline-opacity-50 link-underline-opacity-100-hover">profile</a> here.
                     </div>
-                    <div class="col-1">
-                        Video 2
-                    </div>
-                    <div class="col">
-                        Video 3
-                    </div>
-                    <div class="col">
-                        Video 4
-                    </div>
-                    <div class="col">
-                        Video 5
+
+                </div>
+
+                {% else %}
+
+                <div class="orientation-task card row mx-5 my-4 p-4 border rounded-2 bg-light shadow-sm">
+                    <h5 class="card-title">Complete Your Profile</h5>
+                    <div class="card-body">
+                    <p class="card-text"> If you previously left any required personal or farm information empty while creating your account, 
+                        you may now fill it out here at your convenience. Ensure to fill out information accurately and to the best of your
+                        knowledge. Please feel free to <a href="" style="color: #5C87B2; font-weight: 600;"> contact us </a> if you have any questions.
+                    </p>
+
+                    <!-- Button trigger modal -->
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalId1"
+                    >
+                        Complete
+                    </button>
+                    
+                        <!-- Modal -->
+                        <div
+                            class="modal fade"
+                            id="modalId1"
+                            tabindex="-1"
+                            role="dialog"
+                            aria-labelledby="modalTitleId"
+                            aria-hidden="true"
+                        >
+                            <div
+                                class="modal-dialog modal-lg"
+                                role="document"
+                            >
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="modalTitleId">
+                                            Missing information
+                                        </h5>
+                                        <button
+                                            type="button"
+                                            class="btn-close"
+                                            data-bs-dismiss="modal"
+                                            aria-label="Close"
+                                        ></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="container-fluid">
+                                            <div class="container mt-5">
+                                                <div class="d-flex mt-5 justify-content-between">
+
+                                                    <!-- Form that displays fields which are empty? Or displays entire form but with values already filled in if not empty
+                                                    just farm information is an example -->
+
+                                                    <div>
+                                                        <h3>Farm information</h3>
+                                                        <p>Provide information about your farm and production</p>
+                                                    </div>                                                
+                                                    <div>
+                                                        <form action="">
+                                                    
+                                                            <div class="">
+                                                                <div>
+                                                                    <input type="text" class="form-control col mt-3" placeholder="Farm name">
+                                                                </div>
+                                            
+                                                                <div>
+                                                                    <input type="text" class="form-control mt-3" placeholder="Farm location">
+                                                                </div>
+                                        
+                                                                <div>
+                                                                    <input type="text" class="form-control mt-5" placeholder="Production estimate in the last 12 months (kg)">
+                                                                </div>
+                                            
+                                                                
+                                                                <div class="row mt-3">
+                                                                    <div class="col">
+                                                                        <input type="text" class="form-control" placeholder="Harvest season">
+                                                                    </div>
+                                                                    <div class="col">
+                                                                        <input type="text" class="form-control" placeholder="Cultivars">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mt-3">
+                                                                    <div class="col">
+                                                                        <input type="text" class="form-control" placeholder="Cup scores received">
+                                                                    </div>
+                                                                    <div class="col">
+                                                                        <input type="text" class="form-control" placeholder="Source of scores">
+                                                                    </div>
+                                                                    <div class="col">
+                                                                        <input type="text" class="form-control" placeholder="Link to quality report">
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                <div>
+                                                                    <input type="text" class="form-control mt-5" placeholder="Processing method">
+                                                                </div>
+                                                                <div class="mt-2">
+                                                                    <textarea rows="5" cols="5" name="" class="form-control" placeholder="Processing description"></textarea>
+                                                                </div>
+                                                                
+                                            
+                                                                
+                                        
+                                                                <!-- <input hidden  type="file" class="form-control mt-2" placeholder="Upload Photo"> -->
+                                        
+                                                                <button class="btn btn-primary mt-2 float-end">Save and Continue</button>
+                                                                <div style="padding-bottom:200px">
+                                                                </div>
+                                                            </div>
+                                        
+                                                        
+                                                        </form>
+                                        
+                                                    </div>
+                                        
+                                                </div>
+                                            </div>
+                                        
+                                        
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <form action="" method="post" id="OrientationTasksForm">
+                                            {% csrf_token %}
+                                            
+                                            <div class="form-check">
+                                                {{ form.profile_completed }}
+                                                <label class="form-check-label" for="profileCheck">
+                                                    Complete Profile
+                                                </label>
+                                            </div>
+
+                                            <button type="submit" class="btn btn-primary">Save</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
+
+                {% endif %}
+
             </div>
-            
 
-            
+            <div class="storytelling-workshop-task">
 
-            <br>
+                {% if user.storytelling_workshop %}
+
+                <div class="card row mx-5 my-4 p-4 border rounded-2 shadow-sm bg-success bg-opacity-75 text-light">
+                    <h5 class="card-title">You have completed the Storytelling Workshop!</h5>
+                </div>
+
+                {% else %}
+
+                <div class="card row mx-5 my-4 p-4 border rounded-2 shadow-sm bg-light">
+                    <h5 class="card-title">StoryTelling Workshop</h5>
+                    <div class="card-body">
+
+                        <div class="row ps-1">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                            Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                            quaerat earum? Neque?
+                        </div>
+                        
+                        <div class="row ps-1 pt-3">
+
+                            <!-- Button trigger modal -->
+                            <button
+                                type="button"
+                                class="btn btn-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#storymodal"
+                            >
+                                Start StoryTelling Workshop
+                            </button>
+                            
+                            <!-- Modal -->
+                            <div
+                                class="modal fade"
+                                id="storymodal"
+                                tabindex="-1"
+                                role="dialog"
+                                aria-labelledby="modalTitleId"
+                                aria-hidden="true"
+                            >
+                                <div class="modal-dialog modal-xl" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="modalTitleId">
+                                                StoryTelling Workshop
+                                            </h5>
+                                            <button
+                                                type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal"
+                                                aria-label="Close"
+                                            ></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="container-fluid">Lorem ipsum dolor sit amet, consectetur adipisicing elit.
+                                                 Aliquid unde ex dignissimos inventore sunt consequatur aspernatur! Repellendus,
+                                                  asperiores necessitatibus sit reiciendis voluptatibus consequuntur officiis itaque, 
+                                                  magnam fuga ut odit beatae.
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <form method="POST">
+                                                <div class="row align-items-center">
+                                                    {% csrf_token %}
+                                                    <div class="col-auto pe-5">
+                                                            <label class="form-check-label">
+                                                                {{ form.storytelling_workshop }}
+                                                                Mark as Complete
+                                                            </label>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                            <button name="story" type="submit" class="btn btn-outline-primary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .5rem;">
+                                                                Save Progress
+                                                            </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        
 
 
+                    </div>
+
+                </div>
+
+                {% endif %}
 
 
+            </div>
 
-            
+            <div class="pricing-task">
+
+                {% if user.video_pricing %}
+
+                <div class="card row mx-5 my-4 p-4 border rounded-2 shadow-sm bg-success bg-opacity-75 text-light">
+                    <div class="card-title"> <h5>You have completed Pricing your Coffee!</h5>
+                        If you would like to revisit the task, or rewatch the video, you may do so
+                        <a href="{% url 'farmer_dashboard' %}" class="link-light link-underline-opacity-50 link-underline-opacity-100-hover">here</a>.
+                    </div>
+                </div>
+
+                {% else %}
+
+                <div class="card row mx-5 my-4 p-4 border rounded-2 shadow-sm bg-light">
+                    <h5 class="card-title">Pricing your Coffee</h5>
+                    <div class="card-body">
+
+                        <div class="row ps-1">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                            Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                            quaerat earum? Neque?
+                        </div>
+                        
+                        <div class="row ps-1 pt-3">
+
+                            <!-- Button trigger modal -->
+                            <button
+                                type="button"
+                                class="btn btn-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#pricingmodal"
+                            >
+                                Start Task
+                            </button>
+                            
+                            <!-- Modal -->
+                            <div
+                                class="modal fade"
+                                id="pricingmodal"
+                                tabindex="-1"
+                                role="dialog"
+                                aria-labelledby="modalTitleId"
+                                aria-hidden="true"
+                            >
+                                <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="modalTitleId">
+                                                Pricing your Coffee
+                                            </h5>
+                                            <button
+                                                type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal"
+                                                aria-label="Close"
+                                            ></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="container-fluid">
+                                                Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                                                Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                                                quaerat earum? Neque?
+                                                <div class="container-fluid p-4 text-center">
+                                                    <iframe width="550" height="380" class="rounded"
+                                                    src="https://www.youtube.com/embed/tgbNymZ7vqY">
+                                                    </iframe>
+                                                </div>
+                                                Lorem ipsum door sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                                                Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                                                quaerat earum? Neque?
+                                            </div>
+
+                                        </div>
+                                        <div class="modal-footer">
+                                            <form method="POST">
+                                                <div class="row align-items-center">
+                                                    {% csrf_token %}
+                                                    <div class="col-auto pe-5">
+                                                            <label class="form-check-label">
+                                                                {{ form.video_pricing }}
+                                                                Mark as Complete
+                                                            </label>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                            <button name="pricing" type="submit" class="btn btn-outline-primary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .5rem;">
+                                                                Save Progress
+                                                            </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        
+
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+
+            </div>
+
+            <div class="intl-task">
+
+                {% if user.video_intl %}
+
+                <div class="card row mx-5 my-4 p-4 border rounded-2 shadow-sm bg-success bg-opacity-75 text-light">
+                    <div class="card-title"> <h5>You have completed International Coffee Logistics!</h5>
+                        If you would like to revisit the task, or rewatch the video, you may do so
+                        <a href="{% url 'farmer_dashboard' %}" class="link-light link-underline-opacity-50 link-underline-opacity-100-hover">here</a>.
+                    </div>
+                </div>
+
+                {% else %}
+
+                <div class="card row mx-5 my-4 p-4 border rounded-2 shadow-sm bg-light">
+                    <h5 class="card-title">International Coffee Logistics</h5>
+                    <div class="card-body">
+
+                        <div class="row ps-1">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                            Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                            quaerat earum? Neque?
+                        </div>
+                        
+                        <div class="row ps-1 pt-3">
+
+                            <!-- Button trigger modal -->
+                            <button
+                                type="button"
+                                class="btn btn-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#intlmodal"
+                            >
+                                Start Task
+                            </button>
+                            
+                            <!-- Modal -->
+                            <div
+                                class="modal fade"
+                                id="intlmodal"
+                                tabindex="-1"
+                                role="dialog"
+                                aria-labelledby="modalTitleId"
+                                aria-hidden="true"
+                            >
+                                <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="modalTitleId">
+                                                International Coffee Logistics
+                                            </h5>
+                                            <button
+                                                type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal"
+                                                aria-label="Close"
+                                            ></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="container-fluid">
+                                                Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                                                Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                                                quaerat earum? Neque?
+                                                <div class="container-fluid p-4 text-center">
+                                                    <iframe width="550" height="380" class="rounded"
+                                                    src="https://www.youtube.com/embed/tgbNymZ7vqY">
+                                                    </iframe>
+                                                </div>
+                                                Lorem ipsum door sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                                                Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                                                quaerat earum? Neque?
+                                            </div>
+
+                                        </div>
+                                        <div class="modal-footer">
+                                            <form method="POST">
+                                                <div class="row align-items-center">
+                                                    {% csrf_token %}
+                                                    <div class="col-auto pe-5">
+                                                            <label class="form-check-label">
+                                                                {{ form.video_intl }}
+                                                                Mark as Complete
+                                                            </label>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                            <button name="intl" type="submit" class="btn btn-outline-primary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .5rem;">
+                                                                Save Progress
+                                                            </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        
+
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+
+            </div>
+
+
+            <div class="comm-task">
+
+                {% if user.video_comm_tips %}
+
+                <div class="card row mx-5 my-4 p-4 border rounded-2 shadow-sm bg-success bg-opacity-75 text-light">
+                    <div class="card-title"> <h5>You have completed Considerate Communication Tips!</h5>
+                        If you would like to revisit the task, or rewatch the video, you may do so
+                        <a href="{% url 'farmer_dashboard' %}" class="link-light link-underline-opacity-50 link-underline-opacity-100-hover">here</a>.
+                    </div>
+                </div>
+
+                {% else %}
+
+                <div class="card row mx-5 my-4 p-4 border rounded-2 shadow-sm bg-light">
+                    <h5 class="card-title">Considerate Communication Tips</h5>
+                    <div class="card-body">
+
+                        <div class="row ps-1">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                            Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                            quaerat earum? Neque?
+                        </div>
+                        
+                        <div class="row ps-1 pt-3">
+
+                            <!-- Button trigger modal -->
+                            <button
+                                type="button"
+                                class="btn btn-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#commmodal"
+                            >
+                                Start Task
+                            </button>
+                            
+                            <!-- Modal -->
+                            <div
+                                class="modal fade"
+                                id="commmodal"
+                                tabindex="-1"
+                                role="dialog"
+                                aria-labelledby="modalTitleId"
+                                aria-hidden="true"
+                            >
+                                <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="modalTitleId">
+                                                Considerate Communication Tips
+                                            </h5>
+                                            <button
+                                                type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal"
+                                                aria-label="Close"
+                                            ></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="container-fluid">
+                                                Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                                                Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                                                quaerat earum? Neque?
+                                                <div class="container-fluid p-4 text-center">
+                                                    <iframe width="550" height="380" class="rounded"
+                                                    src="https://www.youtube.com/embed/tgbNymZ7vqY">
+                                                    </iframe>
+                                                </div>
+                                                Lorem ipsum door sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                                                Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                                                quaerat earum? Neque?
+                                            </div>
+
+                                        </div>
+                                        <div class="modal-footer">
+                                            <form method="POST">
+                                                <div class="row align-items-center">
+                                                    {% csrf_token %}
+                                                    <div class="col-auto pe-5">
+                                                            <label class="form-check-label">
+                                                                {{ form.video_comm_tips }}
+                                                                Mark as Complete
+                                                            </label>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                            <button name="comms" type="submit" class="btn btn-outline-primary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .5rem;">
+                                                                Save Progress
+                                                            </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        
+
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+
+            </div>
+
+            <div class="relat-task">
+
+                {% if user.video_relationships %}
+
+                <div class="card row mx-5 my-4 p-4 border rounded-2 shadow-sm bg-success bg-opacity-75 text-light">
+                    <div class="card-title"> <h5>You have completed Forming Equitable Commercial Relationships!</h5>
+                        If you would like to revisit the task, or rewatch the video, you may do so
+                        <a href="{% url 'farmer_dashboard' %}" class="link-light link-underline-opacity-50 link-underline-opacity-100-hover">here</a>.
+                    </div>
+                </div>
+
+                {% else %}
+
+                <div class="card row mx-5 my-4 p-4 border rounded-2 shadow-sm bg-light">
+                    <h5 class="card-title">Forming Equitable Commercial Relationships</h5>
+                    <div class="card-body">
+
+                        <div class="row ps-1">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                            Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                            quaerat earum? Neque?
+                        </div>
+                        
+                        <div class="row ps-1 pt-3">
+
+                            <!-- Button trigger modal -->
+                            <button
+                                type="button"
+                                class="btn btn-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#relatmodal"
+                            >
+                                Start Task
+                            </button>
+                            
+                            <!-- Modal -->
+                            <div
+                                class="modal fade"
+                                id="relatmodal"
+                                tabindex="-1"
+                                role="dialog"
+                                aria-labelledby="modalTitleId"
+                                aria-hidden="true"
+                            >
+                                <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="modalTitleId">
+                                                Forming Equitable Commercial Relationships
+                                            </h5>
+                                            <button
+                                                type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal"
+                                                aria-label="Close"
+                                            ></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="container-fluid">
+                                                Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                                                Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                                                quaerat earum? Neque?
+                                                <div class="container-fluid p-4 text-center">
+                                                    <iframe width="550" height="380" class="rounded"
+                                                    src="https://www.youtube.com/embed/tgbNymZ7vqY">
+                                                    </iframe>
+                                                </div>
+                                                Lorem ipsum door sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                                                Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                                                quaerat earum? Neque?
+                                            </div>
+
+                                        </div>
+                                        <div class="modal-footer">
+                                            <form method="POST">
+                                                <div class="row align-items-center">
+                                                    {% csrf_token %}
+                                                    <div class="col-auto pe-5">
+                                                            <label class="form-check-label">
+                                                                {{ form.video_relationships }}
+                                                                Mark as Complete
+                                                            </label>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                            <button name="relat" type="submit" class="btn btn-outline-primary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .5rem;">
+                                                                Save Progress
+                                                            </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        
+
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+
+            </div>
+
+            <div class="percep-task">
+
+                {% if user.video_perceptions %}
+
+                <div class="card row mx-5 my-4 p-4 border rounded-2 shadow-sm bg-success bg-opacity-75 text-light">
+                    <div class="card-title"> <h5>You have completed Perceptions & Definition of Quality & Value!</h5>
+                        If you would like to revisit the task, or rewatch the video, you may do so
+                        <a href="{% url 'farmer_dashboard' %}" class="link-light link-underline-opacity-50 link-underline-opacity-100-hover">here</a>.
+                    </div>
+                </div>
+
+                {% else %}
+
+                <div class="card row mx-5 my-4 p-4 border rounded-2 shadow-sm bg-light">
+                    <h5 class="card-title">Perceptions & Definition of Quality & Value</h5>
+                    <div class="card-body">
+
+                        <div class="row ps-1">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                            Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                            quaerat earum? Neque?
+                        </div>
+                        
+                        <div class="row ps-1 pt-3">
+
+                            <!-- Button trigger modal -->
+                            <button
+                                type="button"
+                                class="btn btn-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#percepmodal"
+                            >
+                                Start Task
+                            </button>
+                            
+                            <!-- Modal -->
+                            <div
+                                class="modal fade"
+                                id="percepmodal"
+                                tabindex="-1"
+                                role="dialog"
+                                aria-labelledby="modalTitleId"
+                                aria-hidden="true"
+                            >
+                                <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="modalTitleId">
+                                                Perceptions & Definition of Quality & Value
+                                            </h5>
+                                            <button
+                                                type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal"
+                                                aria-label="Close"
+                                            ></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="container-fluid">
+                                                Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                                                Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                                                quaerat earum? Neque?
+                                                <div class="container-fluid p-4 text-center">
+                                                    <iframe width="550" height="380" class="rounded"
+                                                    src="https://www.youtube.com/embed/tgbNymZ7vqY">
+                                                    </iframe>
+                                                </div>
+                                                Lorem ipsum door sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
+                                                Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
+                                                quaerat earum? Neque?
+                                            </div>
+
+                                        </div>
+                                        <div class="modal-footer">
+                                            <form method="POST">
+                                                <div class="row align-items-center">
+                                                    {% csrf_token %}
+                                                    <div class="col-auto pe-5">
+                                                            <label class="form-check-label">
+                                                                {{ form.video_perceptions }}
+                                                                Mark as Complete
+                                                            </label>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                            <button name="percep" type="submit" class="btn btn-outline-primary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .5rem;">
+                                                                Save Progress
+                                                            </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        
+
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+
+            </div>
+
+            {% endif %}
+
+
+            <!-- TEMPORARY MANUAL FORM, used to test functionality throughout page development -->
             <div class="pt-2 col-4 offset-4 justify-content-center">
                 <h6 class="lg text-center">
                     Progress
@@ -372,12 +1033,6 @@
             </div>
 
 
-            
-
-
-
-            
-            
         </div>
         
     </div>
