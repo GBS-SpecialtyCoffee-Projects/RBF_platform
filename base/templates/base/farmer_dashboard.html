@@ -1,108 +1,156 @@
-<!-- {% extends 'base/main.html' %}
+{% extends 'base/main.html' %}
 {% load static %}
 
 {% block content %}
 {% include 'base/profile_navbar.html' %}
 
-<div class="container-fluid profile-bg">
-    <div class="d-flex py-2" style="padding-left:60vh" >
-    <div class="">
-        <img class="rounded-circle" width="150px" height="150px" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="">
-    </div>
-    <div class="ms-4 mt-4" style="">
-        <div class="d-flex">
-            <h2>Israel Tomas</h2>
-            <svg class="ms-2 mt-2" xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="green" class="bi bi-pencil-fill" viewBox="0 0 16 16">
-                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
-            </svg>
+<div class="container-fluid profile-bg pb-5 ">
 
+    <div class="d-flex justify-content-center pt-5" >
+        <div style="background-color: white; width:95%" >
+        <div class="">
+            <img  width="100%" height="150px" src="{% static 'img/dan-meyers-IQVFVH0ajag-unsplash.jpg' %}" alt="">
         </div>
-        <span>Atlanta,Georgia</span>
-    </div>
-
-
-    </div>
-
-    <hr>
-
-    <div class="d-flex px-4">
         <div>
-
-            <div class="px-4 py-2" style="background-color: red;width:1000px;">
-                <div class="d-flex">
-                    <h2> Israel Tomas's Story</h2>
-                    <button class="btn btn-primary btn-sm">Edit</button>
+            <div class="d-flex justify-content-center py-2" style="" >
+                <div class="">
+                    <img class="rounded-circle border border-info" width="90px" height="90px" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="" style="margin-top: -30px;">
                 </div>
-                <p>
-                    Lorem ipsum dolor sit amet consectetur. Convallis leo semper neque fames scelerisque amet ullamcorper mauris sed. Id et elit dictum pellentesque nam ornare scelerisque elementum faucibus. Enim vulputate nibh felis iaculis consectetur aliquam. Arcu massa facilisis commodo mi. Hac sollicitudin habitant nulla interdum phasellus neque pellentesque massa morbi. Semper sed cras euismod aliquam. Libero eget facilisis ultricies pellentesque mauris. Consectetur pharetra pretium molestie vel at aenean aliquam. Nisi urna mattis odio placerat orci turpis sodales sit sed. In ut eget lacus pellentesque risus cursus euismod. Aliquam elit montes amet nunc sed amet. Laoreet tristique porttitor praesent scelerisque eros vulputate vitae arcu tortor.
-                </p>
+                <div class="ms-4 mt-2" >
+                    <div class="d-flex">
+                        <h3>Israel Tomas</h3>
+                        <svg class="ms-2 mt-1" xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="green" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                            <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                        </svg>
+            
+                    </div>
+                    <span>Atlanta,Georgia</span>
+                </div>
+            
+            
+                </div>
+        </div>
+    </div>
+    </div>
+    
+   
+
+    <div class="container-fluid px-4 pt-5 px-5">
+        <div class="row">
+            <div class="col-sm-6" >
+                <div class="px-4 py-2 rounded" style="background-color: white;">
+                    <div class="d-flex"> 
+                        <h2> Israel Tomas's Story</h2>
+                        <div class="mt-1">
+                            <button class="ms-2 btn btn-sm"  style="background-color: blue; color: white;">edit</button>
+                        </div>
+                        
+                    </div> 
+                    <p>
+                        Lorem ipsum dolor sit amet consectetur. Convallis leo semper neque fames scelerisque amet ullamcorper mauris sed. Id et elit dictum pellentesque nam ornare scelerisque elementum faucibus. Enim vulputate nibh felis iaculis consectetur aliquam. Arcu massa facilisis commodo mi. Hac sollicitudin habitant nulla interdum phasellus neque pellentesque massa morbi. Semper sed cras euismod aliquam. Libero eget facilisis ultricies pellentesque mauris. Consectetur pharetra pretium molestie vel at aenean aliquam. Nisi urna mattis odio placerat orci turpis sodales sit sed. In ut eget lacus pellentesque risus cursus euismod. Aliquam elit montes amet nunc sed amet. Laoreet tristique porttitor praesent scelerisque eros vulputate vitae arcu tortor.
+                    </p>
+    
+                </div>
 
             </div>
 
-            <div>
-                <div class="d-flex">
-                    <img src="" alt="">
-                    <img src="" alt="">
-                    <img src="" alt="">
-                    <img src="" alt="">
+            <div class="col-sm-6">
+
+                <div class="px-4 py-2 pt-5 rounded" style="background-color: white; height: 100%;">
+                    <div id="cale"  >
+
+                    </div>
                 </div>
-                <button class="btn btn-primary btn-sm">Edit Photos</button>
-
-
-
-
+               
             </div>
+
+           
+        </div>
+        <div class="row mt-3 px-1 py-3" style="background-color: white;">
+            <div class="col-sm-6">
+                <div class="px-4 py-2 ms-3 rounded">
+                    <h2>Harvest</h2>
+                    <div class="d-flex justify-content-between">
+                        <span>Origin:</span>
+                        <span>Costa Rica</span>
+                    </div>
+                    <div class="d-flex mt-3  justify-content-between">
+                        <span>Variety:</span>
+                        <span>Arabica</span>
+                    </div>
+                    <div class="d-flex mt-3 justify-content-between">
+                        <span>Cup Score:</span>
+                        <span>92</span>
+                    </div>
+                    <div class="d-flex mt-3 justify-content-between">
+                        <span>Processing:</span>
+                        <span>Costa Rica</span>
+                    </div>
+                    <div class="d-flex mt-3 justify-content-between">
+                        <span>Crop Year:</span>
+                        <span>2023</span>
+                    </div> 
+                    <div class="d-flex mt-3 justify-content-between">
+                        <span>Altitude:</span>
+                        <span>700ft</span>
+                    </div>
+                    <div class="d-flex mt-3 justify-content-between">
+                        <span>Quantity Available:</span>
+                        <span>56lbs</span>
+                    </div>
+                    <div class="d-flex mt-3 justify-content-between">
+                        <span>Notes:</span>
+                        <span>Chocolate,Citrus,Fruit</span>
+                    </div>
+    
+                    <button class="btn mt-3 btn-primary">Edit Harvest</button>
+                </div>
+    
+            </div>
+
+            <div class="col-sm-6"> 
+                <div class="row">
+                    <div class="col-sm-4">
+                        <img width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                    <div class="col-sm-4">
+                        <img width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                    <div class="col-sm-4">
+                        <img  width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-4">
+                        <img width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                    <div class="col-sm-4">
+                        <img width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                    <div class="col-sm-4">
+                    <img width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                </div>
+                
+    
+            </div>
+            
 
         </div>
-
-        <div>
-            <div class="px-4 py-2 ms-3" style="background-color: green;">
-                <h2>Harvest</h2>
-                <div class="d-flex">
-                    <span>Origin:</span>
-                    <span>Costa Rica</span>
-                </div>
-                <div class="d-flex">
-                    <span>Variety:</span>
-                    <span>Arabica</span>
-                </div>
-                <div class="d-flex">
-                    <span>Cup Score:</span>
-                    <span>92</span>
-                </div>
-                <div class="d-flex">
-                    <span>Processing:</span>
-                    <span>Costa Rica</span>
-                </div>
-                <div class="d-flex">
-                    <span>Crop Year:</span>
-                    <span>2023</span>
-                </div>
-                <div class="d-flex">
-                    <span>Altitude:</span>
-                    <span>700ft</span>
-                </div>
-                <div class="d-flex">
-                    <span>Quantity Available:</span>
-                    <span>56lbs</span>
-                </div>
-                <div class="d-flex">
-                    <span>Notes:</span>
-                    <span>Chocolate,Citrus,Fruit</span>
-                </div>
-
-                <button class="btn btn-primary">Edit Harvest</button>
-            </div>
-
-        </div>
-
     </div>
 </div>
 
+<!-- <script>
 
+$(document).ready(function(){
+    $('#cale').evkJKcalendar({
+    initDate: '2024-04-20',
+    });
+});
+</script> -->
 
-{% endblock %} -->
-<!DOCTYPE html>
+{% endblock %}
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -205,5 +253,4 @@
         {% endfor %}
     </ul>
 </body>
-</html>
-
+</html> -->
