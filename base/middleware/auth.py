@@ -10,7 +10,6 @@ class AuthMiddleware(MiddlewareMixin):
         # Exclude certain paths from requiring authentication
         excluded_paths = [
             resolve_url('onboarding'),
-            resolve_url('farmer_dashboard'),
             resolve_url('signin'),
             resolve_url('signup'),
             #resolve_url('reset_password'),

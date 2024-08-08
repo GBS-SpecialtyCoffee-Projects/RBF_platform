@@ -1,0 +1,15 @@
+.evk_calendar { height: 200px; line-height: 0.5em; font-size: 18px; text-align: center;}
+.evk_calendar thead tr:last-child { font-size: small; color: rgb(85, 85, 85);}
+.evk_calendar thead tr:nth-child(1) td:nth-child(2) { color: rgb(50, 50, 50); padding-bottom: 18px;}
+.evk_calendar thead tr:nth-child(1) td:nth-child(1):hover, #calendar2 thead tr:nth-child(1) td:nth-child(3):hover { cursor: pointer;}
+.evk_calendar tbody td.cDay2:hover { background: #2196f3;  color: #fff!important; cursor: pointer;}
+.evk_calendar tbody td { color: rgb(44, 86, 122); padding: 10px;}
+.evk_calendar tbody td:nth-child(n+6), #calendar2 .holiday { color: rgb(231, 140, 92);}
+.evk_calendar tbody td.сToday { border: 1px dashed; border-radius: 5px;}
+.evk_calendar tbody td.сEmpty { border: transparent;}
+.evk_calendar tbody td.selected {background: #50a8eb!important; color: #fff; border-radius: 5px;}
+.evk_calendar tbody td.cNone { color: #ccc;}
+.evk_calendar td.m_Next, .evk_calendar td.y_Next { display: inline-block; width: 0; height: 0; border-left: 5px solid #b5b5b5; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+.evk_calendar td.m_Prev, .evk_calendar td.y_Prev { display: inline-block; width: 0; height: 0; border-right: 5px solid #b5b5b5; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+.evk_calendar td.m_Prev:hover, .evk_calendar td.y_Prev:hover { border-right: 5px solid #ff6b01; }
+.evk_calendar td.m_Next:hover, .evk_calendar td.y_Next:hover{ border-left: 5px solid #ff6b01; }
