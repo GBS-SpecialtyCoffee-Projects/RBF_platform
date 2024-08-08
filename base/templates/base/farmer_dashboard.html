@@ -4,6 +4,7 @@
 {% block content %}
 {% include 'base/profile_navbar.html' %}
 
+
 <div class="container-fluid profile-bg " style="height: 100vh;">
 
     <div class="d-flex justify-content-center pt-5" >
@@ -35,6 +36,8 @@
             
                 </div>
         </div>
+
+
     </div>
     </div>
     
@@ -200,6 +203,7 @@
 
 <!-- <script>
 
+
 $(document).ready(function(){
     $('#cale').evkJKcalendar({
     initDate: '2024-04-20',
@@ -209,6 +213,7 @@ $(document).ready(function(){
 
 {% endblock %}
 <!-- <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -223,7 +228,6 @@ $(document).ready(function(){
 
     {% if farmer_profile %}
         <h2>Your Profile</h2>
-                <img src="{{ farmer_profile.profile_picture.url }}" alt="Profile Picture" width="200" />
         <p>Farm Name: {{ farmer_profile.farm_name }}</p>
         <p>Location: {{ farmer_profile.location }}</p>
         <p>Bio: {{ farmer_profile.bio }}</p>
@@ -247,9 +251,7 @@ $(document).ready(function(){
     <h2>Your Photos</h2>
     <ul>
         {% for photo in farmer_photos %}
-            {% if photo.photo %}
-                <li><img src="{{ photo.photo.url }}" alt="Photo {{ photo.id }}" width="200" /></li>
-            {% endif %}
+            <li><img src="{{ photo.photo.url }}" alt="Photo {{ photo.id }}" width="200" /></li>
         {% endfor %}
     </ul>
 
@@ -312,3 +314,4 @@ $(document).ready(function(){
     </ul>
 </body>
 </html> -->
+

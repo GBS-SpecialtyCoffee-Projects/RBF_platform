@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm, RoasterProfileForm, FarmerProfilePhotoForm
+from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm, RoasterProfileForm,FarmerProfilePhotoForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck
 from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto
 from django.contrib import messages
 
@@ -36,6 +36,7 @@ def farmer_dashboard(request):
     #     form = FarmerProfileForm(instance=farmer_profile)
     form = FarmerProfilePhotoForm()
     return render(request, 'base/farmer_dashboard.html', {
+
         # 'roasters': roasters,
         # 'meeting_requests_as_requestee': meeting_requests_as_requestee,
         # 'meeting_requests_as_requester': meeting_requests_as_requester,
@@ -46,6 +47,7 @@ def farmer_dashboard(request):
         # 'can_request_meetings': can_request_meetings,
         # 'form': form,
     })
+
 
 
 def upload_photo(request):
@@ -64,6 +66,7 @@ def upload_photo(request):
 def upload_success(request):
     return render(request, 'base/upload_success.html')
 
+
 def update_profile(request):
     if request.method == 'POST':
         farmer_profile = Farmer.objects.filter(user=request.user).first()
@@ -78,3 +81,142 @@ def update_profile(request):
     # return render(request, 'base/farmer_dashboard.html.html', {'form': form})
     return redirect('farmer_dashboard')
     
+
+def language_select(request):
+    return render(request, 'base/language_select.html')
+
+
+def farmer_orientation(request):
+
+    """
+    View to handle orientation tasks
+    """
+
+    if request.user.group != 'farmer':
+        return redirect('roaster_dashboard')
+    
+    farmer = request.user.farmer_profile
+
+    tasks_completed = [
+        farmer.profile_completed,
+        farmer.storytelling_workshop,
+        farmer.video_pricing,
+        farmer.video_intl,
+        farmer.video_comm_tips,
+        farmer.video_relationships,
+        farmer.video_perceptions,
+    ]
+    # Calculate the percentage of tasks completed for progress bar
+    completed_count = sum(tasks_completed)
+    total_tasks = len(tasks_completed)
+    progress_percentage = (completed_count / total_tasks) * 100
+    remaining = total_tasks - completed_count
+
+
+    if request.method == 'POST':
+
+        if 'story' in request.POST:
+            form = StoryTellingCheck(request.POST, instance=farmer)
+            if form.is_valid():
+                form.save()
+                return redirect('farmer_orientation')
+            
+        elif 'pricing' in request.POST:
+                    form = VideoPricingCheck(request.POST, instance=farmer)
+                    if form.is_valid():
+                        form.save()
+                        return redirect('farmer_orientation')
+                    
+        elif 'intl' in request.POST:
+                    form = VideoIntlCheck(request.POST, instance=farmer)
+                    if form.is_valid():
+                        form.save()
+                        return redirect('farmer_orientation')
+                    
+        elif 'comms' in request.POST:
+                    form = VideoCommTipsCheck(request.POST, instance=farmer)
+                    if form.is_valid():
+                        form.save()
+                        return redirect('farmer_orientation')
+                    
+        elif 'relat' in request.POST:
+                    form = VideoRelationshipsCheck(request.POST, instance=farmer)
+                    if form.is_valid():
+                        form.save()
+                        return redirect('farmer_orientation')
+                    
+        elif 'percep' in request.POST:
+                    form = VideoPerceptionsCheck(request.POST, instance=farmer)
+                    if form.is_valid():
+                        form.save()
+                        return redirect('farmer_orientation')
+
+        else:
+            
+            form = OrientationTasksForm(request.POST, instance=farmer)
+            
+            if form.is_valid():
+                form.save()
+
+                tasks_completed = [
+                    farmer.profile_completed,
+                    farmer.storytelling_workshop,
+                    farmer.video_pricing,
+                    farmer.video_intl,
+                    farmer.video_comm_tips,
+                    farmer.video_relationships,
+                    farmer.video_perceptions,
+                ]
+                completed_count = sum(tasks_completed)
+                progress_percentage = (completed_count / total_tasks) * 100
+                remaining = total_tasks - completed_count
+
+                return redirect('farmer_orientation')
+    else:
+        form = OrientationTasksForm(instance=farmer)
+        
+    context = {
+        'user': farmer,
+        'form': form,
+        'progress_percentage': progress_percentage,
+        'completed': completed_count,
+        'total': total_tasks,
+        'remaining': remaining
+    }
+
+    return render(request, 'base/farmer_orientation.html', context)
+
+
+def storytelling_check(request):
+    """
+    View method to handle storytelling task completion
+    individually outside of OrientationTasksForm
+
+    Implemented as a bug fix for checkbox form
+    submission within modals unselecting all other fields
+    in OrientationTasksForm
+    """
+    if request.method == 'POST':
+        print(request.POST)
+        farmer = request.user.farmer_profile
+        form = StoryTellingCheck(request.POST, instance=farmer)
+        if form.is_valid():
+            form.save()
+            return redirect('farmer_orientation')
+
+def vid_x_check(request):
+    """
+    View method to handle storytelling task completion
+    individually outside of OrientationTasksForm
+
+    Implemented as a bug fix for checkbox form
+    submission within modals unselecting all other fields
+    in OrientationTasksForm
+    """
+    if request.method == 'POST':
+        farmer = request.user.farmer_profile
+        form = VideoPricingCheck(request.POST, instance=farmer)
+        if form.is_valid():
+            form.save()
+            return redirect('farmer_orientation')
+

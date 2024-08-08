@@ -33,6 +33,8 @@ urlpatterns = [
     path('farmer/details/', account.farmer_details, name='farmer_details'),
     path('roaster/details/', account.roaster_details, name='roaster_details'),
     path('reset_password/', account.password_reset_view, name='reset_password'),
+    path('language_select/', account.language_select, name='language_select'),
+    path('farmer_orientation/', farmer.farmer_orientation, name='farmer_orientation')
     #    path('signout/', account.signout_view, name='signout'),
     path('update_profile/', farmer.update_profile, name='update_profile'),
 ]
