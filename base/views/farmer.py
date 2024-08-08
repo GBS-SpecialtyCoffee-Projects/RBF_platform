@@ -1,48 +1,52 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm, RoasterProfileForm
+from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm, RoasterProfileForm, FarmerProfilePhotoForm
 from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto
 from django.contrib import messages
 
+# def farmer_dashboard(request):
+#     return(render(request, 'base/farmer_dashboard.html'))
 def farmer_dashboard(request):
     if request.user.group != 'farmer':
         return redirect('roaster_dashboard')
 
-    roasters = Roaster.objects.all()
-    meeting_requests_as_requestee = MeetingRequest.objects.filter(requestee=request.user)
-    meeting_requests_as_requester = MeetingRequest.objects.filter(requester=request.user)
+    # roasters = Roaster.objects.all()
+    # meeting_requests_as_requestee = MeetingRequest.objects.filter(requestee=request.user)
+    # meeting_requests_as_requester = MeetingRequest.objects.filter(requester=request.user)
     farmer_profile = Farmer.objects.filter(user=request.user).first()
     farmer_photos = FarmerPhoto.objects.filter(user=request.user)
-    pending_meetings = MeetingRequest.objects.filter(
-        requester=request.user, status='accepted'
-    ) | MeetingRequest.objects.filter(
-        requestee=request.user, status='accepted'
-    )
+    # pending_meetings = MeetingRequest.objects.filter(
+    #     requester=request.user, status='accepted'
+    # ) | MeetingRequest.objects.filter(
+    #     requestee=request.user, status='accepted'
+    # )
 
     # Check the number of pending or accepted meetings
-    active_meetings_count = MeetingRequest.objects.filter(
-        requester=request.user, status__in=['pending', 'accepted']
-    ).count()
+    # active_meetings_count = MeetingRequest.objects.filter(
+    #     requester=request.user, status__in=['pending', 'accepted']
+    # ).count()
 
-    can_request_meetings = active_meetings_count < 5
+    # can_request_meetings = active_meetings_count < 5
 
-    if request.method == 'POST':
-        form = FarmerProfileForm(request.POST, instance=farmer_profile)
-        if form.is_valid():
-            form.save()
-            return redirect('farmer_dashboard')
-    else:
-        form = FarmerProfileForm(instance=farmer_profile)
-
+    # if request.method == 'POST':
+    #     form = FarmerProfileForm(request.POST, instance=farmer_profile)
+    #     if form.is_valid():
+    #         form.save()
+    #         return redirect('farmer_dashboard')
+    # else:
+    #     form = FarmerProfileForm(instance=farmer_profile)
+    form = FarmerProfilePhotoForm()
     return render(request, 'base/farmer_dashboard.html', {
-            'roasters': roasters,
-            'meeting_requests_as_requestee': meeting_requests_as_requestee,
-            'meeting_requests_as_requester': meeting_requests_as_requester,
-            'farmer_profile': farmer_profile,
-            'farmer_photos': farmer_photos,
-            'pending_meetings': pending_meetings,
-            'can_request_meetings': can_request_meetings,
-            'form': form,
-        })
+        # 'roasters': roasters,
+        # 'meeting_requests_as_requestee': meeting_requests_as_requestee,
+        # 'meeting_requests_as_requester': meeting_requests_as_requester,
+        'farmer_profile': farmer_profile,
+        'farmer_photos': farmer_photos,
+        'form': form,
+        # 'pending_meetings': pending_meetings,
+        # 'can_request_meetings': can_request_meetings,
+        # 'form': form,
+    })
+
 
 def upload_photo(request):
     if request.method == 'POST':
@@ -59,3 +63,18 @@ def upload_photo(request):
 
 def upload_success(request):
     return render(request, 'base/upload_success.html')
+
+def update_profile(request):
+    if request.method == 'POST':
+        farmer_profile = Farmer.objects.filter(user=request.user).first()
+        form = FarmerProfilePhotoForm(request.POST, request.FILES, instance=farmer_profile)
+        if form.is_valid():
+            print('in valid')
+            form.save()
+            return redirect('farmer_dashboard')  # Redirect to a profile page or any other page
+    else:
+        return redirect('farmer_dashboard')  # If not a POST request, redirect to profile page
+
+    # return render(request, 'base/farmer_dashboard.html.html', {'form': form})
+    return redirect('farmer_dashboard')
+    

@@ -196,3 +196,11 @@ class RoasterProfileForm(forms.ModelForm):
             'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
+class FarmerProfilePhotoForm(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['profile_picture']
+        widgets = {
+            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
