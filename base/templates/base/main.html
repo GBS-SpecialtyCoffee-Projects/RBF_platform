@@ -23,17 +23,10 @@
        
       
         <script src="{% static 'jquery-3.7.1.min.js' %}"></script>
-        <script src="{% static 'bootstrap-5.3.3/js/bootstrap.min.js' %}" async defer></script>
+        <script src="{% static 'bootstrap-5.3.3/js/bootstrap.min.js' %}"></script>
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script  src="{% static 'evk-calendar/evk_calendar_jk.js' %}" ></script>
-        <script>
-            $(document).ready(function(){
-                console.log('ready');
-                $('#cale').evkJKcalendar({
-                initDate: '2024-04-20',
-                });
-            });
-        </script>
+        <script src="{% static 'js/script.js' %}"></script>
     </body>
 </html>
 
