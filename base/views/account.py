@@ -263,3 +263,5 @@ def farmer_onboarding(request):
 def farmer_orientation(request):
     return render(request, 'base/farmer_orientation.html')
 
+
+

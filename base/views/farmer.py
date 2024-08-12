@@ -31,10 +31,10 @@ def farmer_dashboard(request):
     #     form = FarmerProfileForm(request.POST, instance=farmer_profile)
     #     if form.is_valid():
     #         form.save()
-    #         return redirect('farmer_dashboard')
+    #         return redirect('farmer_dashbo
+    form = FarmerProfilePhotoForm()ard')
     # else:
     #     form = FarmerProfileForm(instance=farmer_profile)
-    form = FarmerProfilePhotoForm()
     return render(request, 'base/farmer_dashboard.html', {
 
         # 'roasters': roasters,
@@ -81,6 +81,7 @@ def update_profile(request):
     # return render(request, 'base/farmer_dashboard.html.html', {'form': form})
     return redirect('farmer_dashboard')
     
+
 
 def language_select(request):
     return render(request, 'base/language_select.html')

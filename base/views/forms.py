@@ -171,6 +171,7 @@ class RoasterProfileForm(forms.ModelForm):
         }
 
 
+
 class FarmerProfilePhotoForm(forms.ModelForm):
     class Meta:
         model = Farmer
@@ -178,6 +179,7 @@ class FarmerProfilePhotoForm(forms.ModelForm):
         widgets = {
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
 
 
 class OrientationTasksForm(forms.ModelForm):
@@ -260,4 +262,5 @@ class VideoPerceptionsCheck(forms.ModelForm):
         widgets = {'video_perceptions': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',  # Bootstrap 5 checkbox class
                 'id': 'VideoPerceptionsCheck'})}
+
 

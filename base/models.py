@@ -66,6 +66,9 @@ class Farmer(models.Model):
     affiliation = models.CharField(max_length=255, blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    affiliation = models.CharField(max_length=255, blank=False, null=True)
+    preferred_communication_method = models.CharField(max_length=50, choices=[('whatsapp', 'WhatsApp'), ('email', 'Email')], blank=True, null=True)
+    main_role = models.CharField(max_length=50, choices=[('owner', 'Owner'), ('manager', 'Manager'), ('worker', 'Worker')], blank=True, null=True)
     profile_completed = models.BooleanField(default=False) # this + all bools below are used to indicate required orientation task completion
     storytelling_workshop = models.BooleanField(default=False) 
     video_pricing = models.BooleanField(default=False)
