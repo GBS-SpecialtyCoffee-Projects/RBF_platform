@@ -15,35 +15,7 @@ class FarmerPhotoForm(forms.ModelForm):
 class FarmerForm(forms.ModelForm):
     class Meta:
         model = Farmer
-        fields = [
-            'farm_name', 'location', 'bio',
-            'firstname', 'lastname', 'middlename', 'phone_number',
-            'farm_size', 'harvest_season', 'annual_production', 'cultivars',
-            'cup_scores_received', 'source_of_cup_scores', 'quality_report_link',
-            'processing_method', 'processing_description', 'profile_picture',
-            'preferred_communication_method', 'main_role'
-        ]
-        widgets = {
-            'farm_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Name'}),
-            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Location'}),
-            'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Bio'}),
-            'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
-            'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}),
-            'middlename': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Middle Name'}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number'}),
-            'farm_size': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Size'}),
-            'harvest_season': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Harvest Season'}),
-            'annual_production': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Annual Production'}),
-            'cultivars': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cultivars'}),
-            'cup_scores_received': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cup Scores Received'}),
-            'source_of_cup_scores': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Source of Cup Scores'}),
-            'quality_report_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'Quality Report Link'}),
-            'processing_method': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Processing Method'}),
-            'processing_description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Processing Description'}),
-            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
-            'preferred_communication_method': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Preferred Communication Method'}),
-            'main_role': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Main Role'})
-        }
+        fields = ['farm_name', 'location', 'bio', 'size', 'affiliation']
 
 
 
@@ -175,11 +147,13 @@ class MeetingRequestForm(forms.ModelForm):
 class FarmerProfileForm(forms.ModelForm):
     class Meta:
         model = Farmer
-        fields = ['farm_name', 'location', 'bio','firstname','middlename','lastname','farm_size','harvest_season','annual_production','cultivars','phone_number','cup_scores_received','source_of_cup_scores','quality_report_link']
+        fields = ['farm_name', 'location', 'bio', 'size', 'affiliation']
         widgets = {
             'farm_name': forms.TextInput(attrs={'class': 'form-control'}),
             'location': forms.TextInput(attrs={'class': 'form-control'}),
             'bio': forms.Textarea(attrs={'class': 'form-control'}),
+            'size': forms.TextInput(attrs={'class': 'form-control'}),
+            'affiliation': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
 class RoasterProfileForm(forms.ModelForm):
@@ -195,6 +169,18 @@ class RoasterProfileForm(forms.ModelForm):
             'origins_interested': forms.TextInput(attrs={'class': 'form-control'}),
             'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+
+
+class FarmerProfilePhotoForm(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['profile_picture']
+        widgets = {
+            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+
 
 class OrientationTasksForm(forms.ModelForm):
     class Meta:
@@ -276,3 +262,5 @@ class VideoPerceptionsCheck(forms.ModelForm):
         widgets = {'video_perceptions': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',  # Bootstrap 5 checkbox class
                 'id': 'VideoPerceptionsCheck'})}
+
+
