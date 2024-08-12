@@ -84,8 +84,8 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
         "NAME": "rbf_platform",
-        "USER": "root",
-        "PASSWORD": "rbf_dev36",
+        "USER": "sa",
+        "PASSWORD": "password123",
         "HOST": "127.0.0.1",
         "PORT": "3306",
     }

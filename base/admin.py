@@ -15,7 +15,7 @@ class CustomUserAdmin(BaseUserAdmin):
             'fields': ('username', 'email', 'password1', 'password2'),
         }),
     )
-    list_display = ('username', 'email', 'firstname', 'lastname', 'group', 'is_staff')
+    list_display = ('username', 'email', 'group', 'is_staff')
     search_fields = ('username', 'email', 'firstname', 'lastname')
     list_filter = ('group', 'is_staff')
     ordering = ('username',)
@@ -28,7 +28,7 @@ admin.site.register(User, CustomUserAdmin)
 
 @admin.register(Farmer)
 class FarmerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'farm_name', 'location', 'size', 'affiliation', 'created_at', 'updated_at')
+    list_display = ('id', 'user', 'farm_name', 'location',  'created_at', 'updated_at')
     search_fields = ('farm_name', 'location', 'user__username')
     list_filter = ('affiliation', 'created_at')
 

@@ -197,3 +197,4 @@ def vid_x_check(request):
         if form.is_valid():
             form.save()
             return redirect('farmer_orientation')
+

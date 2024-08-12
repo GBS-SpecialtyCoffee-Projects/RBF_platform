@@ -29,19 +29,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     ]
 
     id = models.AutoField(primary_key=True)
-    firstname = models.CharField(max_length=30)
-    middlename = models.CharField(max_length=30, blank=True, null=True)
-    lastname = models.CharField(max_length=30)
     username = models.CharField(max_length=30, unique=True)
-    password = models.CharField(max_length=128)  # This is managed by AbstractBaseUser
     email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
     last_login = models.DateTimeField(blank=True, null=True)
     group = models.CharField(max_length=30, choices=GROUP_CHOICES)
-    is_active = models.BooleanField(default=True)
-
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
 
@@ -53,19 +46,33 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.username
 
-
 # second table: Farmer is related with User by userid, one userid can only match one farmer profile
 
 class Farmer(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farmer_profile')
-    farm_name = models.CharField(max_length=255, blank=False, null=True)
-    location = models.CharField(max_length=255, blank=False, null=True)
-    bio = models.TextField(blank=False, null=True)
-    size = models.CharField(max_length=255, blank=False, null=True)
-    affiliation = models.CharField(max_length=255, blank=False, null=True)
+    firstname = models.CharField(max_length=255, blank=False, null=False,default=False)
+    middlename = models.CharField(max_length=255, blank=True, null=True)
+    lastname = models.CharField(max_length=255, blank=False, null=False,default=False)
+    farm_name = models.CharField(max_length=255, blank=False, null=False,default=False)
+    location = models.CharField(max_length=255, blank=False, null=False,default=False)  # Consider using a more sophisticated field or library for location
+    farm_size = models.CharField(max_length=255, blank=False, null=False,default=False)
+    harvest_season = models.CharField(max_length=255, blank=True, null=True)
+    annual_production = models.CharField(max_length=255, blank=True, null=True)  # You can further split this into separate fields if needed
+    cultivars = models.CharField(max_length=255, blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    cup_scores_received = models.TextField(blank=True, null=True)
+    source_of_cup_scores = models.CharField(max_length=255, blank=True, null=True)
+    quality_report_link = models.URLField(blank=True, null=True)
+    processing_method = models.CharField(max_length=255, blank=True, null=True)
+    processing_description = models.TextField(blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='farmer_profiles/', blank=True, null=True)
+    bio = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    affiliation = models.CharField(max_length=255, blank=False, null=True)
+    preferred_communication_method = models.CharField(max_length=50, choices=[('whatsapp', 'WhatsApp'), ('email', 'Email')], blank=True, null=True)
+    main_role = models.CharField(max_length=50, choices=[('owner', 'Owner'), ('manager', 'Manager'), ('worker', 'Worker')], blank=True, null=True)
     profile_completed = models.BooleanField(default=False) # this + all bools below are used to indicate required orientation task completion
     storytelling_workshop = models.BooleanField(default=False) 
     video_pricing = models.BooleanField(default=False)
@@ -74,23 +81,26 @@ class Farmer(models.Model):
     video_relationships = models.BooleanField(default=False)
     video_perceptions = models.BooleanField(default=False)
 
-    def save(self):
-        """ A method to automatically check 
-        off the profile_completed field once
-        all required fields are not empty
+    # def save(self):
+    #     """ A method to automatically check 
+    #     off the profile_completed field once
+    #     all required fields are not empty
         
-        * if condition to be modified when Farmer model is finalized
+    #     * if condition to be modified when Farmer model is finalized
 
-        """
-        if self.user and self.farm_name and self.location and self.bio and self.size:
-            self.profile_completed = True
-        else: self.profile_completed = False
-        super().save()
+    #     """
+    #     if self.user and self.farm_name and self.location and self.bio and self.size:
+    #         self.profile_completed = True
+    #     else: self.profile_completed = False
+    #     super().save()
+
+
+
 
 
 
     def __str__(self):
-        return self.farm_name
+        return f'{self.firstname} {self.lastname} - {self.farm_name}'
 
     # def clean(self):
     #     if self.user.group != 'farmer':
@@ -119,8 +129,8 @@ class Roaster(models.Model):
 class FarmerPhoto(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farmer_photos')
-    photo = models.ImageField(upload_to='farmer_photos/')
-    order = models.PositiveIntegerField()
+    photo = models.ImageField(upload_to='farmer_photos/', null=True, blank=True)
+    order = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"Photo {self.id} for {self.user.username}"
@@ -134,6 +144,7 @@ class RoasterPhoto(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='roaster_photos')
     photo = models.ImageField(upload_to='roaster_photos/')
+    profile = models.ImageField(upload_to='roaster_profiles/', null=True, blank=True)
     order = models.PositiveIntegerField()
 
     def __str__(self):
