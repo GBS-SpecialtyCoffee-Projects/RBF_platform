@@ -1,0 +1,72 @@
+/* farmer_signup.css */
+
+.container {
+    max-width: 1400px; /* Adjust this value as needed */
+}
+
+.form-group input.form-control,
+.form-group textarea.form-control,
+.form-group select.form-control {
+    width: 100% !important; /* Ensure it fits within the container */
+    background-color: #f0f0f0 !important; /* Grey background color */
+    border: 1px solid #ccc !important; /* Add a border */
+    padding: 10px !important; /* Add some padding */
+    border-radius: 10px !important; /* Add some rounded corners */
+    box-sizing: border-box !important; /* Include padding and border in the element's total width and height */
+    margin-bottom: 10px !important; /* Add space between fields */
+}
+
+.form-group textarea.form-control {
+    min-height: 150px !important; /* Ensure a minimum height for the textarea */
+}
+
+.form-group select.form-control:invalid {
+    color: gray; /* Placeholder text color */
+}
+
+.form-group select.form-control option {
+    color: black; /* Normal option text color */
+}
+
+.upload-btn {
+    background-color: #1BA629;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+}
+
+.upload-btn-icon {
+    background-color: #148420;
+    width: 60px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    border-radius: 0.25rem;
+}
+
+.upload-btn:hover {
+    background-color: #148420;
+}
+
+.upload-btn p {
+    margin: 0;
+}
+
+.form-container {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.form-wrapper {
+    width: 60%; /* Adjust the width as needed */
+}
+
+label {
+    display: none; /* Hide labels */
+}

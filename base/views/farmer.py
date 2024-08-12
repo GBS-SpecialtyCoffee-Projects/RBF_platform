@@ -34,15 +34,15 @@ def farmer_dashboard(request):
         form = FarmerProfileForm(instance=farmer_profile)
 
     return render(request, 'base/farmer_dashboard.html', {
-        'roasters': roasters,
-        'meeting_requests_as_requestee': meeting_requests_as_requestee,
-        'meeting_requests_as_requester': meeting_requests_as_requester,
-        'farmer_profile': farmer_profile,
-        'farmer_photos': farmer_photos,
-        'pending_meetings': pending_meetings,
-        'can_request_meetings': can_request_meetings,
-        'form': form,
-    })
+            'roasters': roasters,
+            'meeting_requests_as_requestee': meeting_requests_as_requestee,
+            'meeting_requests_as_requester': meeting_requests_as_requester,
+            'farmer_profile': farmer_profile,
+            'farmer_photos': farmer_photos,
+            'pending_meetings': pending_meetings,
+            'can_request_meetings': can_request_meetings,
+            'form': form,
+        })
 
 def upload_photo(request):
     if request.method == 'POST':
@@ -197,3 +197,4 @@ def vid_x_check(request):
         if form.is_valid():
             form.save()
             return redirect('farmer_orientation')
+

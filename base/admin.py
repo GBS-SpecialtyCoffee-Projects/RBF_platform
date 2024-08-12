@@ -1,11 +1,13 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, Farmer, FarmerPhoto, MeetingRequest, RoasterPhoto,Roaster
+from django.contrib.auth.models import Group
+
 
 class CustomUserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'email', 'password')}),
-        ('Personal info', {'fields': ('firstname', 'middlename', 'lastname', 'phone_number', 'group')}),
+        ('Personal info', {'fields': ('phone_number', 'group')}),
         ('Permissions', {'fields': ('is_staff', 'is_superuser')}),
         ('Important dates', {'fields': ('last_login', 'date_joined', 'updated_date')}),
     )
@@ -15,20 +17,20 @@ class CustomUserAdmin(BaseUserAdmin):
             'fields': ('username', 'email', 'password1', 'password2'),
         }),
     )
-    list_display = ('username', 'email', 'firstname', 'lastname', 'group', 'is_staff')
-    search_fields = ('username', 'email', 'firstname', 'lastname')
+    list_display = ('username', 'email', 'group', 'is_staff')
+    search_fields = ('username', 'email')
     list_filter = ('group', 'is_staff')
     ordering = ('username',)
     filter_horizontal = ()  # Remove 'groups' and 'user_permissions'
 
 admin.site.register(User, CustomUserAdmin)
-
+admin.site.unregister(Group)
 
 
 
 @admin.register(Farmer)
 class FarmerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'farm_name', 'location', 'size', 'affiliation', 'created_at', 'updated_at')
+    list_display = ('id', 'user', 'farm_name', 'location',  'created_at', 'updated_at')
     search_fields = ('farm_name', 'location', 'user__username')
     list_filter = ('affiliation', 'created_at')
 
