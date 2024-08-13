@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm, RoasterProfileForm
+from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm, RoasterProfileForm, FarmerProfilePhotoForm
 from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto
 from django.contrib import messages
 
@@ -59,3 +59,18 @@ def upload_photo(request):
 
 def upload_success(request):
     return render(request, 'base/upload_success.html')
+
+
+def update_profile(request):
+    if request.method == 'POST':
+        farmer_profile = Farmer.objects.filter(user=request.user).first()
+        form = FarmerProfilePhotoForm(request.POST, request.FILES, instance=farmer_profile)
+        if form.is_valid():
+            print('in valid')
+            form.save()
+            return redirect('farmer_dashboard')  # Redirect to a profile page or any other page
+    else:
+        return redirect('farmer_dashboard')  # If not a POST request, redirect to profile page
+
+    # return render(request, 'base/farmer_dashboard.html.html', {'form': form})
+    return redirect('farmer_dashboard')

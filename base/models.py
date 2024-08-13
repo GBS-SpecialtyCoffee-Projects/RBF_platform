@@ -55,10 +55,12 @@ class Farmer(models.Model):
     middlename = models.CharField(max_length=255, blank=True, null=True)
     lastname = models.CharField(max_length=255, blank=False, null=False)
     farm_name = models.CharField(max_length=255, blank=False, null=False)
-    location = models.CharField(max_length=255, blank=False, null=False)  # Consider using a more sophisticated field or library for location
-    farm_size = models.CharField(max_length=255, blank=False, null=False)
+    country = models.CharField(max_length=255, blank=True, null=True)
+    state = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=255, blank=True, null=True)
+    farm_size = models.DecimalField(max_digits=10, decimal_places=2, blank=False, null=False, help_text="Size in hectares")
     harvest_season = models.CharField(max_length=255, blank=True, null=True)
-    annual_production = models.CharField(max_length=255, blank=True, null=True)  # You can further split this into separate fields if needed
+    annual_production = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Annual production in tons")
     cultivars = models.CharField(max_length=255, blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     cup_scores_received = models.TextField(blank=True, null=True)
@@ -76,16 +78,13 @@ class Farmer(models.Model):
 
     def __str__(self):
         return f'{self.firstname} {self.lastname} - {self.farm_name}'
-
-    # def clean(self):
-    #     if self.user.group != 'farmer':
-    #         raise ValidationError('The user must be a farmer to add a FarmerProfile.')
-
 class Roaster(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='roaster_profile')
     company_name = models.CharField(max_length=255, blank=False, null=True)
-    location = models.CharField(max_length=255, blank=False, null=True)
+    country = models.CharField(max_length=100, blank=False, null=True)
+    state = models.CharField(max_length=100, blank=False, null=True)
+    city = models.CharField(max_length=100, blank=False, null=True)
     bio = models.TextField(blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -93,11 +92,22 @@ class Roaster(models.Model):
     annual_throughput = models.PositiveIntegerField(blank=False, null=True)
     origins_interested = models.TextField(blank=False, null=True)
     coffee_types_interested = models.TextField(blank=False, null=True)
+    profile_picture = models.ImageField(upload_to='roaster_profiles/', blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        try:
+            # Get the existing roaster object from the database
+            old_profile = Roaster.objects.get(pk=self.pk)
+            if old_profile.profile_picture and self.profile_picture != old_profile.profile_picture:
+                # If a new profile picture is being uploaded, delete the old one
+                old_profile.profile_picture.delete(save=False)
+        except Roaster.DoesNotExist:
+            # No old profile exists, nothing to delete
+            pass
+
+        super(Roaster, self).save(*args, **kwargs)
     def __str__(self):
-        return self.company_name
-
-    # def clean(self):
+        return self.company_name    # def clean(self):
     #     if self.user.group != 'roaster':
     #         raise ValidationError('The user must be a roaster to add a RoasterProfile.')
 # third table: farmerphoto is related with user by userid, one can only input data into it if user group is farmer
@@ -119,8 +129,6 @@ class RoasterPhoto(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='roaster_photos')
     photo = models.ImageField(upload_to='roaster_photos/')
-    profile = models.ImageField(upload_to='roaster_profiles/', null=True, blank=True)
-    order = models.PositiveIntegerField()
 
     def __str__(self):
         return f"Photo {self.id} for {self.user.username}"

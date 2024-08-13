@@ -80,15 +80,19 @@ def roaster_details(request):
     try:
         roaster = request.user.roaster_profile
     except Roaster.DoesNotExist:
-        return redirect('signup')  # If the roaster profile does not exist, redirect to signup
+        return redirect('signup')
 
     if request.method == 'POST':
-        form = RoasterForm(request.POST, instance=roaster)
+        form = RoasterForm(request.POST, request.FILES, instance=roaster)
         if form.is_valid():
             form.save()
-            return redirect('signin')  # Redirect to roaster dashboard after successful update
+            return redirect('roaster_dashboard')
+        else:
+            print(form.errors)  # Print errors to the console
+
     else:
         form = RoasterForm(instance=roaster)
+
     return render(request, 'base/roaster_signup.html', {'form': form})
 
 

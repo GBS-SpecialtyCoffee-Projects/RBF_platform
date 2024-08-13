@@ -34,6 +34,9 @@ urlpatterns = [
     path('roaster/details/', account.roaster_details, name='roaster_details'),
     path('reset_password/', account.password_reset_view, name='reset_password'),
     #    path('signout/', account.signout_view, name='signout'),
+    path('update_profile/', farmer.update_profile, name='update_profile'),
+    path('delete_roaster_photo/<int:photo_id>/', roaster.delete_roaster_photo, name='delete_roaster_photo'),
+
 ]
 
 if settings.DEBUG:

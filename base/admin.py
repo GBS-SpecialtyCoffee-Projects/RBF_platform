@@ -30,8 +30,8 @@ admin.site.unregister(Group)
 
 @admin.register(Farmer)
 class FarmerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'farm_name', 'location',  'created_at', 'updated_at')
-    search_fields = ('farm_name', 'location', 'user__username')
+    list_display = ('id', 'user', 'farm_name',   'created_at', 'updated_at')
+    search_fields = ('farm_name',  'user__username')
     list_filter = ('affiliation', 'created_at')
 
 
@@ -50,16 +50,16 @@ class FarmerPhotoAdmin(admin.ModelAdmin):
 
 @admin.register(Roaster)
 class RoasterAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'company_name', 'location', 'created_at', 'updated_at')
-    search_fields = ('company_name', 'location', 'user__username')
-    list_filter = ('location', 'created_at')
+    list_display = ('id', 'user', 'company_name',  'created_at', 'updated_at')
+    search_fields = ('company_name',  'user__username')
+    list_filter = ('created_at',)
 
 @admin.register(RoasterPhoto)
 class RoasterPhotoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'photo', 'order')
+    list_display = ('id', 'user', 'photo', )
     search_fields = ('user__username', 'photo')
     list_filter = ('user__username',)
-    ordering = ('user', 'order')
+    ordering = ('user', )
     readonly_fields = ('photo',)
 
     def formfield_for_dbfield(self, db_field, **kwargs):

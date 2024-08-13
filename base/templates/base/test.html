@@ -1,1 +1,203 @@
-{% extends 'base/main_nonav.html' %}
+{% extends 'base/main.html' %}
+{% load static %}
+
+{% block content %}
+{% include 'base/profile_navbar.html' %}
+
+<div class="container-fluid profile-bg " style="height: 100vh;">
+
+    <div class="d-flex justify-content-center pt-5" >
+        <div class="shadow-sm rounded" style="background-color: white; width:95%" >
+        <div class="">
+            <img  width="100%" height="150px" src="{% static 'img/dan-meyers-IQVFVH0ajag-unsplash.jpg' %}" alt="">
+        </div>
+        <div>
+            <div class="d-flex justify-content-center py-2" style="" >
+                <div class="">
+                    <img class="rounded-circle border border-info" width="90px" height="90px" src="{{farmer_profile.profile_picture.url}}" alt="" style="margin-top: -30px;">
+                </div>
+                <div class="ms-4 mt-2" >
+                    <div class="d-flex">
+                        <h3>{{farmer_profile.firstname}} {{farmer_profile.lastname}}</h3>
+                        <a  href="#profModal" data-bs-toggle="modal" data-bs-target="#profModal">
+                            <svg class="ms-2 mt-1" xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="green" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                            </svg>
+                        </a>
+                        <!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            Launch demo modal
+                          </button> -->
+
+                    </div>
+                    <span>{{farmer_profile.location}}</span>
+                </div>
+
+
+                </div>
+        </div>
+
+
+    </div>
+    </div>
+
+
+
+    <div class="container-fluid pt-5 px-4">
+        <div class="row">
+            <div class="col-sm-6" >
+                <div class="px-4 py-2 rounded shadow-sm" style="background-color: white;height: 100%;">
+                    <div class="d-flex">
+                        <h2> Your Story</h2>
+                        <div class="mt-1">
+                            <button class="ms-2 btn btn-sm"  style="background-color: blue; color: white; ">edit</button>
+                        </div>
+
+                    </div>
+                    <p>
+                       {{farmer_profile.bio}}
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="col-sm-6">
+
+                <div class="px-4 py-2 pt-5 rounded shadow-sm" style="background-color: white; height: 100%;">
+                    <div id="cale"  >
+
+                    </div>
+                </div>
+
+            </div>
+
+
+        </div>
+        <div class="row mt-3 px-1 py-3 shadow-sm rounded" style="background-color: grey;">
+            <div class="d-flex justify-content-between">
+                <div>
+                <h2>{{ farmer_profile.farm_name }}</h2>
+                </div>
+                <div>
+                    <button class="btn  btn-primary">Edit Harvest</button>
+
+                </div>
+
+            </div>
+            <div class="col-sm-6">
+                <div class=" py-2 ms-3 rounded">
+
+                    <div class="d-flex justify-content-between">
+                        <span>Origin:</span>
+                        <span>Costa Rica</span>
+                    </div>
+                    <div class="d-flex mt-3  justify-content-between">
+                        <span>Variety:</span>
+                        <span>Arabica</span>
+                    </div>
+                    <div class="d-flex mt-3 justify-content-between">
+                        <span>Cup Score:</span>
+                        <span>92</span>
+                    </div>
+                    <div class="d-flex mt-3 justify-content-between">
+                        <span>Processing:</span>
+                        <span>Costa Rica</span>
+                    </div>
+                    <div class="d-flex mt-3 justify-content-between">
+                        <span>Crop Year:</span>
+                        <span>2023</span>
+                    </div>
+                    <div class="d-flex mt-3 justify-content-between">
+                        <span>Altitude:</span>
+                        <span>700ft</span>
+                    </div>
+                    <div class="d-flex mt-3 justify-content-between">
+                        <span>Quantity Available:</span>
+                        <span>56lbs</span>
+                    </div>
+                    <div class="d-flex mt-3 justify-content-between">
+                        <span>Notes:</span>
+                        <span>Chocolate,Citrus,Fruit</span>
+                    </div>
+
+
+                </div>
+
+            </div>
+
+            <div class="col-sm-6">
+                <div class="row">
+                    {% for photo in farmer_photos %}
+                        {% if photo.photo %}
+                        <div class="col-sm-4 mb-3">
+                            <img width="100%" height="200px" class="rounded" src="{{photo.photo.url}}" alt="..." >
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    <!-- <div class="col-sm-4 mb-3">
+                        <img width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                    <div class="col-sm-4 mb-3">
+                        <img  width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                    <div class="col-sm-4 mb-3">
+                        <img width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                    <div class="col-sm-4 mb-3">
+                        <img width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                    <div class="col-sm-4 mb-3">
+                        <img  width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div> -->
+
+
+                </div>
+                <!-- <div class="row mt-2">
+                    <div class="col-sm-4">
+                        <img width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                    <div class="col-sm-4">
+                        <img width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                    <div class="col-sm-4">
+                    <img width="100%" height="200px" class="rounded" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="..." >
+                    </div>
+                </div> -->
+
+
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="profModal" tabindex="-1" aria-labelledby="profModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="exampleModalLabel">Edit Profile</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form action="{% url 'update_profile' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+
+            <div class="input-group mb-3">
+                    {{ form.profile_picture }}
+                    <!-- <input type="file" class="form-control" id="inputGroupFile02">
+                    <label class="input-group-text" for="inputGroupFile02">Upload</label> -->
+             </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
