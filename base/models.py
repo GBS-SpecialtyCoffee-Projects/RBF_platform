@@ -51,12 +51,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Farmer(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farmer_profile')
-    firstname = models.CharField(max_length=255, blank=False, null=False,default=False)
+    firstname = models.CharField(max_length=255, blank=True, null=False)
     middlename = models.CharField(max_length=255, blank=True, null=True)
-    lastname = models.CharField(max_length=255, blank=False, null=False,default=False)
-    farm_name = models.CharField(max_length=255, blank=False, null=False,default=False)
-    location = models.CharField(max_length=255, blank=False, null=False,default=False)  # Consider using a more sophisticated field or library for location
-    farm_size = models.CharField(max_length=255, blank=False, null=False,default=False)
+    lastname = models.CharField(max_length=255, blank=True, null=False)
+    farm_name = models.CharField(max_length=255, blank=True, null=False)
+    location = models.CharField(max_length=255, blank=True, null=False)  # Consider using a more sophisticated field or library for location
+    farm_size = models.CharField(max_length=255, blank=True, null=False)
     harvest_season = models.CharField(max_length=255, blank=True, null=True)
     annual_production = models.CharField(max_length=255, blank=True, null=True)  # You can further split this into separate fields if needed
     cultivars = models.CharField(max_length=255, blank=True, null=True)

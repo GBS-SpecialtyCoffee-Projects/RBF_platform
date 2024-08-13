@@ -65,13 +65,17 @@ def farmer_details(request):
         return redirect('signup')  # If the farmer profile does not exist, redirect to signup
 
     if request.method == 'POST':
-        form = FarmerForm(request.POST, instance=farmer)
-        if form.is_valid():
-            form.save()
-            return redirect('signin')  # Redirect to farmer dashboard after successful update
+        farmer_form = FarmerForm(request.POST, request.FILES, instance=farmer)
+
+        if farmer_form.is_valid():
+            farmer_form.save()
+            return redirect('/base/farmer_dashboard')  # Redirect to signin after successful update
+        else:
+            # Print form errors for debugging
+            print(farmer_form.errors)
     else:
-        form = FarmerForm(instance=farmer)
-    return render(request, 'base/farmer_signup.html', {'form': form})
+        farmer_form = FarmerForm(instance=farmer)
+    return render(request, 'base/farmer_signup.html', {'farmer_form': farmer_form})
 
 def roaster_details(request):
     try:

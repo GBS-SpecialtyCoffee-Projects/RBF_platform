@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck
+from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck
 from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto
 from django.contrib import messages
 
@@ -12,6 +12,7 @@ def farmer_dashboard(request):
     meeting_requests_as_requester = MeetingRequest.objects.filter(requester=request.user)
     farmer_profile = Farmer.objects.filter(user=request.user).first()
     farmer_photos = FarmerPhoto.objects.filter(user=request.user)
+    farmer_photos_unadded = 6 - farmer_photos.count()
     pending_meetings = MeetingRequest.objects.filter(
         requester=request.user, status='accepted'
     ) | MeetingRequest.objects.filter(
@@ -39,6 +40,7 @@ def farmer_dashboard(request):
         'meeting_requests_as_requester': meeting_requests_as_requester,
         'farmer_profile': farmer_profile,
         'farmer_photos': farmer_photos,
+        'unused_count': farmer_photos_unadded,
         'pending_meetings': pending_meetings,
         'can_request_meetings': can_request_meetings,
         'form': form,
@@ -56,6 +58,20 @@ def upload_photo(request):
     else:
         form = FarmerPhotoForm()
     return render(request, 'base/upload_photo.html', {'form': form})
+
+def update_profile(request):
+    if request.method == 'POST':
+        farmer_profile = Farmer.objects.filter(user=request.user).first()
+        form = FarmerProfilePhotoForm(request.POST, request.FILES, instance=farmer_profile)
+        if form.is_valid():
+            print('in valid')
+            form.save()
+            return redirect('farmer_dashboard')  # Redirect to a profile page or any other page
+    else:
+        return redirect('farmer_dashboard')  # If not a POST request, redirect to profile page
+
+    # return render(request, 'base/farmer_dashboard.html.html', {'form': form})
+    return redirect('farmer_dashboard')
 
 def upload_success(request):
     return render(request, 'base/upload_success.html')
