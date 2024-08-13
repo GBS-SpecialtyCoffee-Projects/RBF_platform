@@ -195,6 +195,18 @@ class RoasterProfileForm(forms.ModelForm):
             'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
+
+
+class FarmerProfilePhotoForm(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['profile_picture']
+        widgets = {
+            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+
+
 class OrientationTasksForm(forms.ModelForm):
     class Meta:
         model = Farmer
@@ -275,3 +287,5 @@ class VideoPerceptionsCheck(forms.ModelForm):
         widgets = {'video_perceptions': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',  # Bootstrap 5 checkbox class
                 'id': 'VideoPerceptionsCheck'})}
+
+
