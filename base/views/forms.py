@@ -171,7 +171,6 @@ class MeetingRequestForm(forms.ModelForm):
             'message': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter your message here'}),
         }
 
-
 class FarmerProfileForm(forms.ModelForm):
     class Meta:
         model = Farmer
@@ -196,6 +195,8 @@ class RoasterProfileForm(forms.ModelForm):
             'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
+
+
 class FarmerProfilePhotoForm(forms.ModelForm):
     class Meta:
         model = Farmer
@@ -203,4 +204,88 @@ class FarmerProfilePhotoForm(forms.ModelForm):
         widgets = {
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+
+
+class OrientationTasksForm(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['profile_completed',
+                  'storytelling_workshop',
+                  'video_pricing',
+                  'video_intl',
+                  'video_comm_tips',
+                  'video_relationships',
+                  'video_perceptions']
+        widgets = {
+            'profile_completed': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',  # Bootstrap 5 checkbox class
+                'id': 'profileCheck'
+            }),
+            'storytelling_workshop': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',  # Bootstrap 5 checkbox class
+                'id': 'storytellingCheck'
+            }),
+            'video_pricing': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'}),
+            'video_intl': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'}),
+            'video_comm_tips': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'}),
+            'video_relationships': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'}),
+            'video_perceptions': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'}),
+        }
+
+
+class StoryTellingCheck(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['storytelling_workshop']
+        widgets = {'storytelling_workshop': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',  # Bootstrap 5 checkbox class
+                'id': 'StoryTellingCheck'})} 
+        
+class VideoPricingCheck(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['video_pricing']
+        widgets = {'video_pricing': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',  # Bootstrap 5 checkbox class
+                'id': 'VideoPricingCheck'})}
+        
+
+class VideoIntlCheck(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['video_intl']
+        widgets = {'video_intl': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',  # Bootstrap 5 checkbox class
+                'id': 'VideoIntlCheck'})}
+        
+class VideoCommTipsCheck(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['video_comm_tips']
+        widgets = {'video_comm_tips': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',  # Bootstrap 5 checkbox class
+                'id': 'VideoCommTipsCheck'})}
+
+class VideoRelationshipsCheck(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['video_relationships']
+        widgets = {'video_relationships': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',  # Bootstrap 5 checkbox class
+                'id': 'VideoRelationshipsCheck'})}
+        
+class VideoPerceptionsCheck(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['video_perceptions']
+        widgets = {'video_perceptions': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',  # Bootstrap 5 checkbox class
+                'id': 'VideoPerceptionsCheck'})}
+
 

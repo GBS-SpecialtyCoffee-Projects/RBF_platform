@@ -51,12 +51,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Farmer(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farmer_profile')
-    firstname = models.CharField(max_length=255, blank=False, null=False)
+    firstname = models.CharField(max_length=255, blank=True, null=False)
     middlename = models.CharField(max_length=255, blank=True, null=True)
-    lastname = models.CharField(max_length=255, blank=False, null=False)
-    farm_name = models.CharField(max_length=255, blank=False, null=False)
-    location = models.CharField(max_length=255, blank=False, null=False)  # Consider using a more sophisticated field or library for location
-    farm_size = models.CharField(max_length=255, blank=False, null=False)
+    lastname = models.CharField(max_length=255, blank=True, null=False)
+    farm_name = models.CharField(max_length=255, blank=True, null=False)
+    location = models.CharField(max_length=255, blank=True, null=False)  # Consider using a more sophisticated field or library for location
+    farm_size = models.CharField(max_length=255, blank=True, null=False)
     harvest_season = models.CharField(max_length=255, blank=True, null=True)
     annual_production = models.CharField(max_length=255, blank=True, null=True)  # You can further split this into separate fields if needed
     cultivars = models.CharField(max_length=255, blank=True, null=True)
@@ -73,6 +73,31 @@ class Farmer(models.Model):
     affiliation = models.CharField(max_length=255, blank=False, null=True)
     preferred_communication_method = models.CharField(max_length=50, choices=[('whatsapp', 'WhatsApp'), ('email', 'Email')], blank=True, null=True)
     main_role = models.CharField(max_length=50, choices=[('owner', 'Owner'), ('manager', 'Manager'), ('worker', 'Worker')], blank=True, null=True)
+    profile_completed = models.BooleanField(default=False) # this + all bools below are used to indicate required orientation task completion
+    storytelling_workshop = models.BooleanField(default=False) 
+    video_pricing = models.BooleanField(default=False)
+    video_intl = models.BooleanField(default=False)
+    video_comm_tips = models.BooleanField(default=False)
+    video_relationships = models.BooleanField(default=False)
+    video_perceptions = models.BooleanField(default=False)
+
+    # def save(self):
+    #     """ A method to automatically check 
+    #     off the profile_completed field once
+    #     all required fields are not empty
+        
+    #     * if condition to be modified when Farmer model is finalized
+
+    #     """
+    #     if self.user and self.farm_name and self.location and self.bio and self.size:
+    #         self.profile_completed = True
+    #     else: self.profile_completed = False
+    #     super().save()
+
+
+
+
+
 
     def __str__(self):
         return f'{self.firstname} {self.lastname} - {self.farm_name}'
