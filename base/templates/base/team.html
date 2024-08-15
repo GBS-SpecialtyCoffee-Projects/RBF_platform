@@ -1,0 +1,122 @@
+{% extends 'base/main.html' %}
+{% load static %}
+
+{% block content %}
+{% include "base/navbar.html" %}
+
+<div class="container-fluid bg-light">
+    <h3 class="text-center py-4">
+        The Team Behind CoffeeSpace
+    </h3>
+    
+    <div class="row g-2 px-5 pt-2 mx-1 d-flex justify-content-center" style="display: flex;">
+        <div class="col-auto col-md-4 justify-content-end">
+            <img class="img-fluid pt-2 float-end align-self-stretch" src="{% static 'image/peter_photo.svg' %}" alt="" style="object-fit: cover;">
+        </div>
+        <div class="col-md-6 col-auto ps-4 bg-light py-2">
+            <h4 class="text-dark">
+                Peter W. Roberts
+            </h4>
+            <div class="text-secondary fs-6 pt-2">
+                <p>
+                    Peter is Professor of Organization & Management at Emory University’s Goizueta Business School 
+                    and Academic Director of the Specialty Coffee Transaction Guide and Grounds for Empowerment programs.
+                </p>
+                <p>
+                    His research interests relate to how the behavior and performance of organizations evolve over time. 
+                    Recently, he directs his interests in entrepreneurship and organizational performance toward topics 
+                    in the field of social enterprise. His current projects focus on social entrepreneurs and accelerators, 
+                    on micro-business development, and on the global specialty coffee industry.
+                </p>
+                <p>
+                    Roughly ten years ago, he founded Social Enterprise @ Goizueta (now Goizueta’s Business & Society Institute), 
+                    which focused on making markets work for more people, in more places, in more ways. This led to the 
+                    establishment of the global Entrepreneurship Database Program, the Start:ME accelerator program, and the 
+                    two specialty coffee programs.
+                </p>
+                    Peter's Ph.D. is from the University of Alberta. Before taking up his current position at Emory University, 
+                    Peter served on the faculties of Columbia University, Carnegie Mellon University, and the Australian Graduate 
+                    School of Management.
+            </div>
+        </div>
+    </div>
+
+    <hr class="col-10 justify-self-center mx-auto my-5">
+
+    <div class="row g-2 px-5 py-2 mx-1 d-flex justify-content-center" style="display: flex;">
+        
+        <div class="col-auto col-md-4 justify-content-end">
+            <img class="float-end" src="{% static 'image/karl_photo.svg' %}" alt="" style="object-fit: cover; width: 775px; max-width: 100%;">
+        </div>
+
+        <div class="col-md-6 col-auto ps-4 bg-light py-2">
+            <h4 class="text-dark">
+                Karl Wienhold
+            </h4>
+            <div class="text-secondary fs-6 pt-3">
+                <p>
+                    Karl Wienhold is a doctoral researcher at the University of Lisbon where he 
+                    focuses on the political economy of agricultural value chains, specifically 
+                    the role of power in the coffee trade.
+                </p>
+                <p>
+                    Following a decade working with grassroots farmer organizations and coordinating 
+                    green coffee supply chains, he is now focused on exploring origins of the social 
+                    and environmental issues that plague the sector and removing barriers to 
+                    producer-led alternatives.
+                </p>
+                <p>
+                    He is also author of the book "Cheap Coffee" and consults on projects stimulating 
+                    solidarity and participatory, community-led, autonomous development.
+                </p>
+            </div>
+        </div>
+        
+    </div>
+
+    <hr class="col-10 justify-self-center mx-auto my-5">
+
+    <div class="row g-2 px-5 py-2 mx-1 d-flex justify-content-center" style="display: flex;">
+        
+        <div class="col-auto col-md-4 justify-content-end">
+            <img class="float-end" src="{% static 'image/natalie_photo.svg' %}" alt="" style="object-fit: cover; width: 775px; max-width: 100%;">
+        </div>
+
+        <div class="col-md-6 col-auto ps-4 bg-light py-2">
+            <h4 class="text-dark">
+                Natalie Rivas
+            </h4>
+            <div class="text-secondary pt-3 fs-6">
+                <p>
+                    Natalie is a lifelong coffee lover and connoisseur, qualities that suit her 
+                    well as the Program Associate for the Specialty Coffee Programs at Emory 
+                    University’s Goizueta Business School.
+                </p>
+                <p>
+                    Born to a Salvadoran mother and a Colombian father, she possesses an 
+                    unwavering commitment to bolstering Hispanic communities in any way she can, 
+                    dedicating her undergraduate years to help advance both health and educational 
+                    equity through her various initiatives.
+                </p>
+                <p>
+                    Recently graduated from the Johns Hopkins University with Bachelor’s in both 
+                    Public Health Studies and Economics, Natalie continues her efforts by applying her 
+                    passion and knowledge to champion equity within the LATAM coffee industry.
+                </p>
+            </div>
+        </div>
+        
+    </div>
+
+
+
+
+
+</div>
+
+
+
+
+
+
+{% endblock %}
