@@ -4,7 +4,7 @@
 {% block content %}
 
 {% include 'base/profile_navbar.html' %}
-<div class="container-fluid profile-bg " style="height: 100vh;">
+<div class="container-fluid profile-bg pb-5" style="height: 100vh;">
 
     <div class="d-flex justify-content-center pt-5" >
         <div class="shadow-sm rounded" style="background-color: white; width:95%" >
@@ -49,7 +49,7 @@
                     <div class="d-flex"> 
                         <h2> Your Story</h2>
                         <div class="mt-1">
-                            <button class="ms-2 btn btn-sm"  style="background-color: blue; color: white; ">edit</button>
+                            <button class="ms-2 btn btn-sm"  style="background-color: blue; color: white; " data-bs-toggle="modal" data-bs-target="#storyModal">edit</button>
                         </div>
                         
                     </div> 
@@ -79,7 +79,7 @@
                 <h2>{{ farmer_profile.farm_name }}</h2>
                 </div>
                 <div>
-                    <button class="btn  btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal">Edit Harvest</button>
+                    <button class="btn  btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal">Edit Details</button>
 
                 </div>
 
@@ -135,6 +135,7 @@
 
             <div class="col-sm-6"> 
                 <div class="row">
+                    {% if farmer_photos %}
                     {% for photo in farmer_photos %}
                         {% if photo.photo %}
                         <div class="col-sm-4 mb-3">
@@ -142,6 +143,11 @@
                         </div>
                         {% endif %}
                     {% endfor %}
+                    {% else %}
+                        <div class="col-sm-4 mb-3">
+                            <img width="100%" height="200px" class="rounded" src="media/farmer_photos/128px-Placeholder_view_vector.svg.png" alt="..." >
+                        </div> 
+                    {% endif %}
                     
 
 
@@ -181,6 +187,11 @@
 
         </div>
     </div>
+
+    <div class="text-center mt-3 mb-5">
+        <button class="btn btn-primary disabled" data-bs-toggle="modal" data-bs-target="#profModal">Publish Profile</button>
+
+    </div>
 </div>
 
 
@@ -211,9 +222,36 @@
     </div>
   </div>
 
+<!-- Story Modal -->
+<div class="modal fade" id="storyModal" tabindex="-1" aria-labelledby="storyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="storyModalLabel">Edit Story</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form action="{% url 'farmer_dashboard' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+            
+            <div class="input-group mb-3">
+                    {{ form.bio }}
+                    <!-- <input type="file" class="form-control" id="inputGroupFile02">
+                    <label class="input-group-text" for="inputGroupFile02">Upload</label> -->
+             </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Edit Details Modal -->
   <!-- Scrollable modal -->
-  <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <!-- <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -235,7 +273,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
 
 
 
