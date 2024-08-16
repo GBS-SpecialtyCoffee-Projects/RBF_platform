@@ -27,6 +27,7 @@ def farmer_dashboard(request):
     can_request_meetings = active_meetings_count < 5
 
     if request.method == 'POST':
+        
         form = FarmerProfileForm(request.POST, instance=farmer_profile)
         if form.is_valid():
             form.save()
