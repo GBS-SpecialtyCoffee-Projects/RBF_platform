@@ -1,12 +1,115 @@
 {% extends 'base/main.html' %}
-
-{% block title %}Roaster Signup{% endblock %}
-
+{% load static %}
+{% block head %}
+<link href="{% static 'styles/farmer_signup.css' %}" rel="stylesheet">
+{% endblock %}
 {% block content %}
-<h1>Roaster Signup</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Signup</button>
-</form>
+<div class="container-fluid">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="ms-4">
+            <div style="color: #212529;" class="navbar-brand p-0">SPECIALTY</div>
+            <div style="color: #212529;" class="navbar-brand p-0">COFFEE</div>
+            <div style="color: #5C87B2;" class="navbar-brand p-0">CONNECT</div>
+        </div>
+    </nav>
+    <hr>
+
+    <div class="container mt-5" style="max-width: 1400px; padding-left: 100px; padding-right: 100px;">
+        <div>
+            <h2>About you</h2>
+        </div>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="d-flex mt-5 justify-content-between">
+                <div>
+                    <h3>Personal information</h3>
+                    <p>Provide your personal information</p>
+                </div>
+
+                <div class="form-wrapper">
+                    <div class="row">
+                        <div class="col-12 form-group">
+                            {{ form.company_name }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 form-group">
+                            {{ form.min_lot_size }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 form-group">
+                            {{ form.annual_throughput }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 form-group">
+                            {{ form.country }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 form-group">
+                            {{ form.state }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 form-group">
+                            {{ form.city }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 form-group">
+                            {{ form.origins_interested }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 form-group">
+                            {{ form.coffee_types_interested }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 form-group">
+                            {{ form.bio }}
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12 d-flex align-items-center upload-btn" onclick="document.getElementById('id_profile_picture').click();">
+                            <div class="upload-btn-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="white" class="bi bi-cloud-arrow-up-fill" viewBox="0 0 16 16">
+                                    <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 5.146a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0z"/>
+                                </svg>
+                            </div>
+                            <div class="ps-3" style="flex-grow: 1;">
+                                <p id="upload-label">Upload Profile Photo</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col">
+                            <input type="file" id="id_profile_picture" name="profile_picture" style="display:none;" onchange="updateUploadLabel()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-5">
+                <div class="col">
+                    <button type="submit" class="btn btn-primary float-end">Save and Continue</button>
+                </div>
+            </div>
+             <div style="margin-top: 7rem; margin-bottom: 7rem;"></div> <!-- Adding more empty space -->
+        </form>
+    </div>
+</div>
+
+<script>
+    function updateUploadLabel() {
+        const input = document.getElementById('id_profile_picture');
+        const label = document.getElementById('upload-label');
+        if (input.files.length > 0) {
+            label.textContent = input.files[0].name;
+        } else {
+            label.textContent = 'Upload Profile Photo';
+        }
+    }
+</script>
 {% endblock %}

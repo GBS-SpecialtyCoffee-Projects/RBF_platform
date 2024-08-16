@@ -37,6 +37,10 @@ urlpatterns = [
     path('farmer_orientation/', farmer.farmer_orientation, name='farmer_orientation'),
     #    path('signout/', account.signout_view, name='signout'),
     path('update_profile/', farmer.update_profile, name='update_profile'),
+    path('delete_roaster_photo/<int:photo_id>/', roaster.delete_roaster_photo, name='delete_roaster_photo'),
+    path('connections/', roaster.connections, name='connections'),
+    path('farmer/<int:user_id>/', roaster.farmer_view, name='farmer_profile'),
+
 ]
 
 if settings.DEBUG:
