@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, Farmer, FarmerPhoto, MeetingRequest, RoasterPhoto,Roaster
+from django.contrib.auth.models import Group
+
 
 class CustomUserAdmin(BaseUserAdmin):
     fieldsets = (
@@ -16,29 +18,29 @@ class CustomUserAdmin(BaseUserAdmin):
         }),
     )
     list_display = ('username', 'email', 'group', 'is_staff')
-    search_fields = ('username', 'email', 'firstname', 'lastname')
+    search_fields = ('username', 'email')
     list_filter = ('group', 'is_staff')
     ordering = ('username',)
     filter_horizontal = ()  # Remove 'groups' and 'user_permissions'
 
 admin.site.register(User, CustomUserAdmin)
-
+admin.site.unregister(Group)
 
 
 
 @admin.register(Farmer)
 class FarmerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'farm_name', 'location',  'created_at', 'updated_at')
-    search_fields = ('farm_name', 'location', 'user__username')
+    list_display = ('id', 'user', 'farm_name', 'country', 'state', 'city',  'created_at', 'updated_at')
+    search_fields = ('farm_name', 'country','state','city', 'user__username')
     list_filter = ('affiliation', 'created_at')
 
 
 @admin.register(FarmerPhoto)
 class FarmerPhotoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'photo', 'order')
+    list_display = ('id', 'user', 'photo', )
     search_fields = ('user__username', 'photo')
     list_filter = ('user__username',)
-    ordering = ('user', 'order')
+    ordering = ('user', )
     readonly_fields = ('photo',)
 
     def formfield_for_dbfield(self, db_field, **kwargs):
@@ -48,16 +50,16 @@ class FarmerPhotoAdmin(admin.ModelAdmin):
 
 @admin.register(Roaster)
 class RoasterAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'company_name', 'location', 'created_at', 'updated_at')
-    search_fields = ('company_name', 'location', 'user__username')
-    list_filter = ('location', 'created_at')
+    list_display = ('id', 'user', 'company_name',  'created_at', 'updated_at')
+    search_fields = ('company_name', 'country','state','city', 'user__username')
+    list_filter = ('created_at',)
 
 @admin.register(RoasterPhoto)
 class RoasterPhotoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'photo', 'order')
+    list_display = ('id', 'user', 'photo', )
     search_fields = ('user__username', 'photo')
     list_filter = ('user__username',)
-    ordering = ('user', 'order')
+    ordering = ('user', )
     readonly_fields = ('photo',)
 
     def formfield_for_dbfield(self, db_field, **kwargs):

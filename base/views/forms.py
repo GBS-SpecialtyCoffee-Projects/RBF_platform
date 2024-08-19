@@ -10,13 +10,15 @@ from django.contrib.auth import authenticate
 class FarmerPhotoForm(forms.ModelForm):
     class Meta:
         model = FarmerPhoto
-        fields = ['photo', 'order']
-
+        fields = ['photo']
+        widgets = {
+            'photo': forms.FileInput(attrs={'class': 'form-control'}),
+        }
 class FarmerForm(forms.ModelForm):
     class Meta:
         model = Farmer
         fields = [
-            'farm_name', 'location', 'bio',
+            'farm_name',  'bio', 'country', 'state', 'city',
             'firstname', 'lastname', 'middlename', 'phone_number',
             'farm_size', 'harvest_season', 'annual_production', 'cultivars',
             'cup_scores_received', 'source_of_cup_scores', 'quality_report_link',
@@ -25,7 +27,9 @@ class FarmerForm(forms.ModelForm):
         ]
         widgets = {
             'farm_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Name'}),
-            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Location'}),
+            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country'}),
+            'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
             'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Bio'}),
             'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
             'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}),
@@ -45,21 +49,58 @@ class FarmerForm(forms.ModelForm):
             'main_role': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Main Role'})
         }
 
+class FarmerProfileForm(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = [
+            'farm_name','farm_size', 'harvest_season', 'annual_production', 'cultivars',
+            'cup_scores_received', 'source_of_cup_scores', 'quality_report_link',
+            'processing_method', 'processing_description', 'profile_picture',
+        ]
+        widgets = {
+            'farm_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Name'}),
+            'farm_size': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Size'}),
+            'harvest_season': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Harvest Season'}),
+            'annual_production': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Annual Production'}),
+            'cultivars': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cultivars'}),
+            'cup_scores_received': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cup Scores Received'}),
+            'source_of_cup_scores': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Source of Cup Scores'}),
+            'quality_report_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'Quality Report Link'}),
+            'processing_method': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Processing Method'}),
+            'processing_description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Processing Description'}),
+
+        }
+
 
 
 class RoasterForm(forms.ModelForm):
     class Meta:
         model = Roaster
-        fields = ['company_name', 'location', 'bio',
+        fields = [
+            'company_name', 'country', 'state', 'city', 'bio',
             'min_lot_size', 'annual_throughput',
-            'origins_interested', 'coffee_types_interested']
-
+            'origins_interested', 'coffee_types_interested', 'profile_picture'
+        ]
+        widgets = {
+            'company_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Company Name'}),
+            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country'}),
+            'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
+            'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Bio'}),
+            'min_lot_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Minimum Lot Size'}),
+            'annual_throughput': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Annual Throughput'}),
+            'origins_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Origins Interested'}),
+            'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Coffee Types Interested'}),
+            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+        }
 
 class RoasterPhotoForm(forms.ModelForm):
     class Meta:
         model = RoasterPhoto
-
-        fields = [ 'photo', 'order']
+        fields = ['photo']
+        widgets = {
+            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
 
 User = get_user_model()
 
@@ -174,20 +215,18 @@ class MeetingRequestForm(forms.ModelForm):
 class FarmerProfileForm(forms.ModelForm):
     class Meta:
         model = Farmer
-        fields = ['farm_name', 'location', 'bio','firstname','middlename','lastname','farm_size','harvest_season','annual_production','cultivars','phone_number','cup_scores_received','source_of_cup_scores','quality_report_link']
+        fields = ['farm_name',  'bio','firstname','middlename','lastname','farm_size','harvest_season','annual_production','cultivars','phone_number','cup_scores_received','source_of_cup_scores','quality_report_link']
         widgets = {
             'farm_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'location': forms.TextInput(attrs={'class': 'form-control'}),
             'bio': forms.Textarea(attrs={'class': 'form-control'}),
         }
 
 class RoasterProfileForm(forms.ModelForm):
     class Meta:
         model = Roaster
-        fields = ['company_name', 'location', 'bio', 'min_lot_size', 'annual_throughput', 'origins_interested', 'coffee_types_interested']
+        fields = ['company_name',  'bio', 'min_lot_size', 'annual_throughput', 'origins_interested', 'coffee_types_interested']
         widgets = {
             'company_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'location': forms.TextInput(attrs={'class': 'form-control'}),
             'bio': forms.Textarea(attrs={'class': 'form-control'}),
             'min_lot_size': forms.TextInput(attrs={'class': 'form-control'}),
             'annual_throughput': forms.TextInput(attrs={'class': 'form-control'}),
@@ -196,13 +235,58 @@ class RoasterProfileForm(forms.ModelForm):
         }
 
 
-
 class FarmerProfilePhotoForm(forms.ModelForm):
     class Meta:
         model = Farmer
         fields = ['profile_picture']
         widgets = {
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+
+class RoasterInfoForm(forms.ModelForm):
+    class Meta:
+        model = Roaster
+        fields = ['company_name', 'country', 'state', 'city', 'profile_picture']
+        widgets = {
+            'company_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Company Name'}),
+            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country'}),
+            'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
+            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+class RoasterBioForm(forms.ModelForm):
+    class Meta:
+        model = Roaster
+        fields = ['bio']
+        widgets = {
+            'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Write something about your company...'}),
+        }
+
+
+class RoasterSourcingForm(forms.ModelForm):
+    class Meta:
+        model = Roaster
+        fields = [
+            'min_lot_size',
+            'annual_throughput',
+            'coffee_types_interested',
+            'origins_interested'
+        ]
+        widgets = {
+            'min_lot_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Minimum Lot Size'}),
+            'annual_throughput': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Annual Throughput'}),
+            'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Coffee Types Interested'}),
+            'origins_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Origins Interested'}),
+        }
+
+class FarmerBioForm(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['bio']
+        widgets = {
+            'bio': forms.Textarea(attrs={'class': 'form-control'}),
         }
 
 
