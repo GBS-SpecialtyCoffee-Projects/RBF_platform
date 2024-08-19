@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck
+from base.views.forms import FarmerBioForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck
 from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto
 from django.contrib import messages
 
@@ -26,13 +26,21 @@ def farmer_dashboard(request):
 
     can_request_meetings = active_meetings_count < 5
 
-    if request.method == 'POST':
+    if request.method == 'POST' and 'main_form' in request.POST:
         form = FarmerProfileForm(request.POST, instance=farmer_profile)
         if form.is_valid():
             form.save()
             return redirect('farmer_dashboard')
+    elif request.method == 'POST' and 'story_form' in request.POST:
+        form = FarmerBioForm(request.POST, instance=farmer_profile)
+        if form.is_valid():
+            form.save()
+            return redirect('farmer_dashboard')
     else:
-        form = FarmerProfileForm(instance=farmer_profile)
+        main_form = FarmerProfileForm(instance=farmer_profile)
+        dp_form = FarmerProfilePhotoForm()
+        story_form = FarmerBioForm(instance=farmer_profile)
+        photo_form = FarmerPhotoForm()
 
     return render(request, 'base/farmer_dashboard.html', {
         'roasters': roasters,
@@ -43,7 +51,10 @@ def farmer_dashboard(request):
         'unused_count': farmer_photos_unadded,
         'pending_meetings': pending_meetings,
         'can_request_meetings': can_request_meetings,
-        'form': form,
+        'main_form': main_form, 
+        'story_form': story_form,
+        'photo_form': photo_form,
+        'dp_form': dp_form
     })
 
 def upload_photo(request):
@@ -54,7 +65,7 @@ def upload_photo(request):
             farmer_photo.user = request.user  # Set the user to the currently logged-in user
             farmer_photo.clean()  # Validate the roaster_photo instance
             farmer_photo.save()
-            return redirect('add_roaster_photo_success')
+            return redirect('farmer_dashboard')
     else:
         form = FarmerPhotoForm()
     return render(request, 'base/upload_photo.html', {'form': form})

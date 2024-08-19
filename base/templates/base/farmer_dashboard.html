@@ -4,7 +4,7 @@
 {% block content %}
 
 {% include 'base/profile_navbar.html' %}
-<div class="container-fluid profile-bg " style="height: 100vh;">
+<div class="container-fluid profile-bg pb-5" style="height: 100vh;">
 
     <div class="d-flex justify-content-center pt-5" >
         <div class="shadow-sm rounded" style="background-color: white; width:95%" >
@@ -53,7 +53,7 @@
                     <div class="d-flex"> 
                         <h2> Your Story</h2>
                         <div class="mt-1">
-                            <button class="ms-2 btn btn-sm"  style="background-color: blue; color: white; ">edit</button>
+                            <button class="ms-2 btn btn-sm"  style="background-color: blue; color: white; " data-bs-toggle="modal" data-bs-target="#storyModal">edit</button>
                         </div>
                         
                     </div> 
@@ -83,7 +83,7 @@
                 <h2>{{ farmer_profile.farm_name }}</h2>
                 </div>
                 <div>
-                    <button class="btn  btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal">Edit Harvest</button>
+                    <button class="btn  btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal">Edit Details</button>
 
                 </div>
 
@@ -139,13 +139,30 @@
 
             <div class="col-sm-6"> 
                 <div class="row">
+                    {% if farmer_photos %}
                     {% for photo in farmer_photos %}
                         {% if photo.photo %}
-                        <div class="col-sm-4 mb-3">
-                            <img width="100%" height="200px" class="rounded" src="{{photo.photo.url}}" alt="..." >
+                        <div class="col-sm-4 mb-3" style="height: 200px;width: 200px;">
+                            <img style="width: 100%;"   class="rounded" src="{{photo.photo.url}}" alt="..." >
                         </div>
                         {% endif %}
                     {% endfor %}
+                        <div class="col-sm-4 mb-3 " style="">
+                            <a href="#photoModal" data-bs-toggle="modal" data-bs-target="#photoModal">
+                                <svg style="fill: green;" xmlns="http://www.w3.org/2000/svg" width="70" height="70" fill="currentColor" class="bi bi-plus-circle-fill mt-4" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+                                  </svg>
+                            </a>
+                          
+                        </div>
+                    <!-- <div class="col-sm-4 mb-3" style="height: 200px;width: 200px;">
+                        <img style="width: 100%;" class="rounded" src="{% static 'img/128px-Placeholder_view_vector.svg.png' %}" alt="..." >
+                    </div>  -->
+                    {% else %}
+                        <div class="col-sm-4 mb-3">
+                            <img class="rounded" src="media/farmer_photos/128px-Placeholder_view_vector.svg.png" alt="..." >
+                        </div> 
+                    {% endif %}
                     
 
 
@@ -185,6 +202,11 @@
 
         </div>
     </div>
+
+    <div class="text-center mt-3 mb-5">
+        <button class="btn btn-primary disabled" data-bs-toggle="modal" data-bs-target="#profModal">Publish Profile</button>
+
+    </div>
 </div>
 
 
@@ -201,10 +223,61 @@
         <div class="modal-body">
             
             <div class="input-group mb-3">
-                    {{ form.profile_picture }}
+                    {{ dp_form.profile_picture }}
                     <!-- <input type="file" class="form-control" id="inputGroupFile02">
                     <label class="input-group-text" for="inputGroupFile02">Upload</label> -->
              </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" name="main_form"  class="btn btn-primary">Save changes</button>
+        </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<!-- Story Modal -->
+<div class="modal fade" id="storyModal" tabindex="-1" aria-labelledby="storyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="storyModalLabel">Edit Story</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form action="{% url 'farmer_dashboard' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+            
+            <div class="input-group mb-3">
+                    {{ story_form.bio }}
+                    <!-- <input type="file" class="form-control" id="inputGroupFile02">
+                    <label class="input-group-text" for="inputGroupFile02">Upload</label> -->
+             </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" name="story_form" class="btn btn-primary">Save changes</button>
+        </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Picture Modal -->
+<div class="modal fade" id="photoModal" tabindex="-1" aria-labelledby="photoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="photoModalLabel">Upload New Photo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form action="{% url 'upload_photo' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+            <div class="input-group mb-3">
+                {{ photo_form.photo }}
+         </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -218,25 +291,53 @@
   <!-- Edit Details Modal -->
   <!-- Scrollable modal -->
   <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
           <h1 class="modal-title fs-5" id="exampleModalLabel">Edit Farm Details</h1>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
+        <form action="{% url 'farmer_dashboard' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
         <div class="modal-body">
             <div class="input-group mb-3">
-                {{ form.farm_name }}
+                {{ main_form.farm_name }}
             </div>
             <div class="input-group mb-3">
-                {{ form.farm_size }}
-
+                {{ main_form.farm_size }}
             </div>
+            <div class="input-group mb-3">
+                {{ main_form.harvest_season }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.annual_production }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.cultivars }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.cup_scores_received }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.source_of_cup_scores }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.affiliation }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.processing_method }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.processing_description }}
+            </div>
+       
+            
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
+          <button type="submit" name="main_form" class="btn btn-primary">Save changes</button>
         </div>
+    </form>
       </div>
     </div>
   </div>
