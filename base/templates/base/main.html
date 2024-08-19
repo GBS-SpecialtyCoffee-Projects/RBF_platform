@@ -10,6 +10,8 @@
         <link rel="stylesheet" href="{% static 'styles/style.css' %}">
         <link rel="stylesheet" href="{% static 'bootstrap.min.css' %}" >
         <link rel="stylesheet" href="{% static 'evk-calendar/evk_calendar_jk.css' %}"  />
+        <link rel="stylesheet" href="{% static 'styles/translation.css' %}">
+
         <!-- <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css"> -->
         <script src="https://kit.fontawesome.com/bb0c45263e.js" crossorigin="anonymous"></script>
         {% block head %}
@@ -27,6 +29,12 @@
         <script src="{% static 'bootstrap-5.3.3/js/bootstrap.min.js' %}"></script> -->
         <script  src="{% static 'evk-calendar/evk_calendar_jk.js' %}" ></script>
         <script src="{% static 'js/script.js' %}"></script>
-    </body>
+        <script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+    }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+        </body>
 </html>
 

@@ -1,102 +1,318 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Roaster Dashboard</title>
-</head>
-<body>
-    <h1>Roaster Dashboard</h1>
-    <p>Welcome, {{ request.user.username }}!</p>
-    <a href="{% url 'add_roaster_photo' %}">Add photo</a>
-    <a href="{% url 'signout' %}">Sign out</a>
+{% extends 'base/main.html' %}
+{% load static %}
 
-    {% if roaster_profile %}
-        <h2>Your Profile</h2>
-        <p>Company Name: {{ roaster_profile.company_name }}</p>
-        <p>Location: {{ roaster_profile.location }}</p>
-        <p>Bio: {{ roaster_profile.bio }}</p>
-        <p>Annual Throughput: {{ roaster_profile.annual_throughput }}</p>
-        <p>Coffee Type Interested: {{ roaster_profile.coffee_types_interested }}</p>
-        <p>Min Lot Size: {{ roaster_profile.min_lot_size }}</p>
-        <p>Origins Interested: {{ roaster_profile.origins_interested }}</p>
-    {% else %}
-        <p>No profile information available.</p>
-    {% endif %}
+{% block content %}
+{% include 'base/roaster_profile_navbar.html' %}
 
-    {% if roaster_profile %}
-        <h2>Edit Your Profile</h2>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Save Changes</button>
-        </form>
-    {% else %}
-        <p>No profile information available.</p>
-    {% endif %}
+<div class="container-fluid profile-bg">
+    <!-- First Container: Profile Header -->
+    <div class="d-flex justify-content-center pt-3">
+        <div class="shadow-sm rounded" style="background-color: white; width:95%">
+            <div>
+                <img
+                    width="100%"
+                    height="150px"
+                    src="{% static 'image/roaster_dashboard_bg.jpeg' %}"
+                    alt=""
+                    style="object-fit: cover; object-position: 50% 80%;">
+            </div>
+            <div>
+                <div class="d-flex justify-content-center py-2">
+                    <div>
+                         {% if roaster_profile.profile_picture %}
+                        <img class="rounded-circle border border-info" width="90px" height="90px" src="{{roaster_profile.profile_picture.url}}" alt="" style="margin-top: -30px;">
+                         {% endif %}
+                    </div>
+                    <div class="ms-4 mt-2">
+                        <div class="d-flex">
+                            <h3>{{roaster_profile.company_name}}</h3>
+                            <a href="#editProfileModal" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                                <svg class="ms-2 mt-1" xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="green" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                                    <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                                </svg>
+                            </a>
+                        </div>
+                        <span>{{roaster_profile.city}}, </span>
+                        <span>{{roaster_profile.state}}, </span>
+                        <span>{{roaster_profile.country}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <h2>Your Photos</h2>
-    <ul>
-        {% for photo in roaster_photos %}
-            <li><img src="{{ photo.photo.url }}" alt="Photo {{ photo.id }}" width="200" /></li>
-        {% endfor %}
-    </ul>
+    <!-- Second Container: About Section, Photos, and Placeholder -->
+    <div class="container-fluid pt-4 px-4">
+        <div class="row">
+            <!-- About Section and Photos -->
+            <div class="col-md-6">
+                <div class="px-4 py-2 rounded shadow-sm" style="background-color: white; height: 100%;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2>About</h2>
+                        <button class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#editBioModal" style="background-color: Blue; color: white;">Edit Profile</button>
+                    </div>
+                    <p>{{roaster_profile.bio}}</p>
 
-    {% if not can_request_meetings %}
-        <div class="error">You can only have up to 5 pending or accepted meeting requests at a time.</div>
-    {% endif %}
+                    <div style="margin-top: 3rem; margin-bottom: 3rem;"></div> <!-- Adding more empty space -->
 
-    <h2>Available Farmers</h2>
-    <ul>
-        {% for farmer in farmers %}
-            <li>
-                {{ farmer.user.username }}
-                {% if can_request_meetings %}
-                    <a href="{% url 'request_meeting' farmer.user.id %}">Request Meeting</a>
-                {% else %}
-                    <span>Cannot request more meetings</span>
-                {% endif %}
-            </li>
-        {% endfor %}
-    </ul>
 
-    <h2>Meeting Requests to You</h2>
-    <ul>
-        {% for meeting_request in meeting_requests_as_requestee %}
-            <li>
-                Meeting request from {{ meeting_request.requester.username }} on {{ meeting_request.proposed_date }}
-                <p>Message: {{ meeting_request.message }}</p>
-                {% if meeting_request.status == 'pending' %}
-                    <a href="{% url 'manage_meeting_request' meeting_request.id 'accept' %}">Accept</a>
-                    <a href="{% url 'manage_meeting_request' meeting_request.id 'reject' %}">Reject</a>
-                {% else %}
-                    Status: {{ meeting_request.status }}
-                {% endif %}
-            </li>
-        {% endfor %}
-    </ul>
+                     <!-- Roaster Photos -->
+                    <div class="row mt-3">
+                        {% for photo in roaster_photos %}
+                            <div class="col-6 col-md-4 mb-3">
+                                <img src="{{ photo.photo.url }}" alt="Photo {{ photo.id }}" class="roaster-photo" style="width: 100%; height: 100px; object-fit: cover;">
+<!--                                {{  photo.photo.url }}-->
+                                <form method="post" action="{% url 'delete_roaster_photo' photo.id %}">
+                                    {% csrf_token %}
+                                     <button type="submit" class="btn btn-sm btn-danger mt-2" style="font-size: 12px; padding: 1px 6px;">Delete</button>
+                                </form>
+                            </div>
+                        {% empty %}
+                            <p>No photos available.</p>
+                        {% endfor %}
+                    </div>
+                    <button class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#editPhotoModal" style="background-color: Blue; color: white;">Add Photo</button>
+                </div>
+            </div>
+<!-- Placeholder Container -->
 
-    <h2>Your Meeting Requests</h2>
-    <ul>
-        {% for meeting_request in meeting_requests_as_requester %}
-            <li>
-                Meeting request to {{ meeting_request.requestee.username }} on {{ meeting_request.proposed_date }} - Status: {{ meeting_request.status }}
-            </li>
-        {% endfor %}
-    </ul>
+          <div class="col-md-6">
+    <div class="px-4 py-2 rounded shadow-sm" style="background-color: white; height: 100%;">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Connections</h2>
+<!--            <button class="btn btn-sm" style="background-color: blue; color: white;">Action</button>-->
+        <style>
+            .meeting-accepted {
+                background-color: #8A9A5B; /* Green */
+                color: black;
+            }
+            .meeting-pending {
+                background-color: #5078C5; /* Blue */
+                color: black;
+            }
+            .meeting-rejected {
+                background-color: #FCD6DB; /* Red */
+                color: black;
+            }
+            .meeting-container {
+                padding: 10px;
+                border-radius: 8px;
+                margin-bottom: 10px;
+            }
+        </style>
+        </div>
+        <ul class="list-unstyled">
+            {% for meeting_request in meeting_requests_as_requester %}
+                <li class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center p-2 rounded
+                        {% if meeting_request.status == 'accepted' %} meeting-accepted
+                        {% elif meeting_request.status == 'pending' %} meeting-pending
+                        {% elif meeting_request.status == 'rejected' %} meeting-rejected
+                        {% endif %}">
+                        <div>
+                            <strong>{{ meeting_request.requestee.username }}</strong><br>
+                            <span>Meeting Request <strong>{{ meeting_request.status }}</strong></span>
+                        </div>
+                        <div class="text-end">
+                            <span>{{ meeting_request.proposed_date|date:"n/j/Y" }}</span><br>
+                            <span>{{ meeting_request.proposed_time|time:"g:iA" }} est.</span>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+        <!-- Display the number of meeting requests used -->
+        <div class="mt-3">
+            <p class="text-end">{{ total_meetings_used }}/5 Meeting Requests Used</p>
+        </div>
+    </div>
+</div>
 
-    <h2>Pending Meetings</h2>
-    <ul>
-        {% for meeting in pending_meetings %}
-            <li>
-                Meeting with
-                {% if meeting.requester == request.user %}
-                    {{ meeting.requestee.username }}
-                {% else %}
-                    {{ meeting.requester.username }}
-                {% endif %}
-                on {{ meeting.proposed_date }} - Status: {{ meeting.status }}
-            </li>
-        {% endfor %}
-    </ul>
-</body>
-</html>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+   <!-- Sourcing Container -->
+    <div class="row mt-3 px-1 py-3 shadow-sm rounded mx-auto" style="background-color: white; max-width: 1375px;">
+        <div class="d-flex justify-content-between">
+            <div>
+                <h2>Sourcing</h2>
+            </div>
+            <div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editSourcingModal">Edit Sourcing</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 1rem; margin-bottom: 1rem;"></div> <!-- Adding more empty space -->
+
+        <div class="col-sm-12">
+            <div class="py-2 rounded">
+                <div class="d-flex justify-content-between">
+                    <span>Minimum Lot Size:</span>
+                    <span>{{ roaster_profile.min_lot_size }}</span>
+                </div>
+                <div class="d-flex mt-3 justify-content-between">
+                    <span>Annual Throughput:</span>
+                    <span>{{ roaster_profile.annual_throughput }}</span>
+                </div>
+                <div class="d-flex mt-3 justify-content-between">
+                    <span>Coffee Type Interested:</span>
+                    <span>{{ roaster_profile.coffee_types_interested }}</span>
+                </div>
+                <div class="d-flex mt-3 justify-content-between">
+                    <span>Origins Interested:</span>
+                    <span>{{ roaster_profile.origins_interested }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div style="margin-top: 7rem; margin-bottom: 7rem;"></div> <!-- Adding more empty space -->
+
+
+
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'roaster_dashboard' %}">
+                {% csrf_token %}
+                <input type="hidden" name="roaster_info_form" value="1">  <!-- Hidden input to distinguish form submissions -->
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="company_name" class="form-label">Company Name</label>
+                        {{ roaster_info_form.company_name.errors }}
+                        {{ roaster_info_form.company_name }} <!-- This should render an input element -->
+                    </div>
+                    <div class="mb-3">
+                        <label for="country" class="form-label">Country</label>
+                        {{ roaster_info_form.country.errors }}
+                        {{ roaster_info_form.country }} <!-- This should render an input element -->
+                    </div>
+                    <div class="mb-3">
+                        <label for="state" class="form-label">State</label>
+                        {{ roaster_info_form.state.errors }}
+                        {{ roaster_info_form.state }} <!-- This should render an input element -->
+                    </div>
+                    <div class="mb-3">
+                        <label for="city" class="form-label">City</label>
+                        {{ roaster_info_form.city.errors }}
+                        {{ roaster_info_form.city }} <!-- This should render an input element -->
+                    </div>
+                    <div class="mb-3">
+                        <label for="profile_picture" class="form-label">Profile Picture</label>
+                        {{ roaster_info_form.profile_picture.errors }}
+                        {{ roaster_info_form.profile_picture }} <!-- This should render a file input element -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Bio Modal -->
+<div class="modal fade" id="editBioModal" tabindex="-1" aria-labelledby="editBioModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editBioModalLabel">Edit Bio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'roaster_dashboard' %}">
+                {% csrf_token %}
+                <input type="hidden" name="roaster_bio_form" value="1">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        {{ roaster_bio_form.bio.errors }}
+                        {{ roaster_bio_form.bio }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Photo Modal -->
+<div class="modal fade" id="editPhotoModal" tabindex="-1" aria-labelledby="editPhotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPhotoModalLabel">Add Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'roaster_dashboard' %}">
+                {% csrf_token %}
+                <input type="hidden" name="roaster_photo_form" value="1">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        {{ roaster_photo_form.photo.errors }}
+                        {{ roaster_photo_form.photo }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+    <!-- Edit Sourcing Modal -->
+<div class="modal fade" id="editSourcingModal" tabindex="-1" aria-labelledby="editSourcingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editSourcingModalLabel">Edit Sourcing</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'roaster_dashboard' %}">
+                {% csrf_token %}
+                <input type="hidden" name="roaster_sourcing_form" value="1">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="min_lot_size" class="form-label">Minimum Lot Size</label>
+                        {{ roaster_sourcing_form.min_lot_size.errors }}
+                        {{ roaster_sourcing_form.min_lot_size }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="annual_throughput" class="form-label">Annual Throughput</label>
+                        {{ roaster_sourcing_form.annual_throughput.errors }}
+                        {{ roaster_sourcing_form.annual_throughput }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="coffee_types_interested" class="form-label">Coffee Types Interested</label>
+                        {{ roaster_sourcing_form.coffee_types_interested.errors }}
+                        {{ roaster_sourcing_form.coffee_types_interested }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="origins_interested" class="form-label">Origins Interested</label>
+                        {{ roaster_sourcing_form.origins_interested.errors }}
+                        {{ roaster_sourcing_form.origins_interested }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
