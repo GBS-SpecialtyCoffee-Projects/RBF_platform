@@ -10,8 +10,10 @@ from django.contrib.auth import authenticate
 class FarmerPhotoForm(forms.ModelForm):
     class Meta:
         model = FarmerPhoto
-        fields = ['photo', 'order']
-
+        fields = ['photo']
+        widgets = {
+            'photo': forms.FileInput(attrs={'class': 'form-control'}),
+        }
 class FarmerForm(forms.ModelForm):
     class Meta:
         model = Farmer
@@ -43,6 +45,28 @@ class FarmerForm(forms.ModelForm):
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
             'preferred_communication_method': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Preferred Communication Method'}),
             'main_role': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Main Role'})
+        }
+
+class FarmerProfileForm(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = [
+            'farm_name','farm_size', 'harvest_season', 'annual_production', 'cultivars',
+            'cup_scores_received', 'source_of_cup_scores', 'quality_report_link',
+            'processing_method', 'processing_description', 'profile_picture',
+        ]
+        widgets = {
+            'farm_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Name'}),
+            'farm_size': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Size'}),
+            'harvest_season': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Harvest Season'}),
+            'annual_production': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Annual Production'}),
+            'cultivars': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cultivars'}),
+            'cup_scores_received': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cup Scores Received'}),
+            'source_of_cup_scores': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Source of Cup Scores'}),
+            'quality_report_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'Quality Report Link'}),
+            'processing_method': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Processing Method'}),
+            'processing_description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Processing Description'}),
+
         }
 
 
@@ -171,15 +195,6 @@ class MeetingRequestForm(forms.ModelForm):
             'message': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter your message here'}),
         }
 
-class FarmerProfileForm(forms.ModelForm):
-    class Meta:
-        model = Farmer
-        fields = ['farm_name', 'location', 'bio','firstname','middlename','lastname','farm_size','harvest_season','annual_production','cultivars','phone_number','cup_scores_received','source_of_cup_scores','quality_report_link']
-        widgets = {
-            'farm_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'location': forms.TextInput(attrs={'class': 'form-control'}),
-            'bio': forms.Textarea(attrs={'class': 'form-control'}),
-        }
 
 class RoasterProfileForm(forms.ModelForm):
     class Meta:
@@ -203,6 +218,14 @@ class FarmerProfilePhotoForm(forms.ModelForm):
         fields = ['profile_picture']
         widgets = {
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+class FarmerBioForm(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['bio']
+        widgets = {
+            'bio': forms.Textarea(attrs={'class': 'form-control'}),
         }
 
 
