@@ -1,0 +1,14 @@
+#google_translate_element {
+    color: ghostwhite;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.goog-te-combo {
+    background-color: #343a40; /* Matching navbar dark background */
+    color: white;
+    border: none;
+    font-weight: 600;
+    padding: 5px;
+    margin-right: 20px;
+}
