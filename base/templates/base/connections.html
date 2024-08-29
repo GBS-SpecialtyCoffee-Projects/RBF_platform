@@ -4,10 +4,83 @@
 {% block content %}
 {% include 'base/roaster_profile_navbar.html' %}
 
+
+<div class="container-fluid p-5">
+
+    <div class="row justify-content-center g-2">
+        <div class="col-3">
+            <h3>
+                Search by:
+            </h3>
+        </div>
+        <div class="col-9">
+            
+            <div class="container d-flex border rounded p-3 pt-4 mb-3" style="flex-direction: column;">
+                <div class="container d-flex" style="flex-direction: row;">
+                    <img class="rounded-circle" width="75px" height="75px" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="">
+                    <div class="col ms-2 container d-flex" style="flex-direction: column;">
+                        <h4 class="mb-0"> Farmer name </h4>
+                        <p class="mb-2">Farm Name, Farm Location</p>
+                        <p class="mb-0">The story text will go here, however not all of it will be displayed. Perhaps the first three or four sentences, 
+                            then, the user can click to expand the story if interested, and be prompted to view their full profile, where 
+                            they can then request a meeting and...</p>
+                    </div>
+                </div>
+                <hr>
+                <div class="container d-flex" style="flex-direction: row;">
+                    <div class="col-auto pe-5">
+                        <p class="mb-1" style="font-weight: 500;">Cultivars:</p>
+                        <p class="mb-1"> Arabica </p>
+                    </div>
+                    <div class="col-auto px-2">
+                        <p class="mb-1" style="font-weight: 500;">Annual Yield:</p>
+                        <p class="mb-1" style="font-weight: 500;"> Cup Scores:</p>
+                        <p class="mb-1" style="font-weight: 500;">Processing:</p>
+                    </div>
+                    <div class="col-auto px-2 text-end">
+                        <p class="mb-1">12,000 lbs</p>
+                        <p class="mb-1">95 - 98</p>
+                        <p class="mb-1">Washed</p>
+
+                    </div>
+                    <div class="col d-flex justify-content-end">
+                        {% if can_request_meetings %}
+                        <a href="#" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#requestMeetingModal" data-user-id="{{ farmer.user.id }}">Connect</a>
+                        {% else %}
+                        <p class="text-warning">You have reached the maximum number of meeting requests.</p>
+                        {% endif %}
+                        <a href="#" class="btn btn-primary mt-3">View Profile</a>
+
+
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="container d-flex border rounded" style="flex-direction: row;">
+                <img class="rounded-circle" width="75px" height="75px" src="{% static 'img/charlesdeluvio-K4mSJ7kc0As-unsplash.jpg' %}" alt="">
+                <div class="col container d-flex" style="flex-direction: column;">
+                    <h4> Farmer name </h4>
+                    <p>The story text will go here, however not all of it will be displayed. Perhaps the first three or four sentences, 
+                        then, the user can click to expand the story if interested, and be prompted to view their full profile, where 
+                        they can then request a meeting and...</p>
+                </div>
+            </div>
+
+            
+        </div>
+    </div>
+
+    
+
+
+</div>
+
+
 <div class="container-fluid profile-bg">
     <h2>Connections</h2>
     <!-- Main Content Wrapper -->
-    <div class="d-flex" style="max-width: 1500px; margin: 0 auto;">
+    <div class="d-flex col" style="max-width: 1500px; margin: 0 auto;">
 
     <!-- Placeholder Container on the Left -->
         <div style="width: 20%; background-color: #f8f9fa; padding: 20px; margin-right: 20px;">
@@ -20,6 +93,37 @@
             <!-- Farmer Cards Section -->
             <div class="d-flex flex-wrap" style="width: 65%; justify-content: center;">
                 {% for farmer in farmers %}
+
+                <div class="container d-flex border rounded p-3 pt-4 mb-3" style="flex-direction: column;">
+                    <div class="container d-flex" style="flex-direction: row;">
+                        <img class="rounded-circle" width="75px" height="75px" src="{% if farmer.profile_picture %}{{ farmer.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}" alt="">
+                        <div class="col ms-2 container d-flex" style="flex-direction: column;">
+                            <h4> {{ farmer.user.username }} </h4>
+                            <p>The story text will go here, however not all of it will be displayed. Perhaps the first three or four sentences, 
+                                then, the user can click to expand the story if interested, and be prompted to view their full profile, where 
+                                they can then request a meeting and...</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="container d-flex" style="flex-direction: row;">
+                        <div class="col">
+                            Cultivars
+                            <p> {{ farmer.cultivars }} </p>
+                        </div>
+                        <div class="col">
+                            Annual Yield:
+                            
+                        </div>
+                        <div class="col">
+                            100 {{ farmers.annual_production }}
+
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <!--
                     <div class="card shadow-sm" style="width: 18rem; margin: 10px;">
                         <img src="{% if farmer.profile_picture %}{{ farmer.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}" class="card-img-top" alt="Farmer Image">
                         <div class="card-body" style="background-color: #4e555b; color: white;">
@@ -38,10 +142,15 @@
 
                         </div>
                     </div>
+                -->
+
                 {% empty %}
                     <p>No farmers available at the moment.</p>
                 {% endfor %}
             </div>
+
+
+            
 
             <!-- Connection Manager Section -->
             <div style="width: 40%; align-right: flex-start;">
