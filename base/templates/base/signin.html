@@ -22,7 +22,12 @@
     </div>
 
     <div class="signin-container">
-        <h1>SIGN IN</h1>
+        <h1 style="margin-bottom: 10px;">SIGN IN</h1> <!-- Adjust the margin-bottom value as needed -->
+        <p style="margin: 0;" class="text-center">
+        <small>Don't have an account?
+            <a href="{% url 'signup' %}" style="color: #4DA167; text-decoration: none; display: inline-block;">Sign up</a>
+        </small>
+        </p>
         <div id="error-message" style="color: red;"></div>
         <form id="signin-form" method="post" action="{% url 'signin' %}">
             {% csrf_token %}

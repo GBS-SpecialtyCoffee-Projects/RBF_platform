@@ -6,6 +6,8 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
+import re
+
 
 class FarmerPhotoForm(forms.ModelForm):
     class Meta:
@@ -134,14 +136,24 @@ class SignupForm(forms.ModelForm):
         password1 = cleaned_data.get('password1')
         password2 = cleaned_data.get('password2')
 
+        # Email confirmation check
         if email and confirm_email and email != confirm_email:
             self.add_error('confirm_email', "Emails don't match")
 
+        # Password confirmation check
         if password1 and password2 and password1 != password2:
             self.add_error('password2', "Passwords don't match")
 
-        return cleaned_data
+        # Password complexity check
+        if password1:
+            if len(password1) < 8:
+                self.add_error('password1', "Password must be at least 8 characters long")
+            if not re.search(r'[A-Z]', password1):
+                self.add_error('password1', "Password must contain at least one uppercase letter")
+            if not re.search(r'\d', password1):
+                self.add_error('password1', "Password must contain at least one number")
 
+        return cleaned_data
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -156,7 +168,6 @@ class SignupForm(forms.ModelForm):
                 Roaster.objects.create(user=user)
 
         return user
-
 
 
 
