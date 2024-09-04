@@ -225,3 +225,5 @@ def vid_x_check(request):
             form.save()
             return redirect('farmer_orientation')
 
+def farmer_connections(request):
+    return render(request, 'base/farmer_connections.html')
