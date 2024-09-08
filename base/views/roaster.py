@@ -61,16 +61,21 @@ def roaster_dashboard(request):
     else:
         roaster_bio_form = RoasterBioForm(instance=roaster_profile)
 
-    # Handle the photo form
-    if request.method == 'POST' and 'roaster_photo_form' in request.POST:
-        roaster_photo_form = RoasterPhotoForm(request.POST, request.FILES)
-        if roaster_photo_form.is_valid():
-            photo_instance = roaster_photo_form.save(commit=False)
-            photo_instance.user = request.user  # Assuming you have a ForeignKey to the user
-            photo_instance.save()
-            return redirect('roaster_dashboard')
+    # Limit the number of photos to 6
+    if roaster_photos.count() >= 6:
+        roaster_photo_form = None  # Disable the photo form if the limit is reached
+        messages.warning(request, 'You have reached the maximum limit of 6 photos.')
     else:
-        roaster_photo_form = RoasterPhotoForm()
+        # Handle the photo form
+        if request.method == 'POST' and 'roaster_photo_form' in request.POST:
+            roaster_photo_form = RoasterPhotoForm(request.POST, request.FILES)
+            if roaster_photo_form.is_valid():
+                photo_instance = roaster_photo_form.save(commit=False)
+                photo_instance.user = request.user  # Assuming you have a ForeignKey to the user
+                photo_instance.save()
+                return redirect('roaster_dashboard')
+        else:
+            roaster_photo_form = RoasterPhotoForm()
 
     # Handle the sourcing form
     if request.method == 'POST' and 'roaster_sourcing_form' in request.POST:

@@ -73,10 +73,14 @@
 <!-- JavaScript for Client-Side Validation -->
 <script>
     document.getElementById('signupForm').addEventListener('submit', function(event) {
-        var email = document.getElementById('{{ form.email.id_for_label }}').value;
+    var email = document.getElementById('{{ form.email.id_for_label }}').value;
         var confirmEmail = document.getElementById('{{ form.confirm_email.id_for_label }}').value;
         var password1 = document.getElementById('{{ form.password1.id_for_label }}').value;
         var password2 = document.getElementById('{{ form.password2.id_for_label }}').value;
+        var termsChecked = document.getElementById('termsCheck').checked;
+
+        // Regex for password validation
+        var passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
         if (email !== confirmEmail) {
             alert("Email addresses don't match");
@@ -85,6 +89,16 @@
 
         if (password1 !== password2) {
             alert("Passwords don't match");
+            event.preventDefault();
+        }
+
+        if (!passwordRegex.test(password1)) {
+            alert("Password must be at least 8 characters long, contain at least one uppercase letter, and one number.");
+            event.preventDefault();
+        }
+
+        if (!termsChecked) {
+            alert("You must accept the terms and policies before signing up.");
             event.preventDefault();
         }
     });

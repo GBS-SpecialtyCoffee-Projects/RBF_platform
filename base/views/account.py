@@ -69,7 +69,7 @@ def farmer_details(request):
 
         if farmer_form.is_valid():
             farmer_form.save()
-            return redirect('base/farmer_dashboard')  # Redirect to signin after successful update
+            return redirect('farmer_dashboard')  # Redirect to signin after successful update
         else:
             # Print form errors for debugging
             print(farmer_form.errors)
@@ -127,7 +127,6 @@ def signin_view(request):
         form = SigninForm()
 
     return render(request, 'base/signin.html', {'form': form})
-
 def signout_view(request):
     logout(request)  # This destroys the session
     return redirect('signin')
