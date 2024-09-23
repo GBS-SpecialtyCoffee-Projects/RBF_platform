@@ -199,20 +199,28 @@ class SigninForm(forms.Form):
             return None
 
 class PasswordResetForm(forms.Form):
-    password = forms.CharField(label='New Password', widget=forms.PasswordInput, required=True)
-    confirm_password = forms.CharField(label='Confirm New Password', widget=forms.PasswordInput, required=True)
+    password = forms.CharField(label='New Password', widget=forms.PasswordInput(attrs={'class': 'form-control'}), required=True)
+    confirm_password = forms.CharField(label='Confirm New Password', widget=forms.PasswordInput(attrs={'class': 'form-control'}), required=True)
 
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get("password")
         confirm_password = cleaned_data.get("confirm_password")
 
+        # Password confirmation check
         if password != confirm_password:
-            raise ValidationError("Passwords do not match.")
+            self.add_error('confirm_password', "Passwords do not match")
 
+        # Password complexity check (same as in SignupForm)
+        if password:
+            if len(password) < 8:
+                self.add_error('password', "Password must be at least 8 characters long")
+            if not re.search(r'[A-Z]', password):
+                self.add_error('password', "Password must contain at least one uppercase letter")
+            if not re.search(r'\d', password):
+                self.add_error('password', "Password must contain at least one number")
 
         return cleaned_data
-
 
 class MeetingRequestForm(forms.ModelForm):
     class Meta:
