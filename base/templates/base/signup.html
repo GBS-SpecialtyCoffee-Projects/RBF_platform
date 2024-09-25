@@ -25,6 +25,9 @@
         <div class="col-12 col-lg-6 form-container">
             <div class="signup-form">
                 <h1 class="text-center">Create Account</h1>
+                <p class="text-center">
+                    <small>Already have an account? <a href="{% url 'signin' %}" style="color: #4DA167; text-decoration: none;">Log In</a></small>
+                </p>
                 <form method="post" id="signupForm">
                     {% csrf_token %}
                     {{ form.non_field_errors }}
@@ -44,11 +47,20 @@
                     </div>
                     <div class="mb-0">
                         <label class="form-label">Password</label> {{ form.password1 }}
+
                     </div>
+                    <small class="text-muted" style="font-size: 0.8em; display: block; margin-top: 5px; margin-left: 1.7rem;">Password must be at least 8 characters long, contain at least one uppercase letter, and one number.</small>
+
                     <div class="mb-3">
                         <label class="form-label">Confirm password</label> {{ form.password2 }}
                     </div>
-
+                    <!-- Checkbox for terms and conditions -->
+                    <div class="form-check mb-3 text-start">
+                        <input class="form-check-input" type="checkbox" id="termsCheck">
+                        <label class="form-check-label" for="termsCheck">
+                            I accept all user <a href="{% url 'landing_page' %}" target="_blank">Terms & policies</a>
+                        </label>
+                    </div>
                     <div class="d-grid justify-content-center">
                         <button type="submit" class="btn btn-primary">Sign Up</button>
                     </div>
@@ -61,10 +73,14 @@
 <!-- JavaScript for Client-Side Validation -->
 <script>
     document.getElementById('signupForm').addEventListener('submit', function(event) {
-        var email = document.getElementById('{{ form.email.id_for_label }}').value;
+    var email = document.getElementById('{{ form.email.id_for_label }}').value;
         var confirmEmail = document.getElementById('{{ form.confirm_email.id_for_label }}').value;
         var password1 = document.getElementById('{{ form.password1.id_for_label }}').value;
         var password2 = document.getElementById('{{ form.password2.id_for_label }}').value;
+        var termsChecked = document.getElementById('termsCheck').checked;
+
+        // Regex for password validation
+        var passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
         if (email !== confirmEmail) {
             alert("Email addresses don't match");
@@ -73,6 +89,16 @@
 
         if (password1 !== password2) {
             alert("Passwords don't match");
+            event.preventDefault();
+        }
+
+        if (!passwordRegex.test(password1)) {
+            alert("Password must be at least 8 characters long, contain at least one uppercase letter, and one number.");
+            event.preventDefault();
+        }
+
+        if (!termsChecked) {
+            alert("You must accept the terms and policies before signing up.");
             event.preventDefault();
         }
     });
@@ -106,5 +132,38 @@
                 });
         }
     });
+
+    document.getElementById('termsCheck').addEventListener('change', function() {
+    const signupButton = document.getElementById('signupButton');
+    if (this.checked) {
+        signupButton.disabled = false;
+    } else {
+        signupButton.disabled = true;
+    }
+});
+
+    document.getElementById('signupForm').addEventListener('submit', function(event) {
+        var email = document.getElementById('{{ form.email.id_for_label }}').value;
+        var confirmEmail = document.getElementById('{{ form.confirm_email.id_for_label }}').value;
+        var password1 = document.getElementById('{{ form.password1.id_for_label }}').value;
+        var password2 = document.getElementById('{{ form.password2.id_for_label }}').value;
+
+        if (email !== confirmEmail) {
+            alert("Email addresses don't match");
+            event.preventDefault();
+        }
+
+        if (password1 !== password2) {
+            alert("Passwords don't match");
+            event.preventDefault();
+        }
+
+        // Check if the terms checkbox is checked before submitting
+        if (!document.getElementById('termsCheck').checked) {
+            alert("You must accept the terms and policies before signing up.");
+            event.preventDefault();
+        }
+    });
+
 </script>
 {% endblock %}
