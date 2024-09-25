@@ -40,6 +40,7 @@ urlpatterns = [
     path('delete_roaster_photo/<int:photo_id>/', roaster.delete_roaster_photo, name='delete_roaster_photo'),
     path('connections/', roaster.connections, name='connections'),
     path('farmer/<int:user_id>/', roaster.farmer_view, name='farmer_profile'),
+    path('farmer_connections/', farmer.farmer_connections, name='farmer_connections')
 
 ]
 
