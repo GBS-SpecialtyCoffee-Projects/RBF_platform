@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerBioForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck
 from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto
 from django.contrib import messages
+import os
 
 def farmer_dashboard(request):
     if request.user.group != 'farmer':
@@ -83,6 +84,18 @@ def update_profile(request):
 
     # return render(request, 'base/farmer_dashboard.html.html', {'form': form})
     return redirect('farmer_dashboard')
+
+def delete_farmer_photo(request, photo_id):
+    photo = get_object_or_404(FarmerPhoto, id=photo_id, user=request.user)
+    if request.method == 'GET':
+        # Delete the file from the filesystem
+        if photo.photo and os.path.isfile(photo.photo.path):
+            os.remove(photo.photo.path)
+
+        # Delete the record from the database
+        photo.delete()
+
+        return redirect('farmer_dashboard')
 
 def upload_success(request):
     return render(request, 'base/upload_success.html')
