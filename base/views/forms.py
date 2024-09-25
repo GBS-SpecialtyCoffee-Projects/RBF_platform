@@ -6,8 +6,6 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
-import re
-
 
 class FarmerPhotoForm(forms.ModelForm):
     class Meta:
@@ -136,24 +134,14 @@ class SignupForm(forms.ModelForm):
         password1 = cleaned_data.get('password1')
         password2 = cleaned_data.get('password2')
 
-        # Email confirmation check
         if email and confirm_email and email != confirm_email:
             self.add_error('confirm_email', "Emails don't match")
 
-        # Password confirmation check
         if password1 and password2 and password1 != password2:
             self.add_error('password2', "Passwords don't match")
 
-        # Password complexity check
-        if password1:
-            if len(password1) < 8:
-                self.add_error('password1', "Password must be at least 8 characters long")
-            if not re.search(r'[A-Z]', password1):
-                self.add_error('password1', "Password must contain at least one uppercase letter")
-            if not re.search(r'\d', password1):
-                self.add_error('password1', "Password must contain at least one number")
-
         return cleaned_data
+
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -168,6 +156,7 @@ class SignupForm(forms.ModelForm):
                 Roaster.objects.create(user=user)
 
         return user
+
 
 
 
@@ -199,28 +188,20 @@ class SigninForm(forms.Form):
             return None
 
 class PasswordResetForm(forms.Form):
-    password = forms.CharField(label='New Password', widget=forms.PasswordInput(attrs={'class': 'form-control'}), required=True)
-    confirm_password = forms.CharField(label='Confirm New Password', widget=forms.PasswordInput(attrs={'class': 'form-control'}), required=True)
+    password = forms.CharField(label='New Password', widget=forms.PasswordInput, required=True)
+    confirm_password = forms.CharField(label='Confirm New Password', widget=forms.PasswordInput, required=True)
 
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get("password")
         confirm_password = cleaned_data.get("confirm_password")
 
-        # Password confirmation check
         if password != confirm_password:
-            self.add_error('confirm_password', "Passwords do not match")
+            raise ValidationError("Passwords do not match.")
 
-        # Password complexity check (same as in SignupForm)
-        if password:
-            if len(password) < 8:
-                self.add_error('password', "Password must be at least 8 characters long")
-            if not re.search(r'[A-Z]', password):
-                self.add_error('password', "Password must contain at least one uppercase letter")
-            if not re.search(r'\d', password):
-                self.add_error('password', "Password must contain at least one number")
 
         return cleaned_data
+
 
 class MeetingRequestForm(forms.ModelForm):
     class Meta:
