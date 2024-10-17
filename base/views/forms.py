@@ -2,6 +2,7 @@
 
 from django import forms
 from base.models import FarmerPhoto,Roaster, RoasterPhoto, User, Farmer, MeetingRequest
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -25,16 +26,38 @@ class FarmerForm(forms.ModelForm):
             'processing_method', 'processing_description', 'profile_picture',
             'preferred_communication_method', 'main_role'
         ]
+        labels = {
+            "farm_name": "Farm Name*",
+            'bio': 'Bio*',
+            'country': 'Country*',
+            'state': 'State*',
+            'city': 'City*',
+            'firstname':'First Name*',
+            'lastname': 'Last Name*',
+            'middlename': 'Middle Name*',
+            'phone_number': 'Phone Number*',
+            'farm_size': 'Farm Size',
+            'harvest_season': 'Harvest Season',
+            'annual_production': 'Annual Production',
+            'cultivars': 'Cultivars',
+            'cup_scores_received': 'Cup Scores Received',
+            'source_of_cup_scores': 'Source of Cup Scores',
+            'quality_report_link': 'Quality Report Link',
+            'processing_method': 'Processing Method',
+            'processing_description': 'Processing Description',
+            'profile_picture': 'Profile Picture',
+            'preferred_communication_method': 'Preferred Communication Method',
+        }
         widgets = {
-            'farm_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Name'}),
-            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country'}),
-            'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State'}),
-            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
-            'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Bio'}),
-            'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
-            'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}),
-            'middlename': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Middle Name'}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number'}),
+            'farm_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Name'},),
+            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country','required':'true'}),
+            'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State','required':'true'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City','required':'true'}),
+            'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Bio','required':'true'}),
+            'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name','required':'true'}),
+            'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name','required':'true'}),
+            'middlename': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Middle Name','required':'true'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number','required':'true'}),
             'farm_size': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Size'}),
             'harvest_season': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Harvest Season'}),
             'annual_production': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Annual Production'}),
@@ -212,14 +235,6 @@ class MeetingRequestForm(forms.ModelForm):
             'message': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter your message here'}),
         }
 
-class FarmerProfileForm(forms.ModelForm):
-    class Meta:
-        model = Farmer
-        fields = ['farm_name',  'bio','firstname','middlename','lastname','farm_size','harvest_season','annual_production','cultivars','phone_number','cup_scores_received','source_of_cup_scores','quality_report_link']
-        widgets = {
-            'farm_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'bio': forms.Textarea(attrs={'class': 'form-control'}),
-        }
 
 class RoasterProfileForm(forms.ModelForm):
     class Meta:
