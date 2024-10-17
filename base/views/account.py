@@ -127,6 +127,7 @@ def signin_view(request):
         form = SigninForm()
 
     return render(request, 'base/signin.html', {'form': form})
+
 def signout_view(request):
     logout(request)  # This destroys the session
     return redirect('signin')
@@ -165,53 +166,49 @@ def email_verify(request):
     return render(request, 'base/email_verify.html')
 
 #rename to password reset email
-def verify_email(request):
-    email = request.session.get('email')  # Retrieve email from session
-    if email:
-        try:
-            user = User.objects.get(email=email)
-            mail_subject = 'Password reset verification'
-            message = render_to_string('base/template_verify_email.html', {
-                'user': user,
-                'domain': get_current_site(request).domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': default_token_generator.make_token(user),
-                'protocol': 'https' if request.is_secure() else 'http'
-            })
-            email_message = EmailMessage(mail_subject, message, to=[user.email])
-            if email_message.send():
-                messages.success(request, 'Please check your email to reset your password.')
-            else:
-                messages.error(request, 'Failed to send the email. Please try again.')
-        except User.DoesNotExist:
-            messages.error(request, 'No user is associated with this email address.')
-    else:
-        messages.error(request, 'Email not found in session.')
+def verify_email(request, email):
+    try:
+        user = User.objects.get(email=email)
+        mail_subject = 'Password reset verification'
+        message = render_to_string('base/template_verify_email.html', {
+            'user': user,
+            'domain': get_current_site(request).domain,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': default_token_generator.make_token(user),
+            'protocol': 'https' if request.is_secure() else 'http'
+        })
+        email_message = EmailMessage(mail_subject, message, to=[user.email])
+        if email_message.send():
+            messages.success(request, 'Please check your email to reset your password.')
+        else:
+            messages.error(request, 'Failed to send the email. Please try again.')
+    except User.DoesNotExist:
+        messages.error(request, 'No user is associated with this email address.')
     return redirect('email_verify')
 
 
-# def verify_email(request):
-#     try:
-#         # get the user
-#         user = User.objects.get(email='israelwhiz@gmail.com')
-#     except User.DoesNotExist:
-#         messages.error(request, 'User does not exist')
-#     mail_subject = 'Verify your email'
-#     message = render_to_string('base/template_verify_email.html', {
-#         'user': user.username,
-#         'domain': get_current_site(request).domain,
-#         'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-#         'token': account_activation_token.make_token(user),
-#         'protocol': 'https' if request.is_secure() else 'http'
-#     })
-#     email = EmailMessage(
-#         mail_subject, message, to=[user.email]
-#     )
-#     if email.send():
-#        messages.success(request, f'Dear {user.username}, please check your email to confirm your registration.')
-#     else:
-#        messages.error(request, 'Something went wrong. Please try again.')
-#     return render(request, 'base/email_verify.html')
+def verify_email(request):
+    try:
+        # get the user 
+        user = User.objects.get(email='israelwhiz@gmail.com')
+    except User.DoesNotExist:
+        messages.error(request, 'User does not exist')
+    mail_subject = 'Verify your email'
+    message = render_to_string('base/template_verify_email.html', {
+        'user': user.username,
+        'domain': get_current_site(request).domain,
+        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+        'token': account_activation_token.make_token(user),
+        'protocol': 'https' if request.is_secure() else 'http'
+    })
+    email = EmailMessage(
+        mail_subject, message, to=[user.email]
+    )
+    if email.send(): 
+       messages.success(request, f'Dear {user.username}, please check your email to confirm your registration.')
+    else:
+       messages.error(request, 'Something went wrong. Please try again.')
+    return render(request, 'base/email_verify.html')
 
 
 def activate(request, uidb64, token):
@@ -233,8 +230,7 @@ def activate(request, uidb64, token):
 def enter_email(request):
     if request.method == 'POST':
         email = request.POST['email']
-        request.session['email'] = email  # Store email in session
-        return redirect('verify_email')  # No need to pass email as a URL parameter
+        return redirect('verify_email', email=email)
     return render(request, 'base/enter_email.html')
 
 
@@ -274,6 +270,9 @@ def farmer_onboarding(request):
 
 def farmer_orientation(request):
     return render(request, 'base/farmer_orientation.html')
+
+def team(request):
+    return render(request, 'base/team.html')
 
 
 

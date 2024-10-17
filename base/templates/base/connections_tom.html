@@ -6,44 +6,78 @@
 
 <div class="container-fluid" style="background-color: #f8f9fa;">
     <div class="container-fluid pe-5 py-3">
-        <div class="row g-5">
-            <!-- Left Column -->
-            <div class="col-12 col-md-4">
-                <h3 class="ps-md-5">
+
+        <div class="row d-flex justify-content-start g-5">
+            <div class="col-4">
+                <h3 class="ps-5">
                     Search by:
                 </h3>
-                             <!-- Filters -->
-                <form method="GET" action="{% url 'connections' %}">
-                    <!-- Annual Production Filter -->
-                    <div class="mb-3">
-                        <label for="annual_production" class="form-label">Annual Production (tons)</label>
-                        <select class="form-select" name="annual_production" id="annual_production">
-                            <option value="" {% if not selected_annual_production %}selected{% endif %}>All</option>
-                            <option value="0.1-5" {% if selected_annual_production == '0.1-5' %}selected{% endif %}>0.1 – 5 tons</option>
-                            <option value="5-20" {% if selected_annual_production == '5-20' %}selected{% endif %}>5 – 20 tons</option>
-                            <option value="20-50" {% if selected_annual_production == '20-50' %}selected{% endif %}>20 – 50 tons</option>
-                            <option value="50+" {% if selected_annual_production == '50+' %}selected{% endif %}>50+ tons</option>
-                        </select>
+                <!-- Filters -->
+                <div class="container-fluid">
+                    
+                    <div class="dropdown open pt-3">
+                        <button
+                            class="btn btn-secondary dropdown-toggle"
+                            type="button"
+                            id="triggerId"
+                            data-bs-toggle="dropdown"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                        >
+                            Filter
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="triggerId">
+                            <button class="dropdown-item" href="#"> Filter 1 </button>
+                            <button class="dropdown-item" href="#">
+                                Filter 2
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Farm Size Filter -->
-                    <div class="mb-3">
-                        <label for="farm_size" class="form-label">Farm Size (hectares)</label>
-                        <select class="form-select" name="farm_size" id="farm_size">
-                            <option value="" {% if not selected_farm_size %}selected{% endif %}>All</option>
-                            <option value="0.1-2" {% if selected_farm_size == '0.1-2' %}selected{% endif %}>0.1 – 2 hectares</option>
-                            <option value="2-10" {% if selected_farm_size == '2-10' %}selected{% endif %}>2 – 10 hectares</option>
-                            <option value="10-50" {% if selected_farm_size == '10-50' %}selected{% endif %}>10 – 50 hectares</option>
-                            <option value="50+" {% if selected_farm_size == '50+' %}selected{% endif %}>50+ hectares</option>
-                        </select>
+                    <div class="dropdown open pt-3">
+                        <button
+                            class="btn btn-secondary dropdown-toggle"
+                            type="button"
+                            id="triggerId"
+                            data-bs-toggle="dropdown"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                        >
+                            Filter
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="triggerId">
+                            <button class="dropdown-item" href="#"> Filter 1 </button>
+                            <button class="dropdown-item" href="#">
+                                Filter 2
+                            </button>
+                        </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">Apply Filters</button>
-                </form>
+                    <div class="dropdown open pt-3">
+                        <button
+                            class="btn btn-secondary dropdown-toggle"
+                            type="button"
+                            id="triggerId"
+                            data-bs-toggle="dropdown"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                        >
+                            Filter
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="triggerId">
+                            <button class="dropdown-item" href="#"> Filter 1 </button>
+                            <button class="dropdown-item" href="#">
+                                Filter 2
+                            </button>
+                        </div>
+                    </div>
 
+                </div>
 
                 <div class="pt-5 mt-5">
-                    <!-- Connection Manager Card -->
+
+                    <!-- Still need to modify -->
+
                     <div class="card shadow-sm" style="background-color: white;">
                         <div class="card-header">
                             <h5 class="card-title">Connection Manager</h5>
@@ -58,6 +92,7 @@
                                     <div>
                                         <strong>{{ meeting.requestee.username }}</strong>
                                         <div>{{ meeting.proposed_date|date:"n/j/Y" }}</div>
+
                                         <div>{{ meeting.proposed_date|time:"g:iA" }} est.</div>
                                     </div>
                                     <div class="d-flex">
@@ -82,127 +117,130 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Right Column -->
-            <div class="col-12 col-md-8" style="overflow-x: auto; max-height: 100vh;">
+
+            </div>
+            <div class="col-8" style="overflow-x: auto; max-height: 100vh;">
+
                 <h3 class="pb-3">
                     Search Results:
                 </h3>
 
+
                 <!-- Example Card -->
-<!--                <div class="card mb-3">-->
-<!--                    <div class="card-body">-->
-<!--                        &lt;!&ndash; Top Section &ndash;&gt;-->
-<!--                        <div class="row">-->
-<!--                            <div class="col-auto">-->
-<!--                                <img class="rounded-circle"-->
-<!--                                    src="{% static 'img/placeholder.png' %}"-->
-<!--                                    alt=""-->
-<!--                                    width="100"-->
-<!--                                    height="100"-->
-<!--                                    style="object-fit: cover;">-->
-<!--                            </div>-->
-<!--                            <div class="col">-->
-<!--                                <h4 class="mb-0"> 'Farmer's Name' </h4>-->
-<!--                                <p class="mb-2"> 'Role' of 'Farm name' in 'Farmer location'</p>-->
-<!--                                <p class="mb-0">-->
-<!--                                    The story text will go here, however not all of it will be displayed. Perhaps the first three or four sentences, then, the user can click to expand the story if interested, and be prompted to view their full profile, where they can then request a meeting and...-->
-<!--                                </p>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                        <hr>-->
-<!--                        &lt;!&ndash; Details Section &ndash;&gt;-->
-<!--                        <div class="row">-->
-<!--                            <div class="col-6 col-sm-3">-->
-<!--                                <p class="mb-1 fw-semibold">Cultivars:</p>-->
-<!--                                <p class="mb-1"> Arabica </p>-->
-<!--                            </div>-->
-<!--                            <div class="col-6 col-sm-3">-->
-<!--                                <p class="mb-1 fw-semibold">Annual Yield:</p>-->
-<!--                                <p class="mb-1">12,000 lbs</p>-->
-<!--                            </div>-->
-<!--                            <div class="col-6 col-sm-3">-->
-<!--                                <p class="mb-1 fw-semibold">Cup Scores:</p>-->
-<!--                                <p class="mb-1">95 - 98</p>-->
-<!--                            </div>-->
-<!--                            <div class="col-6 col-sm-3">-->
-<!--                                <p class="mb-1 fw-semibold">Processing:</p>-->
-<!--                                <p class="mb-1">Washed</p>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                        &lt;!&ndash; Action Buttons &ndash;&gt;-->
-<!--                        <div class="row">-->
-<!--                            <div class="col text-end">-->
-<!--                                <a href="#" class="btn btn-primary me-2">Connect</a>-->
-<!--                                <a href="#" class="btn btn-primary">View Profile</a>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
+                <div class="container d-flex border rounded p-3 pb-4 mb-3 bg-white" style="flex-direction: column;">
+
+
+                    <div class="container d-flex" style="flex-direction: row;">
+                        <img class="rounded-circle" width="100px" height="100px" src="{% if farmer.profile_picture %}{{ farmer.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}" alt="">
+                        <div class="col ms-2 container d-flex" style="flex-direction: column;">
+                            <h4 class="mb-0"> 'Farmer's Name' </h4>
+                            <p class="mb-2"> 'Role' of 'Farm name' in 'Farmer location'</p>
+                            <p class="mb-0"> The story text will go here, however not all 
+                                of it will be displayed. Perhaps the first three or four 
+                                sentences, then, the user can click to expand the story if 
+                                interested, and be prompted to view their full profile, 
+                                where they can then request a meeting and... </p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="container row d-flex" style="flex-direction: row;">
+                        <div class="col-auto pe-5">
+                            <p class="mb-1" style="font-weight: 500;">Cultivars:</p>
+                            <p class="mb-1"> Arabica </p>
+                        </div>
+                        <div class="col-auto px-2">
+                            <p class="mb-1" style="font-weight: 500;">Annual Yield:</p>
+                            <p class="mb-1" style="font-weight: 500;"> Cup Scores:</p>
+                            <p class="mb-1" style="font-weight: 500;">Processing:</p>
+                        </div>
+                        <div class="col-auto px-2 text-end">
+                            <p class="mb-1">12,000 lbs</p>
+                            <p class="mb-1">95 - 98</p>
+                            <p class="mb-1">Washed</p>
+
+                        </div>
+                        <div class="col d-flex justify-content-end align-items-center">
+                            {% if can_request_meetings %}
+                            <a href="#" class="btn btn-primary me-4" data-bs-toggle="modal" data-bs-target="#requestMeetingModal" data-user-id="{{ farmer.user.id }}">Connect</a>
+                            {% else %}
+                            <p class="text-warning">You have reached the maximum number of meeting requests.</p>
+                            {% endif %}
+                            <a href="#" class="btn btn-primary">View Profile</a>
+
+
+                        </div>
+                    </div>
+
+                </div>
 
                 <!-- Display Farmers -->
                 {% for farmer in farmers %}
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <!-- Top Section -->
-                            <div class="row">
-                                <div class="col-auto">
-                                    <img class="rounded-circle"
-                                        src="{% if farmer.profile_picture %}{{ farmer.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}"
-                                        alt=""
-                                        width="100"
-                                        height="100"
-                                        style="object-fit: cover;">
-                                </div>
-                                <div class="col">
-                                    <h4 class="mb-0"> {{ farmer.firstname }} {{ farmer.lastname }} </h4>
-                                    <p class="mb-2">{{ farmer.main_role }} of {{ farmer.farm_name }} located in {{ farmer.city }}, {{ farmer.country }}</p>
-                                    <p class="mb-0">
-                                        {{ farmer.bio|truncatewords:50 }}
-                                    </p>
-                                </div>
-                            </div>
-                            <hr>
-                            <!-- Details Section -->
-                            <div class="row">
-                                <div class="col-6 col-sm-3">
-                                    <p class="mb-1 fw-semibold">Cultivars:</p>
-                                    <p class="mb-1"> {{ farmer.cultivars }} </p>
-                                </div>
-                                <div class="col-6 col-sm-3">
-                                    <p class="mb-1 fw-semibold">Annual Yield:</p>
-                                    <p class="mb-1"> {{ farmer.annual_production }} </p>
-                                </div>
-                                <div class="col-6 col-sm-3">
-                                    <p class="mb-1 fw-semibold">Cup Scores:</p>
-                                    <p class="mb-1"> {{ farmer.cup_scores_received }} </p>
-                                </div>
-                                <div class="col-6 col-sm-3">
-                                    <p class="mb-1 fw-semibold">Processing:</p>
-                                    <p class="mb-1"> {{ farmer.processing_method }} </p>
-                                </div>
-                            </div>
-                            <!-- Action Buttons -->
-                            <div class="row">
-                                <div class="col text-end">
-                                    {% if can_request_meetings %}
-                                        <a href="#" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#requestMeetingModal" data-user-id="{{ farmer.user.id }}">Connect</a>
-                                    {% else %}
-                                        <p class="text-warning">You have reached the maximum number of meeting requests.</p>
-                                    {% endif %}
-                                    <a href="{% url 'farmer_profile' farmer.user.id %}" class="btn btn-primary">View Profile</a>
-                                </div>
-                            </div>
+                
+                <div class="container d-flex border rounded p-3 pb-4 mb-3 bg-white" style="flex-direction: column;">
+
+
+                    <div class="container d-flex" style="flex-direction: row;">
+                        <img class="rounded-circle" width="100px" height="100px" src="{% if farmer.profile_picture %}{{ farmer.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}" alt="">
+                        <div class="col ms-2 container d-flex" style="flex-direction: column;">
+                            <h4 class="mb-0"> {{ farmer.firstname }} {{ farmer.lastname }} </h4>
+                            <p class="mb-2">{{farmer.main_role}} of {{ farmer.farm_name }} located in {{ farmer.city }}, {{ farmer.country }}</p>
+                            <p class="mb-0">{{farmer.bio}}</p>
                         </div>
                     </div>
+                    <hr>
+                    <div class="container row d-flex" style="flex-direction: row;">
+                        <div class="col-auto pe-5">
+                            <p class="mb-1" style="font-weight: 500;">Cultivars:</p>
+                            <p class="mb-1"> {{ farmer.cultivars }} </p>
+                        </div>
+                        <div class="col-auto px-2">
+                            <p class="mb-1" style="font-weight: 500;">Annual Yield:</p>
+                            <p class="mb-1" style="font-weight: 500;"> Cup Scores:</p>
+                            <p class="mb-1" style="font-weight: 500;">Processing:</p>
+                        </div>
+                        <div class="col-auto px-2 text-end">
+                            <p class="mb-1"> {{ farmer.annual_production }} </p>
+                            <p class="mb-1"> {{ farmer.cup_scores_received }} </p>
+                            <p class="mb-1"> {{ farmer.processing_method }} </p>
+
+                        </div>
+                        <div class="col d-flex justify-content-end align-items-center">
+                            {% if can_request_meetings %}
+                            <a href="#" class="btn btn-primary me-4" data-bs-toggle="modal" data-bs-target="#requestMeetingModal" data-user-id="{{ farmer.user.id }}">Connect</a>
+                            {% else %}
+                            <p class="text-warning">You have reached the maximum number of meeting requests.</p>
+                            {% endif %}
+                            <a href="#" class="btn btn-primary">View Profile</a>
+
+
+                        </div>
+                    </div>
+
+                </div>
+
                 {% empty %}
-                    <p>None available.</p>
+                    <p>None availble.</p>
                 {% endfor %}
+                
             </div>
         </div>
+
     </div>
 </div>
+
+
+<style>
+    .container-fluid.profile-bg {
+        padding: 20px;
+    }
+    .d-flex.justify-content-between {
+        margin: 0 auto;
+    }
+    .card {
+        margin: 10px;
+    }
+</style>
 
 <!-- Request Meeting Modal -->
 <div class="modal fade" id="requestMeetingModal" tabindex="-1" aria-labelledby="requestMeetingModalLabel" aria-hidden="true">
@@ -253,4 +291,5 @@
         });
     });
 </script>
+
 {% endblock %}
