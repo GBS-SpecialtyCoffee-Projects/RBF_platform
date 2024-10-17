@@ -1,13 +1,16 @@
+# admin.py
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Farmer, FarmerPhoto, MeetingRequest, RoasterPhoto,Roaster
+from .models import User, Farmer, FarmerPhoto, MeetingRequest, RoasterPhoto, Roaster
 from django.contrib.auth.models import Group
-
+from django.db.models import Count
+from django.utils.safestring import mark_safe
 
 class CustomUserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'email', 'password')}),
-        ('Personal info', {'fields': ('firstname', 'middlename', 'lastname', 'phone_number', 'group')}),
+        ('Personal info', {'fields': ('group',)}),
         ('Permissions', {'fields': ('is_staff', 'is_superuser')}),
         ('Important dates', {'fields': ('last_login', 'date_joined', 'updated_date')}),
     )
@@ -17,15 +20,32 @@ class CustomUserAdmin(BaseUserAdmin):
             'fields': ('username', 'email', 'password1', 'password2'),
         }),
     )
-    list_display = ('username', 'email', 'group', 'is_staff')
+    list_display = ('username', 'email', 'group', 'is_staff', 'display_summary_stats')
     search_fields = ('username', 'email')
     list_filter = ('group', 'is_staff')
     ordering = ('username',)
-    filter_horizontal = ()  # Remove 'groups' and 'user_permissions'
 
+    def display_summary_stats(self, obj=None):
+        # This will display summary data as a row in the list display
+        total_users = User.objects.count()
+        total_farmers = Farmer.objects.count()
+        total_roasters = Roaster.objects.count()
+        active_users = User.objects.filter(last_login__isnull=False).count()
+        inactive_users = total_users - active_users
+
+        # Meeting Requests Summary
+        meeting_requests_summary = MeetingRequest.objects.values('status').annotate(count=Count('status'))
+        meeting_requests_summary_display = ", ".join([f"{item['status']}: {item['count']}" for item in meeting_requests_summary])
+
+        return f"Users: {total_users}, Farmers: {total_farmers}, Roasters: {total_roasters}, " \
+               f"Active: {active_users}, Inactive: {inactive_users}, " \
+               f"Meeting Requests: {meeting_requests_summary_display}"
+
+    display_summary_stats.short_description = 'Summary Statistics'
+
+# Registering the CustomUserAdmin
 admin.site.register(User, CustomUserAdmin)
 admin.site.unregister(Group)
-
 
 
 @admin.register(Farmer)
