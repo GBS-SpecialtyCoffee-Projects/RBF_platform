@@ -1,0 +1,26 @@
+{% load static %}
+
+<footer class="container-fluid py-5 pt-5" style="background-color: #4C6AA3;">
+    <div class="row justify-content-center gx-5 pt-5" style="max-width: 100%;">
+      <!-- Left Section -->
+      <div class="col-lg-6 col-md-12 d-flex align-items-start mb-4">
+        <div class="text-white">
+            <img src="{% static 'img/GBSLogo.png' %}" alt="Emory GBS Logo" class="img-fluid me-4" style="width: 80%; height: auto; max-width: 678px;">
+          <p class="mt-4" style="font-size: 0.9em; font-style: italic;">A collaborative initiative led by Emory University’s Goizueta Business School</p>
+          <p class="mb-0" style="font-size: 0.9em;">&copy; 2024 Goizueta Business School</p>
+        </div>
+      </div>
+  
+      <!-- Right Section -->
+      <div class="col-lg-3 col-md-6 col-sm-12 border-start">
+        <h5 class="text-white">Quick Links</h5>
+        <ul class="list-unstyled">
+          <li><a href="{% url 'landing_page' %}" class="text-white">Home</a></li>
+          <li><a href="{% url 'team' %}" class="text-white">About Us</a></li>
+          <li><a href="#" class="text-white">Web Features</a></li>
+          <li><a href="#" class="text-white">The Specialty Coffee Transaction Guide</a></li>
+          <li><a href="#" class="text-white">Contact Us</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>

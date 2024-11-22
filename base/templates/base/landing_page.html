@@ -2,43 +2,46 @@
 {% load static %}
 
 {% block content %}
-    <div class="main-bg">
+    <div class="container-fluid main-bg">
 
-    {% include "base/navbar.html" %}"
-    <div style="margin-top: 150px" class="">
-        <div class="text-center" >
-            <h1 style="color: white; font-weight: bolder; font-size: 60px;;">Quality coffee,<br>straight from the<br> source. </h1>
-            <p class="mt-3" style="color: ghostwhite; font-size: 20px;">Connecting Farmers and Roaster across<br> the globe directly.</p>
+    {% include "base/navbar.html" %}
+    <div>
+
+        <div class="d-flex justify-content-center align-items-center" style="height: 80vh;">
+            <div class="row pt-5">
+                <div class="text-center" >
+                    <h1 class="text-white fw-bold">Quality coffee,<br>straight from the<br> source. </h1>
+                    <p class="mt-3 fs-5 text-white">Connecting specialty coffee producers<br> and roasters DIRECTLY.</p>
+                </div>
+                <div class="text-center">
+                    <button style="background-color: #303C50; color: white;font-weight: bold;"  type="button" class="btn mt-3 ml-3 px-4 py-2">Start Now </button>
+                </div>
+                <div class="text-center">
+                    <button style="color: white;font-weight: lighter;" type="button" class="btn mt-3 ml-3 px-4 py-2 ">Learn More</button>
+                </div>
+            </div>    
+    
         </div>
-        <div class="text-center">
-            <button style="background-color: #303C50; color: white;font-weight: bold;"  type="button" class="btn mt-3 ml-3 px-4 py-2">Start Now </button>
-        </div>
-        <div class="text-center">
-            <button style="color: white;font-weight: lighter;" type="button" class="btn mt-3 ml-3 px-4 py-2 ">learn more</button>
-        </div>
+    </div>
+
 
     </div>
 
-    </div>
+    <div class="container-fluid">
+        <div class="row align-items-stretch p-5" style="background-color:#212529; color: ghostwhite;">
+            <div class="col p-4 mx-5">
+                <h2 width="10px" class="fw-bold">Understanding <br> Coffee Circuit</h2>
+                <p width="50px" class="fw-medium">It allows farmers whose identities are normally lost in the supply chain the chance to be seen and heard the way they want to be, without curation, censorship, or marketing filter. It allows roasters to connect directly with farmers who normally would never find, even if they travel to farming communities.</p>
+                <div class="pt-4">
+                    <button style="background-color:#9DAD6F ;color: ghostwhite" class="btn fw-semibold">I am a Producer</button>
+                    <button style="background-color:#503B31 ;color: ghostwhite" class="btn fw-semibold mx-3">I am a Roaster</button>
+                </div>
 
-    <div style="background-color:#212529 ;">
-        <div class="container" style="padding-top: 100px;padding-bottom: 60px; color: ghostwhite;">
-            <div class="row" >
-                <div class="col-md-6 coll-info">
-                    <h2 width="10px" style="font-weight:bold ;" class="">Understanding the Specialty coffee collective</h2>
-                    <p width="50px" class="" style="font-weight: 500;">It allows farmers whose identities are normally lost in the supply chain the chance to be seen and heard the way they want to be, without curation, censorship, or marketing filter. It allows roasters to connect directly with farmers who normally would never find, even if they travel to farming communities.</p>
-                    <div class="pt-4">
-                        <button style="background-color:#9DAD6F ;color: ghostwhite;font-weight: 500;" class="btn ">Producer</button>
-                        <button style="background-color:#503B31 ;color: ghostwhite;font-weight: 500;" class="btn mx-3">Roaster</button>
-                    </div>
-        
-                </div>
-                <div class="col-md-6" id="embed-vid">
-                        <iframe  
-                    src="https://www.youtube.com/embed/tgbNymZ7vqY">
-                    </iframe>
-                    
-                </div>
+            </div>
+            <div class="col p-4">
+                <iframe class="ratio ratio-4x3"
+                src="https://www.youtube.com/embed/tgbNymZ7vqY">
+                </iframe>
             </div>
         </div>
     </div>
@@ -48,114 +51,154 @@
         <!-- To-do -->
         <!-- Rounded corner on top of image and shade of cards -->
         <div class="text-center">
-            <p>Connecting,not trading</p>
-            <h3>You don't need transparency when there are no barriers</h3>
+            <p class="fw-semibold text-success-emphasis">A circuit is “a two-way communication path between points”</p>
+            <h2 class="fw-bold">Transparency happens when there are no obstructions.</h2>
         </div>
-        <div class="container">
-            <div class="row">
-                <div class="col-sm-4">
-                    <div class="card me-5 text-center border border-radius rounded-4 info-card">
-                        <img class="card-img-top border-top"  src="{% static 'img/bernd-dittrich-qpB6Kl_ckQM-unsplash.jpg' %}" alt="Card image cap">
-                        <div class="card-body">
-                          <h5 class="card-title">What It Is</h5>
-                          <p class="card-text">A means for farmers who only have access to local intermediaries to connect with roasters
-                            A way for roasters to meet farmers authentically, with no curation or staging</p>
-                        </div>
-                      </div>
+        <div class="d-flex mt-5 justify-content-center">
+            <div class="card me-4 text-center border border-radius rounded-5" style="width: 20rem;">
+                <img class="card-img-top border-top rounded-top-5 object-fit-cover" height="175px"  src="{% static 'img/esteban-benites-OEBkWvCLRvA-unsplash.jpg' %}" alt="Card image cap">
+                <div class="card-body">
+                  <h5 class="card-title fw-semibold">What It Is</h5>
+                  <p class="card-text">A place for producers to communicate directly with roasters
+                    <br>A place for roasters to learn directly about producers</p>
                 </div>
-                <div class="col-sm-4">
-                    <div class="card me-5 text-center border border-radius rounded-4 info-card" >
-                        <img class="card-img-top" src="{% static 'img/bernd-dittrich-qpB6Kl_ckQM-unsplash.jpg' %}" alt="Card image cap">
-                        <div class="card-body" >
-                          <h5 class="card-title">What It does</h5>
-                          <p class="card-text">Provides farmers with a space to make themselves visible and known
-                            Facilitates direct communication and collaboration between smallholder farmers and roasters.</p>
-                        </div>
-                    </div>
+              </div>
+              <div class="card me-4 text-center border border-radius rounded-5" style="width: 20rem;">
+                <img class="card-img-top rounded-top-5 object-fit-cover"  height="175px" src="{% static 'img/danurwendho-adyakusuma-dYxx-jPaF34-unsplash.jpg' %}" alt="Card image cap">
+                <div class="card-body" >
+                  <h5 class="card-title fw-semibold">What It does</h5>
+                  <p class="card-text">Provides farmers with a space to make themselves visible and known
+                    Facilitates direct communication and collaboration between smallholder farmers and roasters.</p>
                 </div>
-                <div class="col-sm-4">
-                    <div class="card me-5 text-center border border-radius rounded-4 info-card" >
-                        <img class="card-img-top" src="{% static 'img/bernd-dittrich-qpB6Kl_ckQM-unsplash.jpg' %}" alt="Card image cap">
-                        <div class="card-body" >
-                          <h5 class="card-title">What It Isn't</h5>
-                          <p class="card-text">The attempt to make an amazon of coffee A trading company A “direct trading” platform A profit-making business</p>
-                        </div>
-                      </div>
+              </div>
+              <div class="card text-center border border-radius rounded-5" style="width: 20rem;">
+                <img class="card-img-top rounded-top-5 object-fit-cover" height="175px" src="{% static 'img/joel-friedrich-iWX4pBztAbE-unsplash.jpg' %}" alt="Card image cap">
+                <div class="card-body" >
+                  <h5 class="card-title fw-semibold">What It Isn't</h5>
+                  <p class="card-text">The attempt to make an amazon of coffee A trading company A “direct trading” platform A profit-making business</p>
                 </div>
-
-            </div>
-
+              </div>
         </div>
     </div>
-    <div class="px-5 py-5" style="background-color:#171A1E ;color: ghostwhite;">
-        <h2 class="text-center">Frequently Asked Questions</h2>
-        <div class="mt-5">
+    <div class="p-5" style="background-color:#171A1E; color: ghostwhite;">
+        <h2 class="text-center fw-semibold">Frequently Asked Questions</h2>
+        <div class="mt-4">
 
-            <div style="background-color:#2C3136" class="p-3">
+
+
+            <div style="background-color:#2C3136" class="p-3 mb-4 rounded-3">
                 <div class="d-flex">
 
-                    <div style="width: 40px;background-color: #303C50;" class="border border-radius rounded-circle faq-rounded">
+                    <div style="width: 2vw; height: 2vw; background-color: #303C50; border-radius: 50%;" class="border border-radius rounded-circle d-flex align-self-center">
                     </div>
 
-                    <h3 class="ms-3">
-                        <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="true" aria-controls="collapseExample">
+                    <h4 class="ms-3 d-flex align-self-center">
+                        <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#FAQ1" aria-expanded="true" aria-controls="FAQ1">
                             Who is the Specialty Coffee Collective for?
                         </div>
-                    </h3>
+                    </h4>
 
                 </div>
 
-                  <div style="background-color:#2C3136" class="collapse" id="collapseExample">
-                    <div class="card card-body" style="background-color:#2C3136">
+                  <div style="background-color:#2C3136" class="collapse border-none" id="FAQ1">
+                    <div class="ms-5 ps-1 pt-1 card card-body border border-0" style="background-color:#2C3136">
                         Lorem ipsum dolor sit amet consectetur. Sagittis sit ut donec purus purus. Ornare amet blandit gravida iaculis tellus ut quis. Tortor euismod justo facilisi tincidunt accumsan a neque tortor.
                     </div>
                   </div>
             </div>
 
-            <div style="background-color:#2C3136" class="p-3 mt-5">
+            <div style="background-color:#2C3136" class="p-3 mb-4 rounded-3">
                 <div class="d-flex">
 
-                    <div style="width: 40px;background-color: #303C50;" class="border border-radius rounded-circle faq-rounded">
+                    <div style="width: 2vw; height: 2vw; background-color: #303C50; border-radius: 50%;" class="border border-radius rounded-circle d-flex align-self-center">
                     </div>
 
-                    <h3 class="ms-3">
-                        <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#collapseExample1" aria-expanded="true" aria-controls="collapseExample">
-                            Who is behind the Specialty Coffee Collective?
+                    <h4 class="ms-3 d-flex align-self-center">
+                        <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#FAQ2" aria-expanded="true" aria-controls="FAQ2">
+                            Who is the Specialty Coffee Collective for?
                         </div>
-                    </h3>
+                    </h4>
 
                 </div>
 
-                  <div style="background-color:#2C3136" class="collapse" id="collapseExample1">
-                    <div class="card card-body" style="background-color:#2C3136">
+                  <div style="background-color:#2C3136" class="collapse border-none" id="FAQ2">
+                    <div class="ms-5 ps-1 pt-1 card card-body border border-0" style="background-color:#2C3136">
                         Lorem ipsum dolor sit amet consectetur. Sagittis sit ut donec purus purus. Ornare amet blandit gravida iaculis tellus ut quis. Tortor euismod justo facilisi tincidunt accumsan a neque tortor.
                     </div>
                   </div>
             </div>
 
-            <div style="background-color:#2C3136" class="p-3 mt-5">
+            <div style="background-color:#2C3136" class="p-3 mb-4 rounded-3">
                 <div class="d-flex">
 
-                    <div style="width: 40px;background-color: #303C50;" class="border border-radius rounded-circle faq-rounded">
+                    <div style="width: 2vw; height: 2vw; background-color: #303C50; border-radius: 50%;" class="border border-radius rounded-circle d-flex align-self-center">
                     </div>
 
-                    <h3 class="ms-3">
-                        <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#collapseExample2" aria-expanded="true" aria-controls="collapseExample">
-                            How do I benefit from the Specialty Coffee Collective?
+                    <h4 class="ms-3 d-flex align-self-center">
+                        <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#FAQ3" aria-expanded="true" aria-controls="FAQ3">
+                            Who is the Specialty Coffee Collective for?
                         </div>
-                    </h3>
+                    </h4>
 
                 </div>
 
-                  <div style="background-color:#2C3136" class="collapse" id="collapseExample2">
-                    <div class="card card-body" style="background-color:#2C3136">
+                  <div style="background-color:#2C3136" class="collapse border-none" id="FAQ3">
+                    <div class="ms-5 ps-1 pt-1 card card-body border border-0" style="background-color:#2C3136">
                         Lorem ipsum dolor sit amet consectetur. Sagittis sit ut donec purus purus. Ornare amet blandit gravida iaculis tellus ut quis. Tortor euismod justo facilisi tincidunt accumsan a neque tortor.
                     </div>
                   </div>
             </div>
+
+            <div style="background-color:#2C3136" class="p-3 mb-4 rounded-3">
+                <div class="d-flex">
+
+                    <div style="width: 2vw; height: 2vw; background-color: #303C50; border-radius: 50%;" class="border border-radius rounded-circle d-flex align-self-center">
+                    </div>
+
+                    <h4 class="ms-3 d-flex align-self-center">
+                        <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#FAQ4" aria-expanded="true" aria-controls="FAQ4">
+                            Who is the Specialty Coffee Collective for?
+                        </div>
+                    </h4>
+
+                </div>
+
+                  <div style="background-color:#2C3136" class="collapse border-none" id="FAQ4">
+                    <div class="ms-5 ps-1 pt-1 card card-body border border-0" style="background-color:#2C3136">
+                        Lorem ipsum dolor sit amet consectetur. Sagittis sit ut donec purus purus. Ornare amet blandit gravida iaculis tellus ut quis. Tortor euismod justo facilisi tincidunt accumsan a neque tortor.
+                    </div>
+                  </div>
+            </div>
+
+            <div style="background-color:#2C3136" class="p-3 rounded-3">
+                <div class="d-flex">
+
+                    <div style="width: 2vw; height: 2vw; background-color: #303C50; border-radius: 50%;" class="border border-radius rounded-circle d-flex align-self-center">
+                    </div>
+
+                    <h4 class="ms-3 d-flex align-self-center">
+                        <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#FAQ5" aria-expanded="true" aria-controls="FAQ5">
+                            Who is the Specialty Coffee Collective for?
+                        </div>
+                    </h4>
+
+                </div>
+
+                  <div style="background-color:#2C3136" class="collapse border-none" id="FAQ5">
+                    <div class="ms-5 ps-1 pt-1 card card-body border border-0" style="background-color:#2C3136">
+                        Lorem ipsum dolor sit amet consectetur. Sagittis sit ut donec purus purus. Ornare amet blandit gravida iaculis tellus ut quis. Tortor euismod justo facilisi tincidunt accumsan a neque tortor.
+                    </div>
+                  </div>
+            </div>
+
+
 
 
         </div>
     </div>
-    <footer></footer>
+
+    {% include "base/footer.html" %}
+
+
+
 {% endblock %}
