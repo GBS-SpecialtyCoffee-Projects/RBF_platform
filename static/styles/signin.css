@@ -16,9 +16,8 @@ body {
     background-size: cover;
     height: 100vh;
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     align-items: center;
-    padding-right: 200px;
 }
 
 .signin-container {
