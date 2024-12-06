@@ -9,24 +9,25 @@
 {% endblock %}
 
 {% block content %}
-<div style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
+<div style="position: absolute; top: 60px; left: 30px; z-index: 1000;">
     <div id="google_translate_element"></div>
+</div>
+<div style="position: absolute; top: 10px; right: 30px; z-index: 1000;">
     <a href="{% url 'landing_page' %}" class="close-button" style="text-decoration: none; color: white; font-size: 18px;">Close X</a>
 </div>
+
 <div class="container-fluid">
     <div class="row no-gutters" style="height: 100vh; width: 100vw; margin: 0;">
         <div class="col-lg-6 d-none d-lg-block">
             <div class="background-image">
                 <div class="text-overlay">
-                    <p>SPECIALTY</p>
-                    <p>COFFEE</p>
-                    <p>CONNECT</p>
+                    <img src="{% static 'img/Logo1.png' %}" alt="" style="width: 15%; height: 15%;">
                 </div>
             </div>
         </div>
         <div class="col-12 col-lg-6 form-container">
             <div class="signup-form">
-                <h1 class="text-center">Create Account</h1>
+                <h3 class="text-center pt-5">Create Account</h3>
                 <p class="text-center">
                     <small>Already have an account? <a href="{% url 'signin' %}" style="color: #4DA167; text-decoration: none;">Log In</a></small>
                 </p>
@@ -61,7 +62,7 @@
                             I accept all user <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms & policies</a>
                         </label>
                     </div>
-                    <div class="d-grid justify-content-center">
+                    <div class="d-grid justify-content-center pb-5">
                         <button type="submit" class="btn btn-primary">Sign Up</button>
                     </div>
                 </form>
