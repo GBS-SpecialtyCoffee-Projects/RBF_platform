@@ -8,17 +8,20 @@ def farmer_dashboard(request):
     if request.user.group != 'farmer':
         return redirect('roaster_dashboard')
 
-    roasters = Roaster.objects.all()
-    meeting_requests_as_requestee = MeetingRequest.objects.filter(requestee=request.user)
-    meeting_requests_as_requester = MeetingRequest.objects.filter(requester=request.user)
+    # roasters = Roaster.objects.all()
+    # meeting_requests = MeetingRequest.objects.filter(requestee=request.user)
+    # meeting_requests_as_requester = MeetingRequest.objects.filter(requester=request.user)
     farmer_profile = Farmer.objects.filter(user=request.user).first()
     farmer_photos = FarmerPhoto.objects.filter(user=request.user)
     farmer_photos_unadded = 6 - farmer_photos.count()
     pending_meetings = MeetingRequest.objects.filter(
-        requester=request.user, status='accepted'
-    ) | MeetingRequest.objects.filter(
-        requestee=request.user, status='accepted'
-    )
+        requestee=request.user, status='pending'
+    )[:2]
+    # pending_meetings = MeetingRequest.objects.filter(
+    #     requester=request.user, status='accepted'
+    # ) | MeetingRequest.objects.filter(
+    #     requestee=request.user, status='accepted'
+    # )
 
     # Check the number of pending or accepted meetings
     active_meetings_count = MeetingRequest.objects.filter(
@@ -39,14 +42,14 @@ def farmer_dashboard(request):
             return redirect('farmer_dashboard')
     else:
         main_form = FarmerProfileForm(instance=farmer_profile)
-        dp_form = FarmerProfilePhotoForm()
+        dp_form = FarmerProfilePhotoForm(instance=farmer_profile)
         story_form = FarmerBioForm(instance=farmer_profile)
         photo_form = FarmerPhotoForm()
 
     return render(request, 'base/farmer_dashboard.html', {
-        'roasters': roasters,
-        'meeting_requests_as_requestee': meeting_requests_as_requestee,
-        'meeting_requests_as_requester': meeting_requests_as_requester,
+        # 'roasters': roasters,
+        # 'meeting_requests_as_requestee': meeting_requests_as_requestee,
+        'pending_requests': pending_meetings,
         'farmer_profile': farmer_profile,
         'farmer_photos': farmer_photos,
         'unused_count': farmer_photos_unadded,
@@ -56,6 +59,25 @@ def farmer_dashboard(request):
         'story_form': story_form,
         'photo_form': photo_form,
         'dp_form': dp_form
+    })
+
+def edit_farmer_details(request):
+    if request.user.group != 'farmer':
+        return redirect('roaster_dashboard')
+    
+    farmer_profile = Farmer.objects.filter(user=request.user).first()
+    
+    if request.method == 'POST' and 'main_form' in request.POST:
+        form = FarmerProfileForm(request.POST, instance=farmer_profile)
+        if form.is_valid():
+            form.save()
+            return redirect('farmer_dashboard')
+    else:
+        main_form = FarmerProfileForm(instance=farmer_profile)
+    
+    
+    return render(request, 'base/farmer_details_edit.html',{
+        'main_form': main_form
     })
 
 def upload_photo(request):

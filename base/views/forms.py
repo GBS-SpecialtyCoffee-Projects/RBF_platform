@@ -7,6 +7,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
+from PIL import Image
 import re
 
 
@@ -17,6 +18,8 @@ class FarmerPhotoForm(forms.ModelForm):
         widgets = {
             'photo': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+
 class FarmerForm(forms.ModelForm):
     class Meta:
         model = Farmer
@@ -272,9 +275,15 @@ class RoasterProfileForm(forms.ModelForm):
 class FarmerProfilePhotoForm(forms.ModelForm):
     class Meta:
         model = Farmer
-        fields = ['profile_picture']
+        fields = ['profile_picture','firstname','lastname', 'city', 'state', 'country']
         widgets = {
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country'}),
+            'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
+            'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
+            'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}),
+
         }
 
 
