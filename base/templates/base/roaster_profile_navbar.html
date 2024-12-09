@@ -1,37 +1,35 @@
 {% load static %}
-<nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="ms-5">
-        <div style="color: #212529;" class="navbar-brand p-0">SPECIALTY</div>
-        <div style="color: #212529;" class="navbar-brand p-0">COFFEE</div>
-        <div style="color: #5C87B2;" class="navbar-brand p-0">CONNECT</div>
-    </div>
-    
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse justify-content-end me-5 mt-3" id="navbarNav">
-      <ul class="navbar-nav ">
-          <li class="nav-item">
-          <a style="color:black;" class="nav-link me-5" href="{% url 'roaster_dashboard' %}">DASHBOARD</a>
+
+<nav class="navbar navbar-expand-lg navbar-dark d-flex shadow" style="align-content: center; background-color: ghostwhite;">
+  <div class="m-3 d-flex">
+    <img src="{% static 'img/LogoDarkText.png' %}" alt="" style="width: 25%; height: 25%;">
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse justify-content-end me-5" id="navbarNav">
+    <ul class="navbar-nav d-flex" style="align-content: center;">
+      <li class="nav-item d-flex" style="align-items: center;">
+        <a style="color:#2F2F2F; font-weight: 550; white-space: nowrap;" class="nav-link me-5 fs-6" href="{% url 'roaster_dashboard' %}">DASHBOARD</a>
+      </li>
+      <li class="nav-item d-flex" style="align-items: center;">
+        <a style="color:#2F2F2F; font-weight: 550; white-space: nowrap;" class="nav-link me-5" href="{% url 'roaster_details' %}">ORIENTATION</a>
+      </li>
+      <li class="nav-item d-flex" style="align-items: center;">
+        <a style="color:#2F2F2F; font-weight: 550; white-space: nowrap;" class="nav-link me-5" href="{% url 'connections' %}">CONNECTIONS</a>
+      </li>
+      <li class="nav-item me-5 d-flex" style="align-items: center;">
+              <div id="google_translate_element"></div>
+      </li>
+        <li class="nav-item d-flex" style="align-items: center;">
+        <form method="post" action="{% url 'signout' %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger" style="white-space: nowrap; font-weight: 550;">SIGN OUT</button>
+        </form>
         </li>
-        <li class="nav-item">
-          <a style="color:black;" class="nav-link me-5" href="{% url 'roaster_details' %}">ONBOARDING</a>
-        </li>
-        <li class="nav-item me-5">
-          <a style="color: black;" class="nav-link" href="{% url 'connections' %}">CONNECTIONS</a>
-        </li>
-        <li class="nav-item me-5">
-                <div id="google_translate_element"></div>
-        </li>
-        <li class="nav-item me-5">
-          <form method="post" action="{% url 'signout' %}" style="display:inline;">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-danger">Sign Out</button>
-          </form>
-        </li>
-       
-       
-      </ul>
-    </div>
+    </ul>
+  </div>
 </nav>
-<hr class="mt-0">
+<hr class="mt-0 mb-0">
+

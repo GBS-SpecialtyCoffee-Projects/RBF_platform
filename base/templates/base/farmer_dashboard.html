@@ -4,12 +4,12 @@
 {% block content %}
 
 {% include 'base/profile_navbar.html' %}
-<div class="container-fluid profile-bg pb-5" style="height: 100vh;">
+<div class="container-fluid profile-bg pb-5" style="min-height: 100vh; background-color: #D8D8DF;">
 
-    <div class="d-flex justify-content-center pt-5" >
-        <div class="shadow-sm rounded" style="background-color: white; width:95%" >
+    <div class="d-flex justify-content-center pt-4" >
+        <div class="shadow rounded-3" style="background-color: ghostwhite; width:95%" >
         <div class="">
-            <img  width="100%" height="150px" src="{% static 'img/dan-meyers-IQVFVH0ajag-unsplash.jpg' %}" alt="">
+            <img width="100%" height="150px" style="object-fit: cover;" src="{% static 'img/dan-meyers-IQVFVH0ajag-unsplash.jpg' %}" alt="">
         </div>
         <div>
             <div class="d-flex justify-content-center py-2" style="" >
@@ -18,9 +18,9 @@
                     <img class="rounded-circle border border-info" width="90px" height="90px" src="{{farmer_profile.profile_picture.url}}" alt="" style="margin-top: -30px;">
                     {% endif %}
                 </div>
-                <div class="ms-4 mt-2" >
+                <div class="ms-4 mt-2 pb-2">
                     <div class="d-flex">
-                        <h3>{{farmer_profile.firstname}} {{farmer_profile.lastname}}</h3>
+                        <h3 class="mb-0" style="font-weight: 550;">{{farmer_profile.firstname}} {{farmer_profile.lastname}}</h3>
                         <a  href="#profModal" data-bs-toggle="modal" data-bs-target="#profModal">
                             <svg class="ms-2 mt-1" xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="green" class="bi bi-pencil-fill" viewBox="0 0 16 16">
                                 <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
@@ -31,10 +31,10 @@
                           </button> -->
             
                     </div>
-                    <span>{{farmer_profile.city}}, </span>
-                    <span>{{farmer_profile.state}}, </span>
-                    <span>{{farmer_profile.country}}</span>
-                </div>
+                        <span style="font-weight: 600;">{{farmer_profile.city}}, </span>
+                        <span style="font-weight: 600;">{{farmer_profile.state}}, </span>
+                        <span style="font-weight: 600;">{{farmer_profile.country}}</span>
+                    </div>
             
             
                 </div>
@@ -46,14 +46,14 @@
     
    
 
-    <div class="container-fluid pt-5 px-4">
+    <div class="container-fluid pt-3 px-5">
         <div class="row">
             <div class="col-sm-6" >
-                <div class="px-4 py-2 rounded shadow-sm" style="background-color: white;height: 100%;">
-                    <div class="d-flex"> 
-                        <h2> Your Story</h2>
-                        <div class="mt-1">
-                            <button class="ms-2 btn btn-sm"  style="background-color: blue; color: white; " data-bs-toggle="modal" data-bs-target="#storyModal">edit</button>
+                <div class="px-4 py-2 rounded-3 shadow" style="background-color: ghostwhite;height: 100%;">
+                    <div class="d-flex justify-content-between pt-3"> 
+                        <h3 style="font-weight: 550;">Your Story</h3>
+                        <div class="">
+                            <button class="ms-2 btn btn-sm"  style="background-color: #5C87B2; color: white; " data-bs-toggle="modal" data-bs-target="#storyModal">Edit</button>
                         </div>
                         
                     </div> 
@@ -67,12 +67,12 @@
 
             <div class="col-sm-6">
 
-                <div class="px-4 py-2  rounded shadow-sm" style="background-color: white; height: 100%;">
+                <div class="px-4 py-2  rounded-3 shadow" style="background-color: ghostwhite; height: 100%;">
                     <!-- <div id="cale"  >
 
                     </div> -->
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2>Connections</h2>
+                    <div class="d-flex justify-content-between align-items-center pt-3">
+                        <h3 style="font-weight: 550;">Connections</h3>
             <!--            <button class="btn btn-sm" style="background-color: blue; color: white;">Action</button>-->
                     <style>
                         .meeting-accepted {
@@ -120,67 +120,113 @@
 
            
         </div>
-        <div class="row mt-3 px-3 py-3 shadow-sm rounded" style="background-color: white;">
-            <div class="d-flex py-2 ms-3 justify-content-between">
+        <div class="row mt-3 px-3 py-3 shadow rounded-3" style="background-color: ghostwhite;">
+            <div class="d-flex py-3 px-3 justify-content-between">
                 <div>
-                <h2>{{ farmer_profile.farm_name }}</h2>
+                    <h3 style="font-weight: 550;">{{ farmer_profile.farm_name }}</h3>
                 </div>
                 <div>
-                    <button class="btn  btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal">Edit Details</button>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal" style="background-color: #5C87B2;">Edit Details</button>
 
                 </div>
 
             </div>
-            <div class="col-sm-6">
-                <div class=" py-2 ms-3 rounded farm-info">
+            <div class="col-sm-4">
+                <!--<div class=" py-2 ms-3 rounded farm-info">
                     
                     <div class="d-flex gap-3">
-                        <span class="fw-medium">Farm Size:   </span>
+                        <span style="font-weight: 550;">Farm Size:   </span>
                         <span>{{ farmer_profile.farm_size }}</span>
                     </div>
-                    <div class="d-flex mt-3  gap-3">
-                        <span class="fw-medium">Harvest Season: </span>
+                    <div class="d-flex mt-2  gap-3">
+                        <span style="font-weight: 550;">Harvest Season: </span>
                         <span>{{ farmer_profile.harvest_season }}</span>
                     </div>
-                    <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Annual Yield: </span>
+                    <div class="d-flex mt-2 gap-3">
+                        <span style="font-weight: 550;">Annual Yield: </span>
                         <span>{{ farmer_profile.annual_production }}</span>
                     </div>
-                    <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Cultivars(Variety): </span>
+                    <div class="d-flex mt-2 gap-3">
+                        <span style="font-weight: 550;">Cultivars(Variety): </span>
                         <span>{{ farmer_profile.cultivars }}</span>
                     </div>
-                    <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Cup Scores: </span>
+                    <div class="d-flex mt-2 gap-3">
+                        <span style="font-weight: 550;">Cup Scores: </span>
                         <span>{{ farmer_profile.cup_scores_received }}</span>
                     </div> 
-                    <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Cup Scores Source: </span>
+                    <div class="d-flex mt-2 gap-3">
+                        <span style="font-weight: 550;">Cup Scores Source: </span>
                         <span>{{ farmer_profile.source_of_cup_scores }}</span>
                     </div>
-                    <div class="d-flex mt-3 gap-3" style="word-wrap: break-word;">
-                        <span class="fw-medium">Quality Report: </span>
+                    <div class="d-flex mt-2 gap-3" style="word-wrap: break-word;">
+                        <span style="font-weight: 550;">Quality Report: </span>
                         <a href="{{ farmer_profile.quality_report_link }}"><span>{{ farmer_profile.quality_report_link }}</span></a>
                     </div>
-                    <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Affiliation: </span>
+                    <div class="d-flex mt-2 gap-3">
+                        <span style="font-weight: 550;">Affiliation: </span>
                         <span>{{ farmer_profile.affiliation }}</span>
                     </div>
-                    <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Processing Method: </span>
+                    <div class="d-flex mt-2 gap-3">
+                        <span style="font-weight: 550;">Processing Method: </span>
                         <span>{{ farmer_profile.processing_method }}</span>
                     </div>
-                    <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Processing Desc: </span>
+                    <div class="d-flex mt-2 gap-3">
+                        <span style="font-weight: 550;"">Processing Desc: </span>
                         <span>{{ farmer_profile.processing_description }}</span>
                     </div>
     
                     
+                </div>-->
+
+                <div class="py-2 ms-3 rounded farm-info">
+                    <div style="display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-top: 10px;">
+                        <span style="font-weight: 550; flex: 0 0 150px;">Farm Size:</span>
+                        <span style="flex: 1; word-wrap: break-word;">{{ farmer_profile.farm_size }}</span>
+                    </div>
+                    <div style="display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-top: 10px;">
+                        <span style="font-weight: 550; flex: 0 0 150px;">Harvest Season:</span>
+                        <span style="flex: 1; word-wrap: break-word;">{{ farmer_profile.harvest_season }}</span>
+                    </div>
+                    <div style="display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-top: 10px;">
+                        <span style="font-weight: 550; flex: 0 0 150px;">Annual Yield:</span>
+                        <span style="flex: 1; word-wrap: break-word;">{{ farmer_profile.annual_production }}</span>
+                    </div>
+                    <div style="display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-top: 10px;">
+                        <span style="font-weight: 550; flex: 0 0 150px;">Cultivars (Variety):</span>
+                        <span style="flex: 1; word-wrap: break-word;">{{ farmer_profile.cultivars }}</span>
+                    </div>
+                    <div style="display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-top: 10px;">
+                        <span style="font-weight: 550; flex: 0 0 150px;">Cup Scores:</span>
+                        <span style="flex: 1; word-wrap: break-word;">{{ farmer_profile.cup_scores_received }}</span>
+                    </div>
+                    <div style="display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-top: 10px;">
+                        <span style="font-weight: 550; flex: 0 0 150px;">Cup Scores Source:</span>
+                        <span style="flex: 1; word-wrap: break-word;">{{ farmer_profile.source_of_cup_scores }}</span>
+                    </div>
+                    <div style="display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-top: 10px;">
+                        <span style="font-weight: 550; flex: 0 0 150px;">Quality Report:</span>
+                        <a href="{{ farmer_profile.quality_report_link }}" style="flex: 1; word-wrap: break-word;">{{ farmer_profile.quality_report_link }}</a>
+                    </div>
+                    <div style="display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-top: 10px;">
+                        <span style="font-weight: 550; flex: 0 0 150px;">Affiliation:</span>
+                        <span style="flex: 1; word-wrap: break-word;">{{ farmer_profile.affiliation }}</span>
+                    </div>
+                    <div style="display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-top: 10px;">
+                        <span style="font-weight: 550; flex: 0 0 150px;">Processing Method:</span>
+                        <span style="flex: 1; word-wrap: break-word;">{{ farmer_profile.processing_method }}</span>
+                    </div>
+                    <div style="display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-top: 10px;">
+                        <span style="font-weight: 550; flex: 0 0 150px;">Processing Desc:</span>
+                        <span style="flex: 1; word-wrap: break-word;">{{ farmer_profile.processing_description }}</span>
+                    </div>
                 </div>
+                
+                
+
     
             </div>
 
-            <div class="col-sm-6"> 
+            <div class="col-sm-8"> 
                 <div class="row">
                     {% if farmer_photos %}
                     {% for photo in farmer_photos %}
