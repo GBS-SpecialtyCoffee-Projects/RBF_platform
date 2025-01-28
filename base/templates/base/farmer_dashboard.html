@@ -50,15 +50,38 @@
         <div class="row">
             <div class="col-sm-6" >
                 <div class="px-4 py-2 rounded shadow-sm" style="background-color: white;height: 100%;">
-                    <div class="d-flex"> 
-                        <h2> Your Story</h2>
+                    <div class="d-flex justify-content-between">
+                        <div class="d-flex">
+                            <div>
+                                <h2>Your Story</h2> 
+                            </div>
+                            <div class="mt-2 ms-2">
+                                 <!-- <span style="background-color: #5078C5;" class="badge rounded-pill text-bg-info">{{farmer_stories.language}}</span>  -->
+                                 <div class="dropdown">
+                                    <a id="lang_a" class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        {{farmer_stories.first.language}}
+                                    </a>
+                                   
+
+                                    <ul id="lang_ul" class="dropdown-menu">
+                                        {% for language in farmer_stories %}
+                                        {% if language.language != farmer_stories.first.language %}
+                                        <li class="lang_dd" data-language={{language.language}} ><a class="dropdown-item" href="#">{{language.language}}</a></li>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                  </div>
+
+                            </div>
+                            
+                        </div>   
                         <div class="mt-1">
                             <button class="ms-2 btn btn-sm"  style="background-color: blue; color: white; " data-bs-toggle="modal" data-bs-target="#storyModal">edit</button>
                         </div>
                         
                     </div> 
-                    <p>
-                       {{farmer_profile.bio}}
+                    <p id="story-text">
+                       {{farmer_stories.first.story_text}}
                     </p>
     
                 </div>

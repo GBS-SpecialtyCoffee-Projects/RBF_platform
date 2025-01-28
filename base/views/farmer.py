@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerBioForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck
-from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto
+from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto,Story,Language
 from django.contrib import messages
+from django.http import JsonResponse
 import os
 
 def farmer_dashboard(request):
@@ -13,6 +14,7 @@ def farmer_dashboard(request):
     meeting_requests_as_requester = MeetingRequest.objects.filter(requester=request.user)
     farmer_profile = Farmer.objects.filter(user=request.user).first()
     farmer_photos = FarmerPhoto.objects.filter(user=request.user)
+    farmer_stories  = Story.objects.filter(user=request.user)
     farmer_photos_unadded = 6 - farmer_photos.count()
     pending_meetings = MeetingRequest.objects.filter(
         requester=request.user, status='accepted'
@@ -48,6 +50,7 @@ def farmer_dashboard(request):
         'meeting_requests_as_requestee': meeting_requests_as_requestee,
         'meeting_requests_as_requester': meeting_requests_as_requester,
         'farmer_profile': farmer_profile,
+        'farmer_stories': farmer_stories,
         'farmer_photos': farmer_photos,
         'unused_count': farmer_photos_unadded,
         'pending_meetings': pending_meetings,
@@ -237,4 +240,23 @@ def vid_x_check(request):
         if form.is_valid():
             form.save()
             return redirect('farmer_orientation')
+
+def switch_story(request,language_name):
+     try:
+        #get current farmer
+        farmer = request.user
+        #get the id of the story i am meant to return 
+        language= Language.objects.get(name=language_name)
+        #get story with that id 
+        story = Story.objects.get(language=language, user=farmer)
+        #get all stories excluding story in the language
+        languages = [ story.language.name for story in Story.objects.filter(user=farmer).exclude(language=language)]
+
+        # print(languages)
+        # print(story.story_text)
+     except:
+         return JsonResponse({'error': 'Language not found'}, status=404)
+    
+     #return response to page with story 
+     return JsonResponse({'story': story.story_text,'languages':languages, 'success': 'success'}, status=200)
 

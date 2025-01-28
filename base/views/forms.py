@@ -1,13 +1,22 @@
 # forms.py
 
 from django import forms
-from base.models import FarmerPhoto,Roaster, RoasterPhoto, User, Farmer, MeetingRequest
+from base.models import FarmerPhoto,Roaster, RoasterPhoto, User, Farmer, MeetingRequest,Story
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
+from django_countries.widgets import CountrySelectWidget
+from django_countries.fields import CountryField
 import re
+
+HARVEST_CHOICES = (
+    ('spring','spring'),
+    ('summer','summer'),
+    ('autumn','autumn'),        
+    ('winter','winter')   
+)
 
 
 class FarmerPhotoForm(forms.ModelForm):
@@ -18,16 +27,19 @@ class FarmerPhotoForm(forms.ModelForm):
             'photo': forms.FileInput(attrs={'class': 'form-control'}),
         }
 class FarmerForm(forms.ModelForm):
+
     class Meta:
         model = Farmer
+
         fields = [
             'farm_name',  'bio', 'country', 'state', 'city',
             'firstname', 'lastname', 'middlename', 'phone_number',
-            'farm_size', 'harvest_season', 'annual_production', 'cultivars',
+            'farm_size' , 'annual_production', 'cultivars',
             'cup_scores_received', 'source_of_cup_scores', 'quality_report_link',
             'processing_method', 'processing_description', 'profile_picture',
-            'preferred_communication_method', 'main_role'
+            'preferred_communication_method', 'main_role','farm_size_unit','annual_production_unit','harvest_season'
         ]
+        
         labels = {
             "farm_name": "Farm Name*",
             'bio': 'Bio*',
@@ -49,10 +61,13 @@ class FarmerForm(forms.ModelForm):
             'processing_description': 'Processing Description',
             'profile_picture': 'Profile Picture',
             'preferred_communication_method': 'Preferred Communication Method',
+            "farm_size_unit": "Farm Size Unit",
+            "annual_production_unit": "Annual Production Unit",
         }
         widgets = {
             'farm_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Name'},),
-            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country','required':'true'}),
+            # 'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country','required':'true'}),
+            'country': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Country','required':'true'}),
             'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State','required':'true'}),
             'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City','required':'true'}),
             'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Bio','required':'true'}),
@@ -61,18 +76,21 @@ class FarmerForm(forms.ModelForm):
             'middlename': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Middle Name','required':'true'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number','required':'true'}),
             'farm_size': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Size'}),
-            'harvest_season': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Harvest Season'}),
+            'harvest_season': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Harvest Season'}),
             'annual_production': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Annual Production'}),
             'cultivars': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cultivars'}),
             'cup_scores_received': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cup Scores Received'}),
             'source_of_cup_scores': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Source of Cup Scores'}),
             'quality_report_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'Quality Report Link'}),
-            'processing_method': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Processing Method'}),
+            'processing_method': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Processing Method'}),
             'processing_description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Processing Description'}),
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
             'preferred_communication_method': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Preferred Communication Method'}),
-            'main_role': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Main Role'})
+            'main_role': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Main Role'}),
+            'farm_size_unit': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Farm Size Unit'}),
+            'annual_production_unit': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Annual Production Unit'}),
         }
+
 
 class FarmerProfileForm(forms.ModelForm):
     class Meta:
@@ -405,5 +423,17 @@ class VideoPerceptionsCheck(forms.ModelForm):
         widgets = {'video_perceptions': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',  # Bootstrap 5 checkbox class
                 'id': 'VideoPerceptionsCheck'})}
+        
+class StoryForm(forms.ModelForm):
+    class Meta:
+        model = Story
+        fields = ['story_text','language']
+        widgets = {
+            'story_text': forms.Textarea(attrs={'class': 'form-control'}),
+            'language': forms.Select(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            "story_text": "Story text",
+            'language': 'Story Language',}
 
 

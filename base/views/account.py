@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
-from .forms import SignupForm, SigninForm, PasswordResetForm, FarmerForm
+from .forms import SignupForm, SigninForm, PasswordResetForm, FarmerForm, StoryForm
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
@@ -13,12 +13,13 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from .tokens import account_activation_token
-from base.models import User,Farmer,Roaster
+from base.models import User,Farmer,Roaster,Language
 from django.utils import translation
 from django.conf import settings
 from django.http import JsonResponse
 from django.urls import reverse
 from django.contrib.auth.tokens import default_token_generator
+import re
 
 
 def landing_page(request):
@@ -66,16 +67,44 @@ def farmer_details(request):
 
     if request.method == 'POST':
         farmer_form = FarmerForm(request.POST, request.FILES, instance=farmer)
+        story_text = request.POST.get('story_text')
+        story_language_id = request.POST.get('language')
+         # Attempt to retrieve the language instance
+        try:
+            story_language = Language.objects.get(id=story_language_id)
+        except Language.DoesNotExist:
+            story_language = None
 
-        if farmer_form.is_valid():
-            farmer_form.save()
+        story_data = {
+            'story_text': story_text,
+            'language': story_language
+        }
+        story_form = StoryForm(story_data)
+        # print("data",request.POST)
+        # farmer_form.fields['harvest_season'] =('').join(request.POST['harvest_season'])
+        # print("harvest",farmer_form['harvest_season'])
+        # print("harvest",request.POST.getlist('harvest_season'))
+        # data = request.POST.copy()
+        # data['harvest_season'] = (','.join(request.POST.getlist('harvest_season')))
+        # farmer_form = FarmerForm(data)
+        # print(story_form)
+        # story_form.save()
+        # if farmer_form.is_valid() and story_form.is_valid():
+        if story_form.is_valid():
+            print("valid")
+            # farmer_form.save()
+            story = story_form.save(commit=False)
+            story.user = request.user
+            story.save()
             return redirect('farmer_dashboard')  # Redirect to signin after successful update
         else:
             # Print form errors for debugging
             print(farmer_form.errors)
+            print(story_form.errors)
     else:
+        story_form = StoryForm()
         farmer_form = FarmerForm(instance=farmer)
-    return render(request, 'base/farmer_signup.html', {'farmer_form': farmer_form})
+    return render(request, 'base/farmer_signup.html', {'farmer_form': farmer_form, 'story_form': story_form})
 
 def roaster_details(request):
     try:

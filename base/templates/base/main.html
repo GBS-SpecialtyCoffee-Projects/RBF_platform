@@ -36,6 +36,33 @@
         <script  src="{% static 'evk-calendar/evk_calendar_jk.js' %}" ></script>
         <script src="{% static 'js/script.js' %}"></script>
         <script type="text/javascript">
+
+    $(document).on("click",".lang_dd",function() {
+        var lang = $(this).data("language");
+        console.log(lang);
+        $.ajax({
+            url: "/farmer/switch_story/" + lang,       // URL endpoint
+            type: "GET",    // Data to send to the server
+            success: function (response) {
+                console.log(response.story); // "Hello, {name}!"
+                console.log(response.languages);
+                $("#story-text").text(response.story);
+                // $("#lang_ul").text(response.languages);
+                $("#lang_a").text(lang);
+                new_li = '';
+                for (var i = 0; i < response.languages.length; i++) {
+                    new_li += '<li class="lang_dd" data-language="' + response.languages[i] + '"><a class="dropdown-item" href="#">' + response.languages[i] + '</a></li>\n';
+                }
+                $("#lang_ul").html(new_li);
+                // $('#result').text(response.message); // Update a div with the response
+            },
+            error: function (xhr, status, error) {
+                console.error("Error:", error);
+            },
+            });
+        
+    })
+ 
     function googleTranslateElementInit() {
         new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,es,fr,de,it',},    'google_translate_element');
     }
