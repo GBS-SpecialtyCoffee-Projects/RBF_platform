@@ -1,0 +1,55 @@
+{% extends 'base/main.html' %}
+{% load static %}
+
+{% block content %}
+
+{% include 'base/profile_navbar.html' %}
+
+<div class="container">
+    <form action="{% url 'farmer_dashboard' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+            <div class="input-group mb-3">
+                {{ main_form.farm_name }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.farm_size }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.harvest_season }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.annual_production }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.cultivars }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.cup_scores_received }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.source_of_cup_scores }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.quality_report_link }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.affiliation }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.processing_method }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.processing_description }}
+            </div>
+       
+            
+        </div>
+        
+          <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> -->
+          <button type="submit" name="main_form" class="btn btn-primary">Save changes</button>
+    </form>
+
+</div>
+
+{% endblock %}

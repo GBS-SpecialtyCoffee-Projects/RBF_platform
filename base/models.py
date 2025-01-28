@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django_countries import countries
+from PIL import Image
+
 
 # For admin purpose
 class UserManager(BaseUserManager):
@@ -178,6 +180,22 @@ class FarmerPhoto(models.Model):
 
     def __str__(self):
         return f"Photo {self.id} for {self.user.username}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.photo:
+            self.photo.file.seek(0)
+            img = Image.open(self.photo.path)
+            max_size = (200, 200)  # Maximum width and height
+
+            if img.height > max_size[1] or img.width > max_size[0]:
+                img.thumbnail(max_size, Image.Resampling.LANCZOS)
+                print(f"Resized image {self.photo.file} {img.format}")
+                img.save(self.photo.path, format=f"{img.format}", quality=90)
+
+    
+    
 
     # def clean(self):
     #     if self.user.group != 'farmer':

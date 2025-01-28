@@ -96,6 +96,7 @@
                     </div> -->
                     <div class="d-flex justify-content-between align-items-center">
                         <h2>Connections</h2>
+                        <a href="">View all</a>
             <!--            <button class="btn btn-sm" style="background-color: blue; color: white;">Action</button>-->
                     <style>
                         .meeting-accepted {
@@ -117,25 +118,42 @@
                         }
                     </style>
                     </div>
-                    <ul class="list-unstyled">
-                        {% for meeting_request in meeting_requests_as_requester %}
-                            <li class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center p-2 rounded
-                                    {% if meeting_request.status == 'accepted' %} meeting-accepted
-                                    {% elif meeting_request.status == 'pending' %} meeting-pending
-                                    {% elif meeting_request.status == 'rejected' %} meeting-rejected
-                                    {% endif %}">
-                                    <div>
-                                        <strong>{{ meeting_request.requestee.username }}</strong><br>
-                                        <span>Meeting Request <strong>{{ meeting_request.status }}</strong></span>
-                                    </div>
-                                    <div class="text-end">
-                                        <span>{{ meeting_request.proposed_date|date:"n/j/Y" }}</span><br>
-                                        <span>{{ meeting_request.proposed_time|time:"g:iA" }} est.</span>
-                                    </div>
-                                </div>
-                            </li>
-                        {% endfor %}
+
+                    {% for meeting in pending_requests %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded"  style="background-color: #fafafa;" >
+                        <div>
+                            <strong>{{ meeting.requester.username }}</strong>
+                            <div class="d-flex">
+                                <div>{{ meeting.proposed_date|date:"n/j/Y" }}</div>
+                                <div class="ms-2">{{ meeting.proposed_date|time:"g:iA" }} est.</div>
+
+                            </div>
+                            <p class="con_msg">{{ meeting.message|truncatechars:50 }}</p>
+
+                            
+                        </div>
+                        <div class="d-flex">
+                            {% if meeting.status == 'pending' %}
+                                <form method="post" action="{% url 'connections' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="meeting_id" value="{{ meeting.id }}">
+                                    <button type="submit" name="retrieve_meeting_request" class="btn btn-sm btn-success">Accept</button>
+                                    <button type="submit" name="retrieve_meeting_request" class="btn btn-sm btn-danger">Reject</button>
+                                </form>
+                            {% elif meeting.status == 'rejected' %}
+                                <form method="post" action="{% url 'connections' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="meeting_id" value="{{ meeting.id }}">
+                                    <button type="submit" name="delete_meeting_request" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <p>No meeting requests available.</p>
+                {% endfor %}
+                
+                     
 
                 </div>
                
@@ -149,7 +167,8 @@
                 <h2>{{ farmer_profile.farm_name }}</h2>
                 </div>
                 <div>
-                    <button class="btn  btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal">Edit Details</button>
+                    <!-- <button class="btn  btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal">Edit Details</button> -->
+                     <a href="{% url 'edit_farmer_details' %}" class="btn  btn-primary">Edit Details</a>
 
                 </div>
 
@@ -227,7 +246,7 @@
                       
                     </div>
                     {% else %}
-                     <div class="col-sm-4 mb-3" style="height: 200px;width: 200px;">
+                     <div class="col-sm-4 mb-3" style="height: 150px;width: 150px;">
                         <img style="width: 100%;" class="rounded" src="{% static 'img/128px-Placeholder_view_vector.svg.png' %}" alt="..." >
                     </div> 
                     <div class="col-sm-4 mb-3 ">
@@ -305,6 +324,25 @@
                     {{ dp_form.profile_picture }}
                     <!-- <input type="file" class="form-control" id="inputGroupFile02">
                     <label class="input-group-text" for="inputGroupFile02">Upload</label> -->
+
+             </div>
+             <div class="input-group mb-3">
+                    {{ dp_form.firstname }}
+             </div>
+             <div class="input-group mb-3">
+                {{ dp_form.lastname }}
+            </div>
+            <div class="input-group mb-3">
+                {{ dp_form.city }}
+            </div>
+            <div class="input-group mb-3">
+                {{ dp_form.state }}
+            </div>
+            <div class="input-group mb-3">
+                {{ dp_form.country }}
+            </div>
+             <div>
+
              </div>
         </div>
         <div class="modal-footer">
@@ -367,9 +405,10 @@
     </div>
   </div>
 
+
   <!-- Edit Details Modal -->
   <!-- Scrollable modal -->
-  <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+   <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="exampleModalLabel" >
     <div class="modal-dialog modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
