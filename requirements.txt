@@ -3,6 +3,7 @@ Brotli==1.1.0
 click==8.1.7
 dj-database-url==2.2.0
 Django==4.1
+django-countries==7.6.1
 gunicorn==23.0.0
 h11==0.14.0
 mysqlclient==2.0.3
