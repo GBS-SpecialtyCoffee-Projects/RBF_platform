@@ -97,7 +97,7 @@ DATABASES = {
     # }
         'default': dj_database_url.config(
         # Replace this value with your local database's connection string.
-        default='postgresql://postgres:postgres@localhost:5432/rbf_platform_arek',
+        default=os.environ.get('DATABASE_URL'),
         conn_max_age=600
     )
 }
