@@ -40,6 +40,10 @@ urlpatterns = [
     path('delete_roaster_photo/<int:photo_id>/', roaster.delete_roaster_photo, name='delete_roaster_photo'),
     path('connections/', roaster.connections, name='connections'),
     path('farmer/<int:user_id>/', roaster.farmer_view, name='farmer_profile'),
+    path('delete_farmer_photo/<int:photo_id>/', farmer.delete_farmer_photo, name='delete_farmer_photo'),
+    path('farmer_details_edit/', farmer.edit_farmer_details, name='edit_farmer_details'),
+    path('farmer/switch_story/<int:language_id>/', farmer.switch_story, name='switch_story'),
+    path('farmer/update_story/', farmer.update_story, name='update_story'),
 
 ]
 

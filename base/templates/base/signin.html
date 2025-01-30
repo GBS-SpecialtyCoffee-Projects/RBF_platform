@@ -11,6 +11,7 @@
 
 {% block content %}
 <div style="position: absolute; top: 20px; right: 20px;">
+    <div id="google_translate_element"></div>
     <a href="{% url 'landing_page' %}" class="close-button" style="text-decoration: none; color: white; font-size: 18px;">Close X</a>
 </div>
 <div class="background-image">
@@ -22,16 +23,90 @@
     </div>
 
     <div class="signin-container">
-        <h1>SIGN IN</h1>
-        <div id="error-message" style="color: red;"></div>
-        <form id="signin-form" method="post" action="{% url 'signin' %}">
-            {% csrf_token %}
-            <input type="email" name="email" placeholder="Email" required autocomplete="email">
-            <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
-            <button type="submit">Sign In</button>
-        </form>
-        <a href="{% url 'enter_email' %}">Forgot password?</a>
+    <h1 style="margin-bottom: 10px;">SIGN IN</h1>
+    <p style="margin: 0;" class="text-center">
+        <small>Don't have an account?
+            <a href="{% url 'signup' %}" style="color: #4DA167; text-decoration: none; display: inline-block;">Sign up</a>
+        </small>
+    </p>
+
+    <form id="signin-form" method="post" action="{% url 'signin' %}">
+        {% csrf_token %}
+        <input type="email" name="email" placeholder="Email" required autocomplete="email">
+        <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
+        <button type="submit">Sign In</button>
+    </form>
+    <a href="{% url 'enter_email' %}">Forgot password?</a>
+    </div>
+    <!-- Modal Structure -->
+<div id="errorModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <p id="modal-message">Error message goes here</p>
     </div>
 </div>
+</div>
+
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('signin-form');
+    const errorModal = document.getElementById('errorModal');
+    const closeModal = document.querySelector('.close');
+    const modalMessage = document.getElementById('modal-message');
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', form.action, true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    window.location.href = response.redirect_url;
+                } else {
+                    modalMessage.textContent = response.message;
+                    errorModal.style.display = 'block';
+
+                    // Hide the modal after 3 seconds
+                    setTimeout(function() {
+                        errorModal.style.display = 'none';
+                    }, 3000);
+                }
+            } else {
+                modalMessage.textContent = 'An error occurred. Please try again.';
+                errorModal.style.display = 'block';
+
+                // Hide the modal after 3 seconds
+                setTimeout(function() {
+                    errorModal.style.display = 'none';
+                }, 3000);
+            }
+        };
+
+        xhr.send(formData);
+    });
+
+    // Optional: Close the modal when the user clicks the close button
+    closeModal.onclick = function() {
+        errorModal.style.display = 'none';
+    };
+
+    // Optional: Close the modal if the user clicks anywhere outside of the modal content
+    window.onclick = function(event) {
+        if (event.target == errorModal) {
+            errorModal.style.display = 'none';
+        }
+    };
+});
+
+</script>
+
 <script src="{% static 'js/signin.js' %}"></script>
 {% endblock %}

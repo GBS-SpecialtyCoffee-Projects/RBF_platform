@@ -60,6 +60,56 @@
     color: #5C87B2
 }
 
+#embed-vid iframe {
+    width: 500px;
+    height: 300px;
+}
+
+.farm-info div{
+    word-wrap: break-word;
+}
+
+
+
+
+
+@media screen and (max-width: 600px) {
+    #embed-vid iframe {
+        width: 300px;
+        height: 200px;
+        margin-left: 30px;
+        margin-top: 20px;
+    }
+
+    .info-card{
+        margin-left: 10px;
+        margin-top: 20px;
+    
+    }
+
+    .coll-info{
+        margin-left: 10px;
+    }
+
+    .faq-rounded{
+        display: none;
+    }
+
+    #cale{
+        display: none;
+    }
+}
+
+/* @media screen and (max-width: 1000px) {
+    #embed-vid iframe {
+        width: 400px;
+        height: 300px;
+        margin-left: 30px;
+        margin-top: 20px;
+    }
+   
+} */
+
 
 .btn-blue{
     --bs-btn-font-weight: 600;
@@ -74,6 +124,10 @@
     --bs-btn-active-bg: #{shade-color(#5C87B2, 20%)};
     --bs-btn-active-border-color: #{shade-color(#5C87B2, 20%)}
 }
+
+
+
+
 
 
 

@@ -27,6 +27,7 @@ Temporary Items
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
+*/__pycache__/
 *.py[cod]
 
 # C extensions
@@ -82,7 +83,6 @@ target/
 *.log
 *.pot
 *.pyc
-__pycache__/
 local_settings.py
 
 .env
@@ -94,3 +94,4 @@ db.sqlite3
 .anima/workspace.json
 base/migrations/0001_initial.py
 rbf_platform/settings.py
+media/farmer_photos/

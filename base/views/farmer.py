@@ -1,23 +1,33 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerBioForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck
-from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto
+from base.views.forms import FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck
+from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore
 from django.contrib import messages
+from django.http import JsonResponse
+import os
 
 def farmer_dashboard(request):
     if request.user.group != 'farmer':
         return redirect('roaster_dashboard')
 
-    roasters = Roaster.objects.all()
-    meeting_requests_as_requestee = MeetingRequest.objects.filter(requestee=request.user)
-    meeting_requests_as_requester = MeetingRequest.objects.filter(requester=request.user)
+    # roasters = Roaster.objects.all()
+    # meeting_requests = MeetingRequest.objects.filter(requestee=request.user)
+    # meeting_requests_as_requester = MeetingRequest.objects.filter(requester=request.user)
     farmer_profile = Farmer.objects.filter(user=request.user).first()
     farmer_photos = FarmerPhoto.objects.filter(user=request.user)
+    farmer_stories  = Story.objects.filter(user=request.user)
+    farmer_harvest_seasons = Season.objects.filter(farmer=farmer_profile)
+    farmer_processing_methods = ProcessingMethod.objects.filter(farmer=farmer_profile)
+    farmer_cup_scores = CupScore.objects.filter(farmer=farmer_profile)
+    farmer_story = farmer_stories.first()
     farmer_photos_unadded = 6 - farmer_photos.count()
     pending_meetings = MeetingRequest.objects.filter(
-        requester=request.user, status='accepted'
-    ) | MeetingRequest.objects.filter(
-        requestee=request.user, status='accepted'
-    )
+        requestee=request.user, status='pending'
+    )[:2]
+    # pending_meetings = MeetingRequest.objects.filter(
+    #     requester=request.user, status='accepted'
+    # ) | MeetingRequest.objects.filter(
+    #     requestee=request.user, status='accepted'
+    # )
 
     # Check the number of pending or accepted meetings
     active_meetings_count = MeetingRequest.objects.filter(
@@ -32,21 +42,25 @@ def farmer_dashboard(request):
             form.save()
             return redirect('farmer_dashboard')
     elif request.method == 'POST' and 'story_form' in request.POST:
-        form = FarmerBioForm(request.POST, instance=farmer_profile)
+        form = FarmerStoryForm(request.POST, instance=farmer_profile)
         if form.is_valid():
             form.save()
             return redirect('farmer_dashboard')
     else:
         main_form = FarmerProfileForm(instance=farmer_profile)
-        dp_form = FarmerProfilePhotoForm()
-        story_form = FarmerBioForm(instance=farmer_profile)
+        dp_form = FarmerProfilePhotoForm(instance=farmer_profile)
+        story_form = FarmerStoryForm(instance=farmer_story)
         photo_form = FarmerPhotoForm()
 
     return render(request, 'base/farmer_dashboard.html', {
-        'roasters': roasters,
-        'meeting_requests_as_requestee': meeting_requests_as_requestee,
-        'meeting_requests_as_requester': meeting_requests_as_requester,
+        # 'roasters': roasters,
+        # 'meeting_requests_as_requestee': meeting_requests_as_requestee,
+        'pending_requests': pending_meetings,
         'farmer_profile': farmer_profile,
+        'farmer_stories': farmer_stories,
+        'harvest_seasons': farmer_harvest_seasons,
+        'processing_methods': farmer_processing_methods,
+        'cup_scores': farmer_cup_scores,
         'farmer_photos': farmer_photos,
         'unused_count': farmer_photos_unadded,
         'pending_meetings': pending_meetings,
@@ -55,6 +69,25 @@ def farmer_dashboard(request):
         'story_form': story_form,
         'photo_form': photo_form,
         'dp_form': dp_form
+    })
+
+def edit_farmer_details(request):
+    if request.user.group != 'farmer':
+        return redirect('roaster_dashboard')
+    
+    farmer_profile = Farmer.objects.filter(user=request.user).first()
+    
+    if request.method == 'POST' and 'main_form' in request.POST:
+        form = FarmerProfileForm(request.POST, instance=farmer_profile)
+        if form.is_valid():
+            form.save()
+            return redirect('farmer_dashboard')
+    else:
+        main_form = FarmerProfileForm(instance=farmer_profile)
+    
+    
+    return render(request, 'base/farmer_details_edit.html',{
+        'main_form': main_form
     })
 
 def upload_photo(request):
@@ -83,6 +116,18 @@ def update_profile(request):
 
     # return render(request, 'base/farmer_dashboard.html.html', {'form': form})
     return redirect('farmer_dashboard')
+
+def delete_farmer_photo(request, photo_id):
+    photo = get_object_or_404(FarmerPhoto, id=photo_id, user=request.user)
+    if request.method == 'GET':
+        # Delete the file from the filesystem
+        if photo.photo and os.path.isfile(photo.photo.path):
+            os.remove(photo.photo.path)
+
+        # Delete the record from the database
+        photo.delete()
+
+        return redirect('farmer_dashboard')
 
 def upload_success(request):
     return render(request, 'base/upload_success.html')
@@ -224,4 +269,42 @@ def vid_x_check(request):
         if form.is_valid():
             form.save()
             return redirect('farmer_orientation')
+
+def switch_story(request,language_id):
+     try:
+        #get current farmer
+        farmer = request.user
+        #get the id of the story i am meant to return 
+        language= Language.objects.get(id=language_id)
+        #get story with that id 
+        story = Story.objects.get(language=language, user=farmer)
+        #get all stories excluding story in the language
+        languages = [ (story.language.id,story.language.name) for story in Story.objects.filter(user=farmer).exclude(language=language)]
+
+        # print(languages)
+        # print(story.story_text)
+     except:
+         return JsonResponse({'error': 'Language not found'}, status=404)
+    
+     #return response to page with story 
+     return JsonResponse({'story': story.story_text,'languages':languages, 'success': 'success'}, status=200)
+
+def update_story(request):
+    if request.method == 'POST':
+        farmer = request.user
+        language= Language.objects.get(id=request.POST.get('language'))
+        story = Story.objects.get(language=language, user=farmer)
+        form = FarmerStoryForm(request.POST,instance=story)
+        if form.is_valid():
+            print('in valid')
+            form.save()
+            return JsonResponse({'success': 'success'}, status=200)
+            # return redirect('farmer_dashboard')  # Redirect to a profile page or any other page
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+        # return redirect('farmer_dashboard')  # If not a POST request, redirect to profile page
+
+    # return render(request, 'base/farmer_dashboard.html.html', {'form': form})
+    # return redirect('farmer_dashboard')
+    return JsonResponse({'success': 'success'}, status=200)
 

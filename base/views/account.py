@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
-from .forms import SignupForm, SigninForm, PasswordResetForm, FarmerForm
+from .forms import SignupForm, SigninForm, PasswordResetForm, FarmerForm, StoryForm
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
@@ -13,12 +13,13 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from .tokens import account_activation_token
-from base.models import User,Farmer,Roaster
+from base.models import User,Farmer,Roaster,Language
 from django.utils import translation
 from django.conf import settings
 from django.http import JsonResponse
 from django.urls import reverse
 from django.contrib.auth.tokens import default_token_generator
+import re
 
 
 def landing_page(request):
@@ -66,16 +67,33 @@ def farmer_details(request):
 
     if request.method == 'POST':
         farmer_form = FarmerForm(request.POST, request.FILES, instance=farmer)
+        story_text = request.POST.get('story_text')
+        story_language_id = request.POST.get('language')
+         # Attempt to retrieve the language instance
+        try:
+            story_language = Language.objects.get(id=story_language_id)
+        except Language.DoesNotExist:
+            story_language = None
 
-        if farmer_form.is_valid():
+        story_data = {
+            'story_text': story_text,
+            'language': story_language
+        }
+        story_form = StoryForm(story_data)
+        if farmer_form.is_valid() and story_form.is_valid():
             farmer_form.save()
+            story = story_form.save(commit=False)
+            story.user = request.user
+            story.save()
             return redirect('farmer_dashboard')  # Redirect to signin after successful update
         else:
             # Print form errors for debugging
             print(farmer_form.errors)
+            print(story_form.errors)
     else:
+        story_form = StoryForm()
         farmer_form = FarmerForm(instance=farmer)
-    return render(request, 'base/farmer_signup.html', {'farmer_form': farmer_form})
+    return render(request, 'base/farmer_signup.html', {'farmer_form': farmer_form, 'story_form': story_form})
 
 def roaster_details(request):
     try:
@@ -127,7 +145,6 @@ def signin_view(request):
         form = SigninForm()
 
     return render(request, 'base/signin.html', {'form': form})
-
 def signout_view(request):
     logout(request)  # This destroys the session
     return redirect('signin')
@@ -166,49 +183,53 @@ def email_verify(request):
     return render(request, 'base/email_verify.html')
 
 #rename to password reset email
-def verify_email(request, email):
-    try:
-        user = User.objects.get(email=email)
-        mail_subject = 'Password reset verification'
-        message = render_to_string('base/template_verify_email.html', {
-            'user': user,
-            'domain': get_current_site(request).domain,
-            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-            'token': default_token_generator.make_token(user),
-            'protocol': 'https' if request.is_secure() else 'http'
-        })
-        email_message = EmailMessage(mail_subject, message, to=[user.email])
-        if email_message.send():
-            messages.success(request, 'Please check your email to reset your password.')
-        else:
-            messages.error(request, 'Failed to send the email. Please try again.')
-    except User.DoesNotExist:
-        messages.error(request, 'No user is associated with this email address.')
+def verify_email(request):
+    email = request.session.get('email')  # Retrieve email from session
+    if email:
+        try:
+            user = User.objects.get(email=email)
+            mail_subject = 'Password reset verification'
+            message = render_to_string('base/template_verify_email.html', {
+                'user': user,
+                'domain': get_current_site(request).domain,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'token': default_token_generator.make_token(user),
+                'protocol': 'https' if request.is_secure() else 'http'
+            })
+            email_message = EmailMessage(mail_subject, message, to=[user.email])
+            if email_message.send():
+                messages.success(request, 'Please check your email to reset your password.')
+            else:
+                messages.error(request, 'Failed to send the email. Please try again.')
+        except User.DoesNotExist:
+            messages.error(request, 'No user is associated with this email address.')
+    else:
+        messages.error(request, 'Email not found in session.')
     return redirect('email_verify')
 
 
-def verify_email(request):
-    try:
-        # get the user 
-        user = User.objects.get(email='israelwhiz@gmail.com')
-    except User.DoesNotExist:
-        messages.error(request, 'User does not exist')
-    mail_subject = 'Verify your email'
-    message = render_to_string('base/template_verify_email.html', {
-        'user': user.username,
-        'domain': get_current_site(request).domain,
-        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-        'token': account_activation_token.make_token(user),
-        'protocol': 'https' if request.is_secure() else 'http'
-    })
-    email = EmailMessage(
-        mail_subject, message, to=[user.email]
-    )
-    if email.send(): 
-       messages.success(request, f'Dear {user.username}, please check your email to confirm your registration.')
-    else:
-       messages.error(request, 'Something went wrong. Please try again.')
-    return render(request, 'base/email_verify.html')
+# def verify_email(request):
+#     try:
+#         # get the user
+#         user = User.objects.get(email='israelwhiz@gmail.com')
+#     except User.DoesNotExist:
+#         messages.error(request, 'User does not exist')
+#     mail_subject = 'Verify your email'
+#     message = render_to_string('base/template_verify_email.html', {
+#         'user': user.username,
+#         'domain': get_current_site(request).domain,
+#         'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+#         'token': account_activation_token.make_token(user),
+#         'protocol': 'https' if request.is_secure() else 'http'
+#     })
+#     email = EmailMessage(
+#         mail_subject, message, to=[user.email]
+#     )
+#     if email.send():
+#        messages.success(request, f'Dear {user.username}, please check your email to confirm your registration.')
+#     else:
+#        messages.error(request, 'Something went wrong. Please try again.')
+#     return render(request, 'base/email_verify.html')
 
 
 def activate(request, uidb64, token):
@@ -230,7 +251,8 @@ def activate(request, uidb64, token):
 def enter_email(request):
     if request.method == 'POST':
         email = request.POST['email']
-        return redirect('verify_email', email=email)
+        request.session['email'] = email  # Store email in session
+        return redirect('verify_email')  # No need to pass email as a URL parameter
     return render(request, 'base/enter_email.html')
 
 

@@ -5,10 +5,12 @@
 
 {% block head %}
 <link href="{% static 'styles/signup.css' %}" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
 <div style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
+    <div id="google_translate_element"></div>
     <a href="{% url 'landing_page' %}" class="close-button" style="text-decoration: none; color: white; font-size: 18px;">Close X</a>
 </div>
 <div class="container-fluid">
@@ -16,15 +18,19 @@
         <div class="col-lg-6 d-none d-lg-block">
             <div class="background-image">
                 <div class="text-overlay">
-                    <p>SPECIALTY</p>
-                    <p>COFFEE</p>
-                    <p>CONNECT</p>
+                    <div class="m-3 d-flex">
+                        <div style="color: #C5BCB0; font-weight: 600;" class="navbar-brand m-0 p-0">COFFEE</div>
+                         <div style="color: ghostwhite; font-weight: 600;" class="navbar-brand m-0 p-0">SPACE</div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-12 col-lg-6 form-container">
             <div class="signup-form">
                 <h1 class="text-center">Create Account</h1>
+                <p class="text-center">
+                    <small>Already have an account? <a href="{% url 'signin' %}" style="color: #4DA167; text-decoration: none;">Log In</a></small>
+                </p>
                 <form method="post" id="signupForm">
                     {% csrf_token %}
                     {{ form.non_field_errors }}
@@ -45,10 +51,17 @@
                     <div class="mb-0">
                         <label class="form-label">Password</label> {{ form.password1 }}
                     </div>
+                    <small class="text-muted" style="font-size: 0.8em; display: block; margin-top: 5px; margin-left: 1.7rem;">Password must be at least 8 characters long, contain at least one uppercase letter, and one number.</small>
                     <div class="mb-3">
                         <label class="form-label">Confirm password</label> {{ form.password2 }}
                     </div>
-
+                    <!-- Checkbox for terms and conditions -->
+                    <div class="form-check mb-3 text-start">
+                        <input class="form-check-input" type="checkbox" id="termsCheck">
+                        <label class="form-check-label" for="termsCheck">
+                            I accept all user <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms & policies</a>
+                        </label>
+                    </div>
                     <div class="d-grid justify-content-center">
                         <button type="submit" class="btn btn-primary">Sign Up</button>
                     </div>
@@ -58,13 +71,127 @@
     </div>
 </div>
 
+<!-- Terms & Policy Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Terms & Policies</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Insert your Terms and Policy content here -->
+
+                <h5>User Terms of Use</h5>
+                <h6>1. Introduction</h6>
+                <p>Welcome to [Platform Name]! Our platform connects farmers and roasters, helping build sustainable relationships in the coffee industry. By signing up and using our platform, you agree to these Terms of Use, so please read them carefully.</p>
+
+                <h6>2. Eligibility and Account Registration</h6>
+                <p>You must be at least 18 years old to use our platform. Farmers and roasters have different types of accounts tailored to their specific needs. When creating an account, you must provide accurate and complete information. Please ensure you keep your login credentials confidential.</p>
+
+                <h6>3. User Responsibilities</h6>
+                <ul>
+                    <li><strong>Accurate Information:</strong> All information you provide must be true and kept up to date.</li>
+                    <li><strong>Prohibited Conduct:</strong> You must not engage in fraudulent activities, misrepresent yourself or your farm/roasting company, or upload illegal or inappropriate content. Only genuine profiles are permitted to foster a trustworthy environment.</li>
+                    <li><strong>Respectful Interaction:</strong> All users are expected to communicate respectfully with others, including when making meeting requests or responding to them.</li>
+                </ul>
+
+                <h6>4. Content Rights and Responsibilities</h6>
+                <ul>
+                    <li><strong>User Content Ownership:</strong> You retain ownership of the content you upload (e.g., profile photos, farm information, company information), but grant [Platform Name] a license to use, display, and share it for platform-related purposes.</li>
+                    <li><strong>Moderation Rights:</strong> We reserve the right to remove or edit content that violates our terms or is otherwise inappropriate for the community.</li>
+                </ul>
+
+                <h6>5. Meeting Requests and Communications</h6>
+                <p>Farmers and roasters can initiate meeting requests to discuss potential collaborations. All arrangements made are at the discretion of the involved parties. Our platform facilitates connections, but we are not responsible for any outcomes or agreements reached between users during these meetings.</p>
+
+                <h6>6. Termination of Account</h6>
+                <p>Accounts may be terminated if users violate our terms, engage in fraudulent activities, or misuse the platform in any way that jeopardizes the safety or experience of other users. Users may also request account deletion at any time by contacting our support team.</p>
+
+                <h6>7. Disclaimer of Warranties</h6>
+                <p>We strive to ensure uninterrupted access to the platform, but cannot guarantee that the platform will always be available or error-free. Users understand that interactions and arrangements made through the platform are solely their responsibility.</p>
+
+                <h6>8. Limitation of Liability</h6>
+                <p>[Platform Name] is not liable for any damages arising from your use of the platform, including, but not limited to, lost business opportunities, data breaches, or dissatisfaction with interactions with other users.</p>
+
+                <h6>9. Changes to Terms</h6>
+                <p>We may update these terms periodically. We will notify users of significant changes. Your continued use of the platform constitutes your acceptance of the updated terms.</p>
+
+                <h6>10. Contact Information</h6>
+                <p>For questions about these Terms, please reach out to us at [Contact Information].</p>
+
+                <h5>Privacy Policy</h5>
+                <h6>1. Introduction</h6>
+                <p>At [Platform Name], your privacy is important to us. This Privacy Policy explains what data we collect, how we use it, and how you can manage your information.</p>
+
+                <h6>2. Data Collection</h6>
+                <ul>
+                    <li><strong>Personal Information:</strong> We collect information such as your name, email, phone number, company information (for roasters), and farm information (for farmers). We also collect photos that users upload to create their profiles.</li>
+                    <li><strong>Non-Personal Information:</strong> We collect data like browser type, device information, and usage statistics for the purpose of improving our platform's performance and usability.</li>
+                </ul>
+
+                <h6>3. How Information Is Used</h6>
+                <ul>
+                    <li><strong>Account Management:</strong> To create and manage user profiles, facilitate meetings, and provide relevant content based on your role as a farmer or roaster.</li>
+                    <li><strong>Communication:</strong> To send notifications about meeting requests, platform updates, and other important information.</li>
+                    <li><strong>Improvement and Analytics:</strong> To understand platform usage and enhance user experience. This may include the use of analytics tools that aggregate non-personal data.</li>
+                </ul>
+
+                <h6>4. Data Sharing and Disclosure</h6>
+                <ul>
+                    <li>We do not sell your personal information to third parties.</li>
+                    <li>We may share limited information with service providers that assist us in running the platform, such as hosting providers or email services. These partners are required to keep your information confidential.</li>
+                </ul>
+
+                <h6>5. User Control Over Data</h6>
+                <ul>
+                    <li><strong>Editing or Deleting Your Data:</strong> Users can access and edit their personal information through their profile settings. You may also request deletion of your account by contacting support.</li>
+                    <li><strong>Meeting Data:</strong> Meeting requests and communication history are retained for the benefit of users but can be deleted upon request after a meeting concludes.</li>
+                </ul>
+
+                <h6>6. Cookies and Tracking Technologies</h6>
+                <ul>
+                    <li><strong>Cookies:</strong> Our platform uses cookies to manage user sessions and track usage statistics. Users can control cookie settings through their browser to limit the data collected if they wish.</li>
+                </ul>
+
+                <h6>7. Data Security</h6>
+                <p>We use industry-standard measures to protect your data, including encryption and secure servers. However, no method of transmission over the internet is completely secure, and we urge users to be cautious with sensitive information.</p>
+
+                <h6>8. Data Retention</h6>
+                <ul>
+                    <li><strong>Account Data:</strong> We retain your information for as long as your account is active. Upon account deletion, certain data may be retained as necessary for legal or regulatory purposes.</li>
+                    <li><strong>Meeting and Communication Data:</strong> Retained as long as required to provide services or as required by applicable laws.</li>
+                </ul>
+
+                <h6>9. Children’s Privacy</h6>
+                <p>Our platform is not intended for children under the age of 18, and we do not knowingly collect information from minors.</p>
+
+                <h6>10. Changes to the Privacy Policy</h6>
+                <p>We may update this Privacy Policy occasionally to reflect changes in our practices. Users will be notified of significant updates, and continuing to use the platform means you accept the revised policy.</p>
+
+                <h6>11. Contact Information</h6>
+                <p>For questions about this Privacy Policy, or if you have concerns about your data, please contact us at [Contact Information].</p>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- JavaScript for Client-Side Validation -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.getElementById('signupForm').addEventListener('submit', function(event) {
         var email = document.getElementById('{{ form.email.id_for_label }}').value;
         var confirmEmail = document.getElementById('{{ form.confirm_email.id_for_label }}').value;
         var password1 = document.getElementById('{{ form.password1.id_for_label }}').value;
         var password2 = document.getElementById('{{ form.password2.id_for_label }}').value;
+        var termsChecked = document.getElementById('termsCheck').checked;
+
+        // Regex for password validation
+        var passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
         if (email !== confirmEmail) {
             alert("Email addresses don't match");
@@ -73,6 +200,16 @@
 
         if (password1 !== password2) {
             alert("Passwords don't match");
+            event.preventDefault();
+        }
+
+        if (!passwordRegex.test(password1)) {
+            alert("Password must be at least 8 characters long, contain at least one uppercase letter, and one number.");
+            event.preventDefault();
+        }
+
+        if (!termsChecked) {
+            alert("You must accept the terms and policies before signing up.");
             event.preventDefault();
         }
     });
@@ -104,6 +241,15 @@
                         document.getElementById('email-error').innerText = '';
                     }
                 });
+        }
+    });
+
+    document.getElementById('termsCheck').addEventListener('change', function() {
+        const signupButton = document.querySelector('button[type="submit"]');
+        if (this.checked) {
+            signupButton.disabled = false;
+        } else {
+            signupButton.disabled = true;
         }
     });
 </script>

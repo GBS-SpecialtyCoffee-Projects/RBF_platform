@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django_countries import countries
+from PIL import Image
 
 
 # For admin purpose
@@ -48,25 +50,84 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 # second table: Farmer is related with User by userid, one userid can only match one farmer profile
 
+class Season(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+class ProcessingMethod(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+class CupScore(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
 class Farmer(models.Model):
+    SIZE_CHOICES = [
+        ('hectare', 'Hectare'),
+        ('acres', 'Acres'), 
+    ]
+
+    PROD_UNIT_CHOICES = [
+        ('kilograms', 'Kilograms'),
+    ]
+
+    HARVEST_CHOICES = [
+        ('spring','spring'),
+        ('summer','summer'),
+        ('autumn','autumn'),        
+        ('winter','winter'),  
+    ]
+
+    COUNTRY_CHOICES = [ (country.name, country.name) for country in countries ]
+
+    PROCESSING_METHOD_CHOICES = [
+        ('Washed','Washed'),
+        ('Natural','Natural'),
+        ('Honey','Honey'),
+        ('Semi-Washed','Semi-Washed'),
+        ('Controlled','Controlled'),
+        ('Anaerobic','Anaerobic'),
+    ]
+    
+
+
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farmer_profile')
     firstname = models.CharField(max_length=255, blank=False, null=False)
     middlename = models.CharField(max_length=255, blank=True, null=True)
     lastname = models.CharField(max_length=255, blank=False, null=False)
     farm_name = models.CharField(max_length=255, blank=False, null=False)
-    country = models.CharField(max_length=255, blank=True, null=True)
+    country = models.TextField(default='United States of America',choices=COUNTRY_CHOICES, blank=True, null=False)
     state = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=255, blank=True, null=True)
     farm_size = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Size in hectares")
-    harvest_season = models.CharField(max_length=255, blank=True, null=True)
+    farm_size_unit = models.CharField(max_length=255,choices=SIZE_CHOICES, blank=True, null=True)
+    # harvest_season = models.CharField(max_length=255,choices=HARVEST_CHOICES, null=True)
+    harvest_season = models.ManyToManyField(Season, blank=True)
     annual_production = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Annual production in tons")
+    annual_production_unit = models.CharField(max_length=255, choices=PROD_UNIT_CHOICES, blank=True, null=True)
     cultivars = models.CharField(max_length=255, blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
-    cup_scores_received = models.TextField(blank=True, null=True)
+    cup_scores_received = models.ManyToManyField(CupScore, blank=True, null=True)
     source_of_cup_scores = models.CharField(max_length=255, blank=True, null=True)
     quality_report_link = models.URLField(blank=True, null=True)
-    processing_method = models.CharField(max_length=255, blank=True, null=True)
+    processing_method = models.ManyToManyField(ProcessingMethod, blank=True)
     processing_description = models.TextField(blank=True, null=True)
     profile_picture = models.ImageField(upload_to='farmer_profiles/', blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
@@ -128,6 +189,22 @@ class FarmerPhoto(models.Model):
 
     def __str__(self):
         return f"Photo {self.id} for {self.user.username}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.photo:
+            self.photo.file.seek(0)
+            img = Image.open(self.photo.path)
+            max_size = (200, 200)  # Maximum width and height
+
+            if img.height > max_size[1] or img.width > max_size[0]:
+                img.thumbnail(max_size, Image.Resampling.LANCZOS)
+                print(f"Resized image {self.photo.file} {img.format}")
+                img.save(self.photo.path, format=f"{img.format}", quality=90)
+
+    
+    
 
     # def clean(self):
     #     if self.user.group != 'farmer':
@@ -173,3 +250,30 @@ class MeetingRequest(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+
+class Language (models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+
+class Story(models.Model):
+    # language_list = [ (language.name,language.name) for language in Language.objects.all()]
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farmer_stories')
+    language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True, blank=True, related_name='story_languages')
+    # language = models.CharField(max_length=255, choices=language_list, null=True, blank=True)
+    story_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    
+
+    # def __str__(self):
+    #     return self.title
+

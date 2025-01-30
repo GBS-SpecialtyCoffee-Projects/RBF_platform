@@ -50,15 +50,38 @@
         <div class="row">
             <div class="col-sm-6" >
                 <div class="px-4 py-2 rounded shadow-sm" style="background-color: white;height: 100%;">
-                    <div class="d-flex"> 
-                        <h2> Your Story</h2>
+                    <div class="d-flex justify-content-between">
+                        <div class="d-flex">
+                            <div>
+                                <h2>Your Story</h2> 
+                            </div>
+                            <div class="mt-2 ms-2">
+                                 <!-- <span style="background-color: #5078C5;" class="badge rounded-pill text-bg-info">{{farmer_stories.language}}</span>  -->
+                                 <div class="dropdown">
+                                    <a id="lang_a" class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        {{farmer_stories.first.language}}
+                                    </a>
+                                   
+
+                                    <ul id="lang_ul" class="dropdown-menu">
+                                        {% for language in farmer_stories %}
+                                        {% if language.language != farmer_stories.first.language %}
+                                        <li class="lang_dd" data-language={{language.language_id}} ><a class="dropdown-item" href="#">{{language.language}}</a></li>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                  </div>
+
+                            </div>
+                            
+                        </div>   
                         <div class="mt-1">
-                            <button class="ms-2 btn btn-sm"  style="background-color: blue; color: white; " data-bs-toggle="modal" data-bs-target="#storyModal">edit</button>
+                            <button id="edit_story" class="ms-2 btn btn-sm"  style="background-color: blue; color: white; " data-bs-toggle="modal" data-bs-target="#storyModal">edit</button>
                         </div>
                         
                     </div> 
-                    <p>
-                       {{farmer_profile.bio}}
+                    <p id="story-text">
+                       {{farmer_stories.first.story_text}}
                     </p>
     
                 </div>
@@ -67,10 +90,71 @@
 
             <div class="col-sm-6">
 
-                <div class="px-4 py-2 pt-5 rounded shadow-sm" style="background-color: white; height: 100%;">
-                    <div id="cale"  >
+                <div class="px-4 py-2  rounded shadow-sm" style="background-color: white; height: 100%;">
+                    <!-- <div id="cale"  >
 
+                    </div> -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2>Connections</h2>
+                        <a href="">View all</a>
+            <!--            <button class="btn btn-sm" style="background-color: blue; color: white;">Action</button>-->
+                    <style>
+                        .meeting-accepted {
+                            background-color: #8A9A5B; /* Green */
+                            color: black;
+                        }
+                        .meeting-pending {
+                            background-color: #5078C5; /* Blue */
+                            color: black;
+                        }
+                        .meeting-rejected {
+                            background-color: #FCD6DB; /* Red */
+                            color: black;
+                        }
+                        .meeting-container {
+                            padding: 10px;
+                            border-radius: 8px;
+                            margin-bottom: 10px;
+                        }
+                    </style>
                     </div>
+
+                    {% for meeting in pending_requests %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded"  style="background-color: #fafafa;" >
+                        <div>
+                            <strong>{{ meeting.requester.username }}</strong>
+                            <div class="d-flex">
+                                <div>{{ meeting.proposed_date|date:"n/j/Y" }}</div>
+                                <div class="ms-2">{{ meeting.proposed_date|time:"g:iA" }} est.</div>
+
+                            </div>
+                            <p class="con_msg">{{ meeting.message|truncatechars:50 }}</p>
+
+                            
+                        </div>
+                        <div class="d-flex">
+                            {% if meeting.status == 'pending' %}
+                                <form method="post" action="{% url 'connections' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="meeting_id" value="{{ meeting.id }}">
+                                    <button type="submit" name="retrieve_meeting_request" class="btn btn-sm btn-success">Accept</button>
+                                    <button type="submit" name="retrieve_meeting_request" class="btn btn-sm btn-danger">Reject</button>
+                                </form>
+                            {% elif meeting.status == 'rejected' %}
+                                <form method="post" action="{% url 'connections' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="meeting_id" value="{{ meeting.id }}">
+                                    <button type="submit" name="delete_meeting_request" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <p>No meeting requests available.</p>
+                {% endfor %}
+                
+                     
+
                 </div>
                
             </div>
@@ -83,21 +167,24 @@
                 <h2>{{ farmer_profile.farm_name }}</h2>
                 </div>
                 <div>
-                    <button class="btn  btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal">Edit Details</button>
+                    <!-- <button class="btn  btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal">Edit Details</button> -->
+                     <a href="{% url 'edit_farmer_details' %}" class="btn  btn-primary">Edit Details</a>
 
                 </div>
 
             </div>
             <div class="col-sm-6">
-                <div class=" py-2 ms-3 rounded">
+                <div class=" py-2 ms-3 rounded farm-info">
                     
                     <div class="d-flex gap-3">
                         <span class="fw-medium">Farm Size:   </span>
-                        <span>{{ farmer_profile.farm_size }}</span>
+                        <span>{{ farmer_profile.farm_size }} </span>
                     </div>
                     <div class="d-flex mt-3  gap-3">
                         <span class="fw-medium">Harvest Season: </span>
-                        <span>{{ farmer_profile.harvest_season }}</span>
+                        {% for season in harvest_seasons %}
+                        <span>{{ season }},</span>
+                        {% endfor %}
                     </div>
                     <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Annual Yield: </span>
@@ -107,17 +194,23 @@
                         <span class="fw-medium">Cultivars(Variety): </span>
                         <span>{{ farmer_profile.cultivars }}</span>
                     </div>
-                    <div class="d-flex mt-3 gap-3">
+                    <!-- <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Cup Scores: </span>
                         <span>{{ farmer_profile.cup_scores_received }}</span>
-                    </div> 
+                    </div>  -->
+                    <div class="d-flex mt-3 gap-3">
+                        <span class="fw-medium">Cup Scores:: </span>
+                        {% for score in cup_scores %}
+                        <span class="ms-0">{{ score }},</span>
+                        {% endfor %}
+                    </div>
                     <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Cup Scores Source: </span>
                         <span>{{ farmer_profile.source_of_cup_scores }}</span>
                     </div>
-                    <div class="d-flex mt-3 gap-3">
+                    <div class="d-flex mt-3 gap-3" style="word-wrap: break-word;">
                         <span class="fw-medium">Quality Report: </span>
-                        <span>{{ farmer_profile.quality_report_link }}</span>
+                        <a href="{{ farmer_profile.quality_report_link }}"><span>{{ farmer_profile.quality_report_link }}</span></a>
                     </div>
                     <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Affiliation: </span>
@@ -125,7 +218,9 @@
                     </div>
                     <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Processing Method: </span>
-                        <span>{{ farmer_profile.processing_method }}</span>
+                        {% for method in processing_methods %}
+                        <span>{{ method }},</span>
+                        {% endfor %}
                     </div>
                     <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Processing Desc: </span>
@@ -144,24 +239,37 @@
                         {% if photo.photo %}
                         <div class="col-sm-4 mb-3" style="height: 200px;width: 200px;">
                             <img style="width: 100%;"   class="rounded" src="{{photo.photo.url}}" alt="..." >
+                            <a href="{% url 'delete_farmer_photo' photo.id %}" class="btn btn-danger btn-sm mt-2">Delete</a>
                         </div>
                         {% endif %}
                     {% endfor %}
-                        <div class="col-sm-4 mb-3 " style="">
-                            <a href="#photoModal" data-bs-toggle="modal" data-bs-target="#photoModal">
-                                <svg style="fill: green;" xmlns="http://www.w3.org/2000/svg" width="70" height="70" fill="currentColor" class="bi bi-plus-circle-fill mt-4" viewBox="0 0 16 16">
-                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
-                                  </svg>
-                            </a>
-                          
-                        </div>
+                      
                     <!-- <div class="col-sm-4 mb-3" style="height: 200px;width: 200px;">
                         <img style="width: 100%;" class="rounded" src="{% static 'img/128px-Placeholder_view_vector.svg.png' %}" alt="..." >
                     </div>  -->
+                    <div class="col-sm-4 mb-3 ">
+                        <a href="#photoModal" data-bs-toggle="modal" data-bs-target="#photoModal">
+                            <svg style="fill: green;" xmlns="http://www.w3.org/2000/svg" width="70" height="70" fill="currentColor" class="bi bi-plus-circle-fill mt-4" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+                              </svg>
+                        </a>
+                      
+                    </div>
                     {% else %}
-                        <div class="col-sm-4 mb-3">
+                     <div class="col-sm-4 mb-3" style="height: 150px;width: 150px;">
+                        <img style="width: 100%;" class="rounded" src="{% static 'img/128px-Placeholder_view_vector.svg.png' %}" alt="..." >
+                    </div> 
+                    <div class="col-sm-4 mb-3 ">
+                        <a href="#photoModal" data-bs-toggle="modal" data-bs-target="#photoModal">
+                            <svg style="fill: green;" xmlns="http://www.w3.org/2000/svg" width="70" height="70" fill="currentColor" class="bi bi-plus-circle-fill mt-4" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+                              </svg>
+                        </a>
+                      
+                    </div>
+                        <!-- <div class="col-sm-4 mb-3">
                             <img class="rounded" src="media/farmer_photos/128px-Placeholder_view_vector.svg.png" alt="..." >
-                        </div> 
+                        </div>  -->
                     {% endif %}
                     
 
@@ -226,6 +334,25 @@
                     {{ dp_form.profile_picture }}
                     <!-- <input type="file" class="form-control" id="inputGroupFile02">
                     <label class="input-group-text" for="inputGroupFile02">Upload</label> -->
+
+             </div>
+             <div class="input-group mb-3">
+                    {{ dp_form.firstname }}
+             </div>
+             <div class="input-group mb-3">
+                {{ dp_form.lastname }}
+            </div>
+            <div class="input-group mb-3">
+                {{ dp_form.city }}
+            </div>
+            <div class="input-group mb-3">
+                {{ dp_form.state }}
+            </div>
+            <div class="input-group mb-3">
+                {{ dp_form.country }}
+            </div>
+             <div>
+
              </div>
         </div>
         <div class="modal-footer">
@@ -245,12 +372,17 @@
           <h1 class="modal-title fs-5" id="storyModalLabel">Edit Story</h1>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <form action="{% url 'farmer_dashboard' %}" method="post" enctype="multipart/form-data">
+        <form id="edit_story_form" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="modal-body">
+
+            <div class="input-group mb-3">
+                    {{ story_form.language }}
+            </div>
             
             <div class="input-group mb-3">
-                    {{ story_form.bio }}
+                   
+                    {{ story_form.story_text }}
                     <!-- <input type="file" class="form-control" id="inputGroupFile02">
                     <label class="input-group-text" for="inputGroupFile02">Upload</label> -->
              </div>
@@ -277,7 +409,7 @@
         <div class="modal-body">
             <div class="input-group mb-3">
                 {{ photo_form.photo }}
-         </div>
+        </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -288,9 +420,10 @@
     </div>
   </div>
 
+
   <!-- Edit Details Modal -->
   <!-- Scrollable modal -->
-  <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+   <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="exampleModalLabel" >
     <div class="modal-dialog modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
@@ -320,6 +453,9 @@
             </div>
             <div class="input-group mb-3">
                 {{ main_form.source_of_cup_scores }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.quality_report_link }}
             </div>
             <div class="input-group mb-3">
                 {{ main_form.affiliation }}

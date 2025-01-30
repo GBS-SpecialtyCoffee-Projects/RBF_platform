@@ -5,6 +5,9 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 import os
+from django.urls import reverse
+from django.http import HttpResponseRedirect
+
 
 def roaster_dashboard(request):
     if request.user.group != 'roaster':
@@ -61,16 +64,21 @@ def roaster_dashboard(request):
     else:
         roaster_bio_form = RoasterBioForm(instance=roaster_profile)
 
-    # Handle the photo form
-    if request.method == 'POST' and 'roaster_photo_form' in request.POST:
-        roaster_photo_form = RoasterPhotoForm(request.POST, request.FILES)
-        if roaster_photo_form.is_valid():
-            photo_instance = roaster_photo_form.save(commit=False)
-            photo_instance.user = request.user  # Assuming you have a ForeignKey to the user
-            photo_instance.save()
-            return redirect('roaster_dashboard')
+    # Limit the number of photos to 6
+    if roaster_photos.count() >= 6:
+        roaster_photo_form = None  # Disable the photo form if the limit is reached
+        messages.warning(request, 'You have reached the maximum limit of 6 photos.')
     else:
-        roaster_photo_form = RoasterPhotoForm()
+        # Handle the photo form
+        if request.method == 'POST' and 'roaster_photo_form' in request.POST:
+            roaster_photo_form = RoasterPhotoForm(request.POST, request.FILES)
+            if roaster_photo_form.is_valid():
+                photo_instance = roaster_photo_form.save(commit=False)
+                photo_instance.user = request.user  # Assuming you have a ForeignKey to the user
+                photo_instance.save()
+                return redirect('roaster_dashboard')
+        else:
+            roaster_photo_form = RoasterPhotoForm()
 
     # Handle the sourcing form
     if request.method == 'POST' and 'roaster_sourcing_form' in request.POST:
@@ -195,18 +203,54 @@ def connections(request):
     form = MeetingRequestForm()
     show_modal = False  # Initially, the modal should not be shown
 
+    # Get filter parameters from GET request
+    annual_production = request.GET.get('annual_production')
+    farm_size = request.GET.get('farm_size')
+
+    # Filter the farmers queryset accordingly
+    if annual_production:
+        farmers = farmers.filter(annual_production__isnull=False)
+        if annual_production == '0.1-5':
+            farmers = farmers.filter(annual_production__gte=0.1, annual_production__lte=5)
+        elif annual_production == '5-20':
+            farmers = farmers.filter(annual_production__gte=5, annual_production__lte=20)
+        elif annual_production == '20-50':
+            farmers = farmers.filter(annual_production__gte=20, annual_production__lte=50)
+        elif annual_production == '50+':
+            farmers = farmers.filter(annual_production__gte=50)
+
+    if farm_size:
+        farmers = farmers.filter(farm_size__isnull=False)
+        if farm_size == '0.1-2':
+            farmers = farmers.filter(farm_size__gte=0.1, farm_size__lte=2)
+        elif farm_size == '2-10':
+            farmers = farmers.filter(farm_size__gte=2, farm_size__lte=10)
+        elif farm_size == '10-50':
+            farmers = farmers.filter(farm_size__gte=10, farm_size__lte=50)
+        elif farm_size == '50+':
+            farmers = farmers.filter(farm_size__gte=50)
+
     if request.method == 'POST':
         # Handle retrieval or deletion of meeting requests
         if 'retrieve_meeting_request' in request.POST:
             meeting_request = get_object_or_404(MeetingRequest, id=request.POST.get('meeting_id'))
             if meeting_request.status == 'pending':
                 meeting_request.delete()
-            return redirect('connections')
+            # Redirect back to the same page with GET parameters
+            query_params = request.GET.urlencode()
+            redirect_url = reverse('connections')
+            if query_params:
+                redirect_url += '?' + query_params
+            return HttpResponseRedirect(redirect_url)
         elif 'delete_meeting_request' in request.POST:
             meeting_request = get_object_or_404(MeetingRequest, id=request.POST.get('meeting_id'))
             if meeting_request.status == 'rejected':
                 meeting_request.delete()
-            return redirect('connections')
+            query_params = request.GET.urlencode()
+            redirect_url = reverse('connections')
+            if query_params:
+                redirect_url += '?' + query_params
+            return HttpResponseRedirect(redirect_url)
 
         # Handle meeting request form submission
         form = MeetingRequestForm(request.POST)
@@ -218,19 +262,26 @@ def connections(request):
 
             if active_meetings_count >= 5:
                 messages.error(request, "You cannot have more than 5 pending or accepted meetings.")
-                return redirect('connections')
+                query_params = request.GET.urlencode()
+                redirect_url = reverse('connections')
+                if query_params:
+                    redirect_url += '?' + query_params
+                return HttpResponseRedirect(redirect_url)
 
             meeting_request = form.save(commit=False)
             meeting_request.requester = request.user
             meeting_request.requestee = get_object_or_404(User, id=request.POST.get('user_id'))
             meeting_request.save()
-            return redirect('connections')
+            query_params = request.GET.urlencode()
+            redirect_url = reverse('connections')
+            if query_params:
+                redirect_url += '?' + query_params
+            return HttpResponseRedirect(redirect_url)
         else:
             show_modal = True  # Show modal if the form is invalid
 
     # Fetch the user's meeting requests
     meeting_requests = MeetingRequest.objects.filter(requester=request.user)
-
 
     # Check the number of pending or accepted meetings
     active_meetings_count = meeting_requests.filter(status__in=['pending', 'accepted']).count()
@@ -238,13 +289,14 @@ def connections(request):
 
     return render(request, 'base/connections.html', {
         'farmers': farmers,
-        'form': form,  # Pass the form to the template
-        'show_modal': show_modal,  # Pass the show_modal flag
+        'form': form,
+        'show_modal': show_modal,
         'can_request_meetings': can_request_meetings,
-        'meeting_requests': meeting_requests,  # Pass meeting requests to the template
-        'total_meetings_used': active_meetings_count,  # Pass the count to the template
+        'meeting_requests': meeting_requests,
+        'total_meetings_used': active_meetings_count,
+        'selected_annual_production': annual_production,
+        'selected_farm_size': farm_size,
     })
-
 
 def farmer_view(request, user_id):
     # Fetch the farmer profile based on the user ID
