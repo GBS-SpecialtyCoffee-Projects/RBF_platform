@@ -80,19 +80,8 @@ def farmer_details(request):
             'language': story_language
         }
         story_form = StoryForm(story_data)
-        # print("data",request.POST)
-        # farmer_form.fields['harvest_season'] =('').join(request.POST['harvest_season'])
-        # print("harvest",farmer_form['harvest_season'])
-        # print("harvest",request.POST.getlist('harvest_season'))
-        # data = request.POST.copy()
-        # data['harvest_season'] = (','.join(request.POST.getlist('harvest_season')))
-        # farmer_form = FarmerForm(data)
-        # print(story_form)
-        # story_form.save()
-        # if farmer_form.is_valid() and story_form.is_valid():
-        if story_form.is_valid():
-            print("valid")
-            # farmer_form.save()
+        if farmer_form.is_valid() and story_form.is_valid():
+            farmer_form.save()
             story = story_form.save(commit=False)
             story.user = request.user
             story.save()

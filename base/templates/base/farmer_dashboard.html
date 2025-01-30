@@ -66,7 +66,7 @@
                                     <ul id="lang_ul" class="dropdown-menu">
                                         {% for language in farmer_stories %}
                                         {% if language.language != farmer_stories.first.language %}
-                                        <li class="lang_dd" data-language={{language.language}} ><a class="dropdown-item" href="#">{{language.language}}</a></li>
+                                        <li class="lang_dd" data-language={{language.language_id}} ><a class="dropdown-item" href="#">{{language.language}}</a></li>
                                         {% endif %}
                                         {% endfor %}
                                     </ul>
@@ -76,7 +76,7 @@
                             
                         </div>   
                         <div class="mt-1">
-                            <button class="ms-2 btn btn-sm"  style="background-color: blue; color: white; " data-bs-toggle="modal" data-bs-target="#storyModal">edit</button>
+                            <button id="edit_story" class="ms-2 btn btn-sm"  style="background-color: blue; color: white; " data-bs-toggle="modal" data-bs-target="#storyModal">edit</button>
                         </div>
                         
                     </div> 
@@ -178,11 +178,13 @@
                     
                     <div class="d-flex gap-3">
                         <span class="fw-medium">Farm Size:   </span>
-                        <span>{{ farmer_profile.farm_size }}</span>
+                        <span>{{ farmer_profile.farm_size }} </span>
                     </div>
                     <div class="d-flex mt-3  gap-3">
                         <span class="fw-medium">Harvest Season: </span>
-                        <span>{{ farmer_profile.harvest_season }}</span>
+                        {% for season in harvest_seasons %}
+                        <span>{{ season }},</span>
+                        {% endfor %}
                     </div>
                     <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Annual Yield: </span>
@@ -192,10 +194,16 @@
                         <span class="fw-medium">Cultivars(Variety): </span>
                         <span>{{ farmer_profile.cultivars }}</span>
                     </div>
-                    <div class="d-flex mt-3 gap-3">
+                    <!-- <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Cup Scores: </span>
                         <span>{{ farmer_profile.cup_scores_received }}</span>
-                    </div> 
+                    </div>  -->
+                    <div class="d-flex mt-3 gap-3">
+                        <span class="fw-medium">Cup Scores:: </span>
+                        {% for score in cup_scores %}
+                        <span class="ms-0">{{ score }},</span>
+                        {% endfor %}
+                    </div>
                     <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Cup Scores Source: </span>
                         <span>{{ farmer_profile.source_of_cup_scores }}</span>
@@ -210,7 +218,9 @@
                     </div>
                     <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Processing Method: </span>
-                        <span>{{ farmer_profile.processing_method }}</span>
+                        {% for method in processing_methods %}
+                        <span>{{ method }},</span>
+                        {% endfor %}
                     </div>
                     <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Processing Desc: </span>
@@ -362,12 +372,17 @@
           <h1 class="modal-title fs-5" id="storyModalLabel">Edit Story</h1>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <form action="{% url 'farmer_dashboard' %}" method="post" enctype="multipart/form-data">
+        <form id="edit_story_form" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="modal-body">
+
+            <div class="input-group mb-3">
+                    {{ story_form.language }}
+            </div>
             
             <div class="input-group mb-3">
-                    {{ story_form.bio }}
+                   
+                    {{ story_form.story_text }}
                     <!-- <input type="file" class="form-control" id="inputGroupFile02">
                     <label class="input-group-text" for="inputGroupFile02">Upload</label> -->
              </div>

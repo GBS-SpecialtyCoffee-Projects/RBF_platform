@@ -82,7 +82,7 @@ class FarmerForm(forms.ModelForm):
             'harvest_season': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Harvest Season'}),
             'annual_production': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Annual Production'}),
             'cultivars': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cultivars'}),
-            'cup_scores_received': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cup Scores Received'}),
+            'cup_scores_received': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Cup Scores Received'}),
             'source_of_cup_scores': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Source of Cup Scores'}),
             'quality_report_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'Quality Report Link'}),
             'processing_method': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Processing Method'}),
@@ -342,12 +342,13 @@ class RoasterSourcingForm(forms.ModelForm):
             'origins_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Origins Interested'}),
         }
 
-class FarmerBioForm(forms.ModelForm):
+class FarmerStoryForm(forms.ModelForm):
     class Meta:
-        model = Farmer
-        fields = ['bio']
+        model = Story
+        fields = ['language', 'story_text']
         widgets = {
-            'bio': forms.Textarea(attrs={'class': 'form-control'}),
+            'story_text': forms.Textarea(attrs={'id': 'edit_story_modal', 'class': 'form-control'}),
+            'language': forms.HiddenInput(attrs={'id': 'edit_story_lang', 'class': 'form-control'}),
         }
 
 

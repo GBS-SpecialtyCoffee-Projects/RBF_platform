@@ -67,6 +67,15 @@ class ProcessingMethod(models.Model):
 
     def __str__(self):
         return self.name
+    
+class CupScore(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
 
 class Farmer(models.Model):
     SIZE_CHOICES = [
@@ -115,7 +124,7 @@ class Farmer(models.Model):
     annual_production_unit = models.CharField(max_length=255, choices=PROD_UNIT_CHOICES, blank=True, null=True)
     cultivars = models.CharField(max_length=255, blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
-    cup_scores_received = models.TextField(blank=True, null=True)
+    cup_scores_received = models.ManyToManyField(CupScore, blank=True, null=True)
     source_of_cup_scores = models.CharField(max_length=255, blank=True, null=True)
     quality_report_link = models.URLField(blank=True, null=True)
     processing_method = models.ManyToManyField(ProcessingMethod, blank=True)

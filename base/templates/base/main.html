@@ -39,6 +39,7 @@
 
     $(document).on("click",".lang_dd",function() {
         var lang = $(this).data("language");
+        var lang_name = $(this).text();
         console.log(lang);
         $.ajax({
             url: "/farmer/switch_story/" + lang,       // URL endpoint
@@ -47,11 +48,14 @@
                 console.log(response.story); // "Hello, {name}!"
                 console.log(response.languages);
                 $("#story-text").text(response.story);
+                $("#edit_story_modal").val(response.story);
+                $('#edit_story_lang').val(lang)
+                // $("#edit_story_form").attr('action',"");
                 // $("#lang_ul").text(response.languages);
-                $("#lang_a").text(lang);
+                $("#lang_a").text(lang_name);
                 new_li = '';
                 for (var i = 0; i < response.languages.length; i++) {
-                    new_li += '<li class="lang_dd" data-language="' + response.languages[i] + '"><a class="dropdown-item" href="#">' + response.languages[i] + '</a></li>\n';
+                    new_li += '<li class="lang_dd" data-language="' + response.languages[i][0] + '"><a class="dropdown-item" href="#">' + response.languages[i][1] + '</a></li>\n';
                 }
                 $("#lang_ul").html(new_li);
                 // $('#result').text(response.message); // Update a div with the response
@@ -62,6 +66,24 @@
             });
         
     })
+
+    $(document).on("submit","#edit_story_form",function(event) {
+        event.preventDefault();
+
+        var formData = $(this).serialize();
+        console.log(formData);
+        $.ajax({
+            url: "/farmer/update_story/",       // URL endpoint
+            type: "POST",    // Data to send to the server
+            data: formData,
+            success: function (response) {
+        
+                console.log(response.story);},
+            error: function (xhr, status, error) {
+                console.error("Error:", error);
+            },
+    });
+    });
  
     function googleTranslateElementInit() {
         new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,es,fr,de,it',},    'google_translate_element');

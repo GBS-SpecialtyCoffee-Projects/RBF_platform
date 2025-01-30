@@ -167,7 +167,6 @@
                             </div>
                         
                             <div>{{ farmer_form.harvest_season.label }}</div>
-                            <!-- <div>{{ farmer_form.harvest_season }}</div> -->
                             {% for checkbox in farmer_form.harvest_season %}
                             <div class="form-check form-check-inline">
                                 {{checkbox}}
@@ -182,10 +181,17 @@
                                 {{ farmer_form.cultivars }}
                                 <label for="{{ farmer_form.cultivars.id_for_label }}">{{ farmer_form.cultivars.label }}</label>
                             </div>
-                            <div class="form-floating form-group">
+                            <!-- <div class="form-floating form-group">
                                 {{ farmer_form.cup_scores_received }}
                                 <label for="{{ farmer_form.cup_scores_received.id_for_label }}">{{ farmer_form.cup_scores_received.label }}</label>
+                            </div> -->
+                            <div>{{ farmer_form.cup_scores_received.label }}</div>
+                            <!-- <div>{{ farmer_form.harvest_season }}</div> -->
+                            {% for checkbox in farmer_form.cup_scores_received %}
+                            <div class="form-check form-check-inline">
+                                {{checkbox}}
                             </div>
+                            {% endfor %}
                             <div class="form-floating form-group">
                                 {{ farmer_form.source_of_cup_scores }}
                                 <label for="{{ farmer_form.source_of_cup_scores.id_for_label }}">{{ farmer_form.source_of_cup_scores.label }}</label>
