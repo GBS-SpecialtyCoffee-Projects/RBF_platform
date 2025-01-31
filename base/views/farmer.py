@@ -92,11 +92,18 @@ def edit_farmer_details(request):
 
 def upload_photo(request):
     if request.method == 'POST':
-        form = FarmerPhotoForm(request.POST, request.FILES)
+        # form = FarmerPhotoForm(request.POST, request.FILES)
+        # if form.is_valid():
+        #     farmer_photo = form.save(commit=False)
+        #     farmer_photo.user = request.user  # Set the user to the currently logged-in user
+        #     farmer_photo.clean()  
+        #     farmer_photo.save()
+        #     return redirect('farmer_dashboard')
+        form = FarmerPhotoForm(photo = 'farmer_photos/battlecreek-coffee-roasters-mY4hAwxNA_0-unsplash_fShwt4h.jpg')
         if form.is_valid():
             farmer_photo = form.save(commit=False)
             farmer_photo.user = request.user  # Set the user to the currently logged-in user
-            farmer_photo.clean()  # Validate the roaster_photo instance
+            farmer_photo.clean()  
             farmer_photo.save()
             return redirect('farmer_dashboard')
     else:

@@ -59,6 +59,7 @@ def signup_view(request):
         form = SignupForm()
     return render(request, 'base/signup.html', {'form': form})
 
+
 def farmer_details(request):
     try:
         farmer = request.user.farmer_profile
