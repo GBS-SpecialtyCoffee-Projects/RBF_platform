@@ -66,7 +66,7 @@ def farmer_details(request):
         return redirect('signup')  # If the farmer profile does not exist, redirect to signup
 
     if request.method == 'POST':
-        farmer_form = FarmerForm(request.POST, request.FILES, instance=farmer)
+        farmer_form = FarmerForm(request.POST, instance=farmer)
         story_text = request.POST.get('story_text')
         story_language_id = request.POST.get('language')
          # Attempt to retrieve the language instance
@@ -81,11 +81,14 @@ def farmer_details(request):
         }
         story_form = StoryForm(story_data)
         if farmer_form.is_valid() and story_form.is_valid():
-            farmer_form.save()
-            story = story_form.save(commit=False)
-            story.user = request.user
-            story.save()
-            return redirect('farmer_dashboard')  # Redirect to signin after successful update
+            try:
+                farmer_form.save()
+                story = story_form.save(commit=False)
+                story.user = request.user
+                story.save()
+                return redirect('farmer_dashboard')  # Redirect to signin after successful update
+            except Exception as e:
+                print(e)
         else:
             # Print form errors for debugging
             print(farmer_form.errors)
