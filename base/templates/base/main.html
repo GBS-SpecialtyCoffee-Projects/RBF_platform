@@ -47,7 +47,7 @@
             success: function (response) {
                 console.log(response.story); // "Hello, {name}!"
                 console.log(response.languages);
-                $("#story-text").text(response.story);
+                $("#story_div").html('<p id="story-text">' + response.story + '</p>');
                 $("#edit_story_modal").val(response.story);
                 $('#edit_story_lang').val(lang)
                 // $("#edit_story_form").attr('action',"");
@@ -61,6 +61,9 @@
                 // $('#result').text(response.message); // Update a div with the response
             },
             error: function (xhr, status, error) {
+                $("#lang_a").text(lang_name);
+                $('#add_story_lang').val(lang)
+                $('#story_div').html('<button id="add_story" class="ms-2 btn btn-sm"  style="background-color: green; color: white; " data-bs-toggle="modal" data-bs-target="#addstoryModal">Add new story</button>');
                 console.error("Error:", error);
             },
             });
@@ -77,8 +80,32 @@
             type: "POST",    // Data to send to the server
             data: formData,
             success: function (response) {
-        
-                console.log(response.story);},
+                $("#story-text").text(response.story);
+                $("#storyModal").modal('hide');
+                
+                // console.log(response.story);
+            },
+            error: function (xhr, status, error) {
+                console.error("Error:", error);
+            },
+    });
+    });
+
+    $(document).on("submit","#add_story_form",function(event) {
+        event.preventDefault();
+
+        var formData = $(this).serialize();
+        console.log(formData);
+        $.ajax({
+            url: "/farmer/add_story/",       // URL endpoint
+            type: "POST",    // Data to send to the server
+            data: formData,
+            success: function (response) {
+                $("#story-text").text(response.story);
+                $("#addstoryModal").modal('hide');
+                
+                // console.log(response.story);
+            },
             error: function (xhr, status, error) {
                 console.error("Error:", error);
             },

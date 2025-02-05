@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django_countries import countries
+from rbf_platform.storage_backends import ProfileStorage,PhotoStorage
 from PIL import Image
 
 
@@ -129,7 +130,8 @@ class Farmer(models.Model):
     quality_report_link = models.URLField(blank=True, null=True)
     processing_method = models.ManyToManyField(ProcessingMethod, blank=True)
     processing_description = models.TextField(blank=True, null=True)
-    profile_picture = models.ImageField(upload_to='farmer_profiles/', blank=True, null=True)
+    # profile_picture = models.ImageField(upload_to='farmer_profiles/', blank=True, null=True)
+    profile_picture = models.ImageField(storage=ProfileStorage(),blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -184,24 +186,24 @@ class Roaster(models.Model):
 class FarmerPhoto(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farmer_photos')
-    photo = models.ImageField(upload_to='farmer_photos/', null=True, blank=True)
+    photo = models.ImageField(storage=PhotoStorage(), blank=True, null=True)
     #order = models.PositiveIntegerField(null=True, blank=True)
 
-    def __str__(self):
-        return f"Photo {self.id} for {self.user.username}"
+    # def __str__(self):
+    #     return f"Photo {self.id} for {self.user.username}"
     
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     super().save(*args, **kwargs)
 
-        if self.photo:
-            self.photo.file.seek(0)
-            img = Image.open(self.photo.path)
-            max_size = (200, 200)  # Maximum width and height
+    #     if self.photo:
+    #         self.photo.file.seek(0)
+    #         img = Image.open(self.photo.path)
+    #         max_size = (200, 200)  # Maximum width and height
 
-            if img.height > max_size[1] or img.width > max_size[0]:
-                img.thumbnail(max_size, Image.Resampling.LANCZOS)
-                print(f"Resized image {self.photo.file} {img.format}")
-                img.save(self.photo.path, format=f"{img.format}", quality=90)
+    #         if img.height > max_size[1] or img.width > max_size[0]:
+    #             img.thumbnail(max_size, Image.Resampling.LANCZOS)
+    #             print(f"Resized image {self.photo.file} {img.format}")
+    #             img.save(self.photo.path, format=f"{img.format}", quality=90)
 
     
     

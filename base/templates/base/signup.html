@@ -191,7 +191,7 @@
         var termsChecked = document.getElementById('termsCheck').checked;
 
         // Regex for password validation
-        var passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+        var passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d\W_]{8,}$/;
 
         if (email !== confirmEmail) {
             alert("Email addresses don't match");

@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
+from dotenv import load_dotenv
+load_dotenv()
+
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -45,8 +48,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     "base.apps.BaseConfig",
+    "storages",
+    
+    
 ]
 
 MIDDLEWARE = [
@@ -81,6 +86,17 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "rbf_platform.wsgi.application"
+
+#Storages 
+# DEFAULT_FILE_STORAGE = "storages.backends.s3.S3Storage"
+# STORAGES = {
+#     "default": {
+#         "BACKEND": "storage.backends.s3boto3.S3Boto3Storage",
+#     },
+#     "staticfiles": {
+#         "BACKEND": "storage.backends.s3boto3.S3StaticStorage",
+#     }
+# }
 
 
 # Database
@@ -152,7 +168,36 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = "/static/"
+# USE_S3  = os.getenv('USE_S3') == 'TRUE'
+
+USE_S3 = True
+
+if USE_S3:
+    # aws settings
+
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = 'UTPVAYTQdpfuQCsTikS1h8hE8o9CcwWGXnuduPrG'
+    # AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+    AWS_STORAGE_BUCKET_NAME = 'rbfplatformbucket'
+    AWS_DEFAULT_ACL = None
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+    # AWS_S3_REGION_NAME = 'us-east-2'
+    # s3 static settings
+    STATIC_LOCATION = 'static'
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/'
+    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    # s3 public media settings
+    PUBLIC_MEDIA_LOCATION = 'media'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
+    # DEFAULT_FILE_STORAGE = 'rbf_platform.storage_backends.ProfileStorage'
+    DEFAULT_FILE_STORAGE = 'storage.backends.s3boto3.S3Boto3Storage'
+    STATICFILES_DIRS = (
+        os.path.join(BASE_DIR, "static/"),
+    )
+    # STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles") 
+else:
+    STATIC_URL = "/static/"
 
 # This production code might break development mode, so we check whether we're in DEBUG mode
 if not DEBUG:
@@ -162,17 +207,18 @@ if not DEBUG:
     # and renames the files with unique names for each version to support long-term caching
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, "static"),
-)
+    STATICFILES_DIRS = (
+        os.path.join(BASE_DIR, "static"),
+    )
+
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 #AUTHENTICATION_BACKENDS = ['base.backend.EmailBackend']
 LOCALE_PATHS = [

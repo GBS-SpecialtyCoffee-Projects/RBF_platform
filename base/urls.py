@@ -44,6 +44,7 @@ urlpatterns = [
     path('farmer_details_edit/', farmer.edit_farmer_details, name='edit_farmer_details'),
     path('farmer/switch_story/<int:language_id>/', farmer.switch_story, name='switch_story'),
     path('farmer/update_story/', farmer.update_story, name='update_story'),
+    path('farmer/add_story/', farmer.add_story, name='add_story'),
 
 ]
 

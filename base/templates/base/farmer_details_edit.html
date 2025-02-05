@@ -6,40 +6,59 @@
 {% include 'base/profile_navbar.html' %}
 
 <div class="container">
-    <form action="{% url 'farmer_dashboard' %}" method="post" enctype="multipart/form-data">
+    <form action="{% url 'edit_farmer_details' %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="modal-body">
+            {{ main_form.farm_name.label }}
             <div class="input-group mb-3">
+               
                 {{ main_form.farm_name }}
             </div>
+            {{ main_form.farm_size.label }}
             <div class="input-group mb-3">
+               
                 {{ main_form.farm_size }}
             </div>
+            {{ main_form.harvest_season.label }}
             <div class="input-group mb-3">
+                
                 {{ main_form.harvest_season }}
             </div>
+            {{ main_form.annual_production.label }}
             <div class="input-group mb-3">
+               
                 {{ main_form.annual_production }}
             </div>
+            {{ main_form.cultivars.label }}
             <div class="input-group mb-3">
+                
                 {{ main_form.cultivars }}
             </div>
+            {{ main_form.cup_scores_received.label }}
             <div class="input-group mb-3">
+                
                 {{ main_form.cup_scores_received }}
             </div>
+            {{ main_form.source_of_cup_scores.label }}
             <div class="input-group mb-3">
+                
                 {{ main_form.source_of_cup_scores }}
             </div>
+            {{ main_form.quality_report_link.label }}
             <div class="input-group mb-3">
                 {{ main_form.quality_report_link }}
             </div>
-            <div class="input-group mb-3">
+            <!-- <div class="input-group mb-3">
                 {{ main_form.affiliation }}
-            </div>
+            </div> -->
+            {{ main_form.processing_method.label }}
             <div class="input-group mb-3">
+                
                 {{ main_form.processing_method }}
             </div>
+            {{ main_form.processing_description.label }}
             <div class="input-group mb-3">
+                
                 {{ main_form.processing_description }}
             </div>
        

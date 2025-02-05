@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck
+from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck
 from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore
 from django.contrib import messages
 from django.http import JsonResponse
@@ -23,6 +23,7 @@ def farmer_dashboard(request):
     pending_meetings = MeetingRequest.objects.filter(
         requestee=request.user, status='pending'
     )[:2]
+    languages = Language.objects.all()
     # pending_meetings = MeetingRequest.objects.filter(
     #     requester=request.user, status='accepted'
     # ) | MeetingRequest.objects.filter(
@@ -47,9 +48,11 @@ def farmer_dashboard(request):
             form.save()
             return redirect('farmer_dashboard')
     else:
+        print('in else')
         main_form = FarmerProfileForm(instance=farmer_profile)
         dp_form = FarmerProfilePhotoForm(instance=farmer_profile)
         story_form = FarmerStoryForm(instance=farmer_story)
+        add_story_form = FarmerAddStoryForm()
         photo_form = FarmerPhotoForm()
 
     return render(request, 'base/farmer_dashboard.html', {
@@ -67,8 +70,10 @@ def farmer_dashboard(request):
         'can_request_meetings': can_request_meetings,
         'main_form': main_form, 
         'story_form': story_form,
+        'add_story_form': add_story_form,
         'photo_form': photo_form,
-        'dp_form': dp_form
+        'dp_form': dp_form,
+        'languages': languages
     })
 
 def edit_farmer_details(request):
@@ -76,16 +81,19 @@ def edit_farmer_details(request):
         return redirect('roaster_dashboard')
     
     farmer_profile = Farmer.objects.filter(user=request.user).first()
+    print(request.method)
     
     if request.method == 'POST' and 'main_form' in request.POST:
         form = FarmerProfileForm(request.POST, instance=farmer_profile)
         if form.is_valid():
+            print('in valid')
             form.save()
             return redirect('farmer_dashboard')
+        else:
+            print(form.errors)
     else:
         main_form = FarmerProfileForm(instance=farmer_profile)
-    
-    
+
     return render(request, 'base/farmer_details_edit.html',{
         'main_form': main_form
     })
@@ -128,8 +136,8 @@ def delete_farmer_photo(request, photo_id):
     photo = get_object_or_404(FarmerPhoto, id=photo_id, user=request.user)
     if request.method == 'GET':
         # Delete the file from the filesystem
-        if photo.photo and os.path.isfile(photo.photo.path):
-            os.remove(photo.photo.path)
+        # if photo.photo and os.path.isfile(photo.photo.path):
+        #     os.remove(photo.photo.path)
 
         # Delete the record from the database
         photo.delete()
@@ -286,12 +294,13 @@ def switch_story(request,language_id):
         #get story with that id 
         story = Story.objects.get(language=language, user=farmer)
         #get all stories excluding story in the language
-        languages = [ (story.language.id,story.language.name) for story in Story.objects.filter(user=farmer).exclude(language=language)]
+        # languages = [ (story.language.id,story.language.name) for story in Story.objects.filter(user=farmer).exclude(language=language)]
+        languages = [ (language.id,language.name) for language in Language.objects.all()]
 
         # print(languages)
         # print(story.story_text)
      except:
-         return JsonResponse({'error': 'Language not found'}, status=404)
+         return JsonResponse({'error': 'Language not found',}, status=404)
     
      #return response to page with story 
      return JsonResponse({'story': story.story_text,'languages':languages, 'success': 'success'}, status=200)
@@ -303,9 +312,30 @@ def update_story(request):
         story = Story.objects.get(language=language, user=farmer)
         form = FarmerStoryForm(request.POST,instance=story)
         if form.is_valid():
-            print('in valid')
-            form.save()
-            return JsonResponse({'success': 'success'}, status=200)
+            # print('in valid')
+            instance =form.save()
+            return JsonResponse({'success': 'success', 'story': instance.story_text}, status=200)
+            # return redirect('farmer_dashboard')  # Redirect to a profile page or any other page
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+        # return redirect('farmer_dashboard')  # If not a POST request, redirect to profile page
+
+    # return render(request, 'base/farmer_dashboard.html.html', {'form': form})
+    # return redirect('farmer_dashboard')
+    return JsonResponse({'success': 'success'}, status=200)
+
+def add_story(request):
+    if request.method == 'POST':
+        farmer = request.user
+        # language= Language.objects.get(id=request.POST.get('language'))
+        # story = Story.objects.get(language=language, user=farmer)
+        form = FarmerAddStoryForm(request.POST)
+        if form.is_valid():
+            # print('in valid')
+            instance =form.save(commit=False)
+            instance.user = farmer
+            instance.save()
+            return JsonResponse({'success': 'success', 'story': instance.story_text}, status=200)
             # return redirect('farmer_dashboard')  # Redirect to a profile page or any other page
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)

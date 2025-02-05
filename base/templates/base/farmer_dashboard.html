@@ -67,11 +67,12 @@
                                    
 
                                     <ul id="lang_ul" class="dropdown-menu">
-                                        {% for language in farmer_stories %}
-                                        {% if language.language != farmer_stories.first.language %}
-                                        <li class="lang_dd" data-language={{language.language_id}} ><a class="dropdown-item" href="#">{{language.language}}</a></li>
+                                        {% for language in languages %}
+                                        {% if language.name != farmer_stories.first.language %}
+                                        <li class="lang_dd" data-language={{language.id}} ><a class="dropdown-item" href="#">{{language.name}}</a></li>
                                         {% endif %}
                                         {% endfor %}
+
                                     </ul>
                                   </div>
 
@@ -80,12 +81,18 @@
                         </div>   
                         <div class="mt-1">
                             <button id="edit_story" class="ms-2 btn btn-sm"  style="background-color: blue; color: white; " data-bs-toggle="modal" data-bs-target="#storyModal">edit</button>
+                            <!-- <button id="add_story" class="ms-2 btn btn-sm"  style="background-color: green; color: white; " data-bs-toggle="modal" data-bs-target="#addstoryModal">Add new story</button> -->
                         </div>
                         
+                        
                     </div> 
+                    <div id="story_div">
+
+                    
                     <p id="story-text">
                        {{farmer_stories.first.story_text}}
                     </p>
+                </div>
     
                 </div>
 
@@ -398,6 +405,40 @@
       </div>
     </div>
   </div>
+
+<!-- Add Story Modal -->
+<div class="modal fade" id="addstoryModal" tabindex="-1" aria-labelledby="addstoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="addstoryModalLabel">Add New Story</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="add_story_form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+
+            <div class="input-group mb-3">
+                    {{ add_story_form.language }}
+                      
+            </div>
+            
+            <div class="input-group mb-3">
+                   
+                    {{ add_story_form.story_text }}
+                    <!-- <input type="file" class="form-control" id="inputGroupFile02">
+                    <label class="input-group-text" for="inputGroupFile02">Upload</label> -->
+             </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" name="story_form" class="btn btn-primary">Save changes</button>
+        </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Add Picture Modal -->
 <div class="modal fade" id="photoModal" tabindex="-1" aria-labelledby="photoModalLabel" aria-hidden="true">
