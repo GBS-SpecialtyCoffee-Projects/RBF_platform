@@ -51,12 +51,12 @@ class FarmerForm(forms.ModelForm):
             'city': 'City*',
             'firstname':'First Name*',
             'lastname': 'Last Name*',
-            'middlename': 'Middle Name*',
+            'middlename': 'Middle Name',
             'phone_number': 'Phone Number*',
             'farm_size': 'Farm Size',
             'harvest_season': 'Harvest Season',
             'annual_production': 'Annual Production',
-            'cultivars': 'Cultivars',
+            'cultivars': 'Cultivars/Varieties',
             'cup_scores_received': 'Cup Scores Received',
             'source_of_cup_scores': 'Source of Cup Scores',
             'quality_report_link': 'Quality Report Link',
@@ -76,7 +76,7 @@ class FarmerForm(forms.ModelForm):
             'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Bio','required':'true'}),
             'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name','required':'true'}),
             'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name','required':'true'}),
-            'middlename': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Middle Name','required':'true'}),
+            'middlename': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Middle Name'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number','required':'true'}),
             'farm_size': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Size'}),
             'harvest_season': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Harvest Season'}),
@@ -101,18 +101,31 @@ class FarmerProfileForm(forms.ModelForm):
         fields = [
             'farm_name','farm_size', 'harvest_season', 'annual_production', 'cultivars',
             'cup_scores_received', 'source_of_cup_scores', 'quality_report_link',
-            'processing_method', 'processing_description', 'profile_picture',
+            'processing_method', 'processing_description', 
         ]
+        labels = {
+            "farm_name": "Farm Name*",
+            'farm_size': 'Farm Size',
+            'harvest_season': 'Harvest Season',
+            'annual_production': 'Annual Production',
+            'cultivars': 'Cultivars/Varieties',
+            'cup_scores_received': 'Cup Scores Received',
+            'source_of_cup_scores': 'Source of Cup Scores',
+            'quality_report_link': 'Quality Report Link',
+            'processing_method': 'Processing Method',
+            'processing_description': 'Processing Description',
+            # 'profile_picture': 'Profile Picture',
+        }
         widgets = {
             'farm_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Name'}),
             'farm_size': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Size'}),
-            'harvest_season': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Harvest Season'}),
+            'harvest_season': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Harvest Season'}),
             'annual_production': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Annual Production'}),
             'cultivars': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cultivars'}),
-            'cup_scores_received': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cup Scores Received'}),
+            'cup_scores_received': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Cup Scores Received'}),
             'source_of_cup_scores': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Source of Cup Scores'}),
             'quality_report_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'Quality Report Link'}),
-            'processing_method': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Processing Method'}),
+            'processing_method': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Processing Method'}),
             'processing_description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Processing Description'}),
 
         }
@@ -349,6 +362,15 @@ class FarmerStoryForm(forms.ModelForm):
         widgets = {
             'story_text': forms.Textarea(attrs={'id': 'edit_story_modal', 'class': 'form-control'}),
             'language': forms.HiddenInput(attrs={'id': 'edit_story_lang', 'class': 'form-control'}),
+        }
+
+class FarmerAddStoryForm(forms.ModelForm):
+    class Meta:
+        model = Story
+        fields = ['language', 'story_text']
+        widgets = {
+            'story_text': forms.Textarea(attrs={'id': 'add_story_modal', 'class': 'form-control'}),
+            'language': forms.HiddenInput(attrs={'id': 'add_story_lang', 'class': 'form-control'}),
         }
 
 
