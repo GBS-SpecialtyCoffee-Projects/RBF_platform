@@ -101,7 +101,7 @@ class FarmerProfileForm(forms.ModelForm):
         fields = [
             'farm_name','farm_size', 'harvest_season', 'annual_production', 'cultivars',
             'cup_scores_received', 'source_of_cup_scores', 'quality_report_link',
-            'processing_method', 'processing_description', 
+            'processing_method', 'processing_description', 'preferred_communication_method',
         ]
         labels = {
             "farm_name": "Farm Name*",
@@ -114,6 +114,7 @@ class FarmerProfileForm(forms.ModelForm):
             'quality_report_link': 'Quality Report Link',
             'processing_method': 'Processing Method',
             'processing_description': 'Processing Description',
+            'preferred_communication_method': 'Preferred Communication Method',
             # 'profile_picture': 'Profile Picture',
         }
         widgets = {
@@ -127,6 +128,7 @@ class FarmerProfileForm(forms.ModelForm):
             'quality_report_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'Quality Report Link'}),
             'processing_method': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Processing Method'}),
             'processing_description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Processing Description'}),
+            'preferred_communication_method': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Preferred Communication Method'}),
 
         }
 

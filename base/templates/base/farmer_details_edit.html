@@ -61,11 +61,16 @@
                 
                 {{ main_form.processing_description }}
             </div>
+            {{ main_form.preferred_communication_method.label }}
+            <div class="input-group mb-3">
+                
+                {{ main_form.preferred_communication_method }}
+            </div>
        
             
         </div>
         
-          <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> -->
+          <a href="{% url 'farmer_dashboard' %}" class="btn btn-secondary">Cancel</a>
           <button type="submit" name="main_form" class="btn btn-primary">Save changes</button>
     </form>
 

@@ -80,7 +80,8 @@
             type: "POST",    // Data to send to the server
             data: formData,
             success: function (response) {
-                $("#story-text").text(response.story);
+                // $("#story-text").text(response.story);
+                $('#story_div').html('<p id="story-text">' + response.story + '</p>');
                 $("#storyModal").modal('hide');
                 
                 // console.log(response.story);
@@ -101,6 +102,7 @@
             type: "POST",    // Data to send to the server
             data: formData,
             success: function (response) {
+                // console.log(response.story);
                 $("#story-text").text(response.story);
                 $("#addstoryModal").modal('hide');
                 
