@@ -4,11 +4,10 @@
 <link href="{% static 'styles/farmer_signup.css' %}" rel="stylesheet">
 {% endblock %}
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid pb-2">
     <nav class="navbar navbar-expand-lg navbar-dark ">
         <div class="ms-4 d-flex">
-            <div style="color: #212529;" class="navbar-brand p-0 me-0">COFFEE</div>
-            <div style="color: #5C87B2;" class="navbar-brand p-0">SPACE</div>
+            <img src="{% static 'image/LogoDarkText.png' %}" width="150px" alt="">
             <div class="me-4" id="google_translate_element"></div>
         </div>
     </nav>
@@ -226,18 +225,26 @@
                                 {{ farmer_form.main_role }}
                                 <label for="{{ farmer_form.main_role.id_for_label }}">{{ farmer_form.main_role.label }}</label>
                             </div>
+                            
+                            
 
+                    </div>
+
+                    <div class="col">
+
+                    
+                    <button type="submit" class="btn btn-primary float-end">Save and Continue</button>
                     </div>
 
                 </div>
                
                    
             </div>
-            <div class="row mt-5">
-                <div class="col">
-                    <button type="submit" class="btn btn-primary float-end">Save and Continue</button>
-                </div>
-            </div>
+            
+        
+            
+                
+           
             <div style="margin-top: 7rem; margin-bottom: 7rem;"></div> <!-- Adding more empty space -->
 
             

@@ -103,7 +103,7 @@
             data: formData,
             success: function (response) {
                 // console.log(response.story);
-                $("#story-text").text(response.story);
+                $('#story_div').html('<p id="story-text">' + response.story + '</p>');
                 $("#addstoryModal").modal('hide');
                 
                 // console.log(response.story);
