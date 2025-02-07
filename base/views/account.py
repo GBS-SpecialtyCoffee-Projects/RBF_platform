@@ -67,7 +67,7 @@ def farmer_details(request):
         return redirect('signup')  # If the farmer profile does not exist, redirect to signup
 
     if request.method == 'POST':
-        farmer_form = FarmerForm(request.POST, instance=farmer)
+        farmer_form = FarmerForm(request.POST,request.FILES, instance=farmer)
         story_text = request.POST.get('story_text')
         story_language_id = request.POST.get('language')
          # Attempt to retrieve the language instance

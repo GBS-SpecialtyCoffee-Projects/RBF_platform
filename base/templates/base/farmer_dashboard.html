@@ -19,7 +19,9 @@
                     {% endif %}
                 </div> -->
                 <div class="">
+                    {% if farmer_profile.profile_picture %}
                    <img class="rounded-circle border border-info" width="90px" height="90px" src="{{farmer_profile.profile_picture.url}}" alt="" style="margin-top: -30px;">
+                    {% endif %}
                </div>
                 <div class="ms-4 mt-2" >
                     <div class="d-flex">
@@ -171,21 +173,20 @@
 
            
         </div>
-        <div class="row mt-3 px-3 py-3 shadow-sm rounded">
-           
-            <div class="col-sm-6 pt-2" style="background-color: white;">
-                <div class="d-flex py-2 ms-3 " >
-                    <div>
-                    <h2>{{ farmer_profile.farm_name }}</h2>
-                    </div>
-                    <div class="ms-3">
-                        <!-- <button class="btn  btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal">Edit Details</button> -->
-                         <a href="{% url 'edit_farmer_details' %}" class="btn  btn-primary">Edit Details</a>
-    
-                    </div>
-    
+        <div class="row mt-3 px-3 py-3 shadow-sm rounded" style="background-color: white;">
+            <div class="d-flex py-2 ms-3 ">
+                <div>
+                <h2>{{ farmer_profile.farm_name }}</h2>
                 </div>
-                <div class=" py-2 ms-3 rounded farm-info" >
+                <div class="ms-3">
+                    <!-- <button class="btn  btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal">Edit Details</button> -->
+                     <a href="{% url 'edit_farmer_details' %}" class="btn  btn-primary">Edit Details</a>
+
+                </div>
+
+            </div>
+            <div class="col-sm-6">
+                <div class=" py-2 ms-3 rounded farm-info">
                     
                     <div class="d-flex gap-3">
                         <span class="fw-medium">Farm Size:   </span>
@@ -247,10 +248,7 @@
     
             </div>
 
-            <div class="col-sm-6 pt-2" style="background-color: white;" > 
-                <div>
-                    <h2>Photos</h2>
-                </div>
+            <div class="col-sm-6"> 
                 <div class="row">
                     {% if farmer_photos %}
                     {% for photo in farmer_photos %}
