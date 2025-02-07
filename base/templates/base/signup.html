@@ -183,6 +183,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.getElementById('signupForm').addEventListener('submit', function(event) {
+        //disable button
+        this.querySelector('button[type="submit"]').disabled = true;
         var email = document.getElementById('{{ form.email.id_for_label }}').value;
         var confirmEmail = document.getElementById('{{ form.confirm_email.id_for_label }}').value;
         var password1 = document.getElementById('{{ form.password1.id_for_label }}').value;
@@ -195,21 +197,25 @@
         if (email !== confirmEmail) {
             alert("Email addresses don't match");
             event.preventDefault();
+            this.querySelector('button[type="submit"]').disabled = false;
         }
 
         if (password1 !== password2) {
             alert("Passwords don't match");
             event.preventDefault();
+            this.querySelector('button[type="submit"]').disabled = false;
         }
 
         if (!passwordRegex.test(password1)) {
             alert("Password must be at least 8 characters long, contain at least one uppercase letter, and one number.");
             event.preventDefault();
+            this.querySelector('button[type="submit"]').disabled = false;
         }
 
         if (!termsChecked) {
             alert("You must accept the terms and policies before signing up.");
             event.preventDefault();
+            this.querySelector('button[type="submit"]').disabled = false;
         }
     });
 

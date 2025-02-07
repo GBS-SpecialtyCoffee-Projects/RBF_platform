@@ -57,6 +57,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     form.addEventListener('submit', function(event) {
         event.preventDefault();
+        //disable button
+        form.querySelector('button[type="submit"]').disabled = true;
 
         const formData = new FormData(form);
         const xhr = new XMLHttpRequest();
@@ -69,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (response.success) {
                     window.location.href = response.redirect_url;
                 } else {
+                    form.querySelector('button[type="submit"]').disabled = false;
                     modalMessage.textContent = response.message;
                     errorModal.style.display = 'block';
 
@@ -80,6 +83,8 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 modalMessage.textContent = 'An error occurred. Please try again.';
                 errorModal.style.display = 'block';
+
+                form.querySelector('button[type="submit"]').disabled = false;
 
                 // Hide the modal after 3 seconds
                 setTimeout(function() {
