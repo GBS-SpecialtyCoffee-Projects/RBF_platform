@@ -82,16 +82,13 @@ def farmer_details(request):
         }
         story_form = StoryForm(story_data)
         if farmer_form.is_valid() and story_form.is_valid():
-            try:
-                farmer = farmer_form.save(commit=False)
+            farmer = farmer_form.save(commit=False)
             farmer.is_details_filled = True
             farmer.save()
-                story = story_form.save(commit=False)
-                story.user = request.user
-                story.save()
-                return redirect('farmer_dashboard')  # Redirect to signin after successful update
-            except Exception as e:
-                print(e)
+            story = story_form.save(commit=False)
+            story.user = request.user
+            story.save()
+            return redirect('farmer_dashboard')  # Redirect to signin after successful update
         else:
             # Print form errors for debugging
             print(farmer_form.errors)
