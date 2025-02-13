@@ -9,13 +9,13 @@
     <div class="d-flex justify-content-center pt-5" >
         <div class="shadow-sm rounded" style="background-color: white; width:95%" >
         <div class="">
-            <img  width="100%" height="150px" src="{% static 'img/dan-meyers-IQVFVH0ajag-unsplash.jpg' %}" alt="">
+            <img  width="100%" height="150px" style="object-fit: cover;" src="{% static 'img/dan-meyers-IQVFVH0ajag-unsplash.jpg' %}" alt="">
         </div>
         <div>
             <div class="d-flex justify-content-center py-2" >
                 <div class="">
                      {% if farmer_profile.profile_picture %}
-                    <img class="rounded-circle border border-info" width="90px" height="90px" src="{{farmer_profile.profile_picture.url}}" alt="" style="margin-top: -30px;">
+                    <img class="rounded-circle border border-info" style="object-fit: cover;" width="90px" height="90px" src="{{farmer_profile.profile_picture.url}}" alt="" style="margin-top: -30px;">
                     {% endif %}
                 </div>
                 <div class="ms-4 mt-2" >
