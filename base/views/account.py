@@ -82,7 +82,8 @@ def farmer_details(request):
         }
         story_form = StoryForm(story_data)
         if farmer_form.is_valid() and story_form.is_valid():
-            farmer = farmer_form.save(commit=False)
+            farmer_form.save()
+            # farmer = farmer_form.save(commit=False)
             farmer.is_details_filled = True
             farmer.save()
             story = story_form.save(commit=False)
