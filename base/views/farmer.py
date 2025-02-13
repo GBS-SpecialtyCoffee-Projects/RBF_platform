@@ -13,6 +13,10 @@ def farmer_dashboard(request):
     # meeting_requests = MeetingRequest.objects.filter(requestee=request.user)
     # meeting_requests_as_requester = MeetingRequest.objects.filter(requester=request.user)
     farmer_profile = Farmer.objects.filter(user=request.user).first()
+
+    if farmer_profile and farmer_profile.is_details_filled == False:
+        return redirect('farmer_details')
+    
     farmer_photos = FarmerPhoto.objects.filter(user=request.user)
     farmer_stories  = Story.objects.filter(user=request.user)
     farmer_harvest_seasons = Season.objects.filter(farmer=farmer_profile)

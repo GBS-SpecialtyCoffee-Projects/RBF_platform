@@ -31,9 +31,9 @@
                           </button> -->
             
                     </div>
-                    <span>{{farmer_profile.city}}, </span>
+                    <!-- <span>{{farmer_profile.city}}, </span>
                     <span>{{farmer_profile.state}}, </span>
-                    <span>{{farmer_profile.country}}</span>
+                    <span>{{farmer_profile.country}}</span> -->
                 </div>
             
             
@@ -183,8 +183,12 @@
     
                 </div>
                 <div class=" py-2 ms-3 rounded farm-info" >
-                    
                     <div class="d-flex gap-3">
+                        <span class="fw-medium">Farm Location:  <span>{{farmer_profile.city}}, </span>
+                        <span>{{farmer_profile.state}}, </span>
+                        <span>{{farmer_profile.country}}</span> </span>
+                    </div>
+                    <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Farm Size:   </span>
                         <span>{{ farmer_profile.farm_size }} </span>
                     </div>
@@ -207,19 +211,19 @@
                         <span>{{ farmer_profile.cup_scores_received }}</span>
                     </div>  -->
                     <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Cup Scores:: </span>
+                        <span class="fw-medium">Cup Scores:</span>
                         {% for score in cup_scores %}
                         <span class="ms-0">{{ score }},</span>
                         {% endfor %}
                     </div>
-                    <div class="d-flex mt-3 gap-3">
+                    <!-- <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Cup Scores Source: </span>
                         <span>{{ farmer_profile.source_of_cup_scores }}</span>
-                    </div>
-                    <div class="d-flex mt-3 gap-3" style="word-wrap: break-word;">
+                    </div> -->
+                    <!-- <div class="d-flex mt-3 gap-3" style="word-wrap: break-word;">
                         <span class="fw-medium">Quality Report: </span>
                         <a href="{{ farmer_profile.quality_report_link }}"><span>{{ farmer_profile.quality_report_link }}</span></a>
-                    </div>
+                    </div> -->
                     <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Affiliation: </span>
                         <span>{{ farmer_profile.affiliation }}</span>
@@ -252,8 +256,8 @@
                     {% if farmer_photos %}
                     {% for photo in farmer_photos %}
                         {% if photo.photo %}
-                        <div class="col-sm-4 mb-3" style="height: 200px;width: 200px;">
-                            <img style="width: 100%;"   class="rounded" src="{{photo.photo.url}}" alt="..." >
+                        <div class="col-sm-4 mb-3" >
+                            <img style="width: 150px;height: 150px;object-fit: cover;"   class="rounded" src="{{photo.photo.url}}" alt="..." >
                             <a href="{% url 'delete_farmer_photo' photo.id %}" class="btn btn-danger btn-sm mt-2">Delete</a>
                         </div>
                         {% endif %}
@@ -262,6 +266,7 @@
                     <!-- <div class="col-sm-4 mb-3" style="height: 200px;width: 200px;">
                         <img style="width: 100%;" class="rounded" src="{% static 'img/128px-Placeholder_view_vector.svg.png' %}" alt="..." >
                     </div>  -->
+                    {% if farmer_photos.count < 6 %}
                     <div class="col-sm-4 mb-3 ">
                         <a href="#photoModal" data-bs-toggle="modal" data-bs-target="#photoModal">
                             <svg style="fill: green;" xmlns="http://www.w3.org/2000/svg" width="70" height="70" fill="currentColor" class="bi bi-plus-circle-fill mt-4" viewBox="0 0 16 16">
@@ -270,6 +275,7 @@
                         </a>
                       
                     </div>
+                    {% endif %}
                     {% else %}
                      <div class="col-sm-4 mb-3" style="height: 150px;width: 150px;">
                         <img style="width: 100%;" class="rounded" src="{% static 'img/128px-Placeholder_view_vector.svg.png' %}" alt="..." >
@@ -357,7 +363,7 @@
              <div class="input-group mb-3">
                 {{ dp_form.lastname }}
             </div>
-            <div class="input-group mb-3">
+            <!-- <div class="input-group mb-3">
                 {{ dp_form.city }}
             </div>
             <div class="input-group mb-3">
@@ -365,10 +371,7 @@
             </div>
             <div class="input-group mb-3">
                 {{ dp_form.country }}
-            </div>
-             <div>
-
-             </div>
+            </div> -->
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -486,8 +489,13 @@
                 {{ main_form.farm_name }}
             </div>
             <div class="input-group mb-3">
-                {{ main_form.farm_size }}
+                {{ main_form.country }} 
+                {{ main_form.state }}
+                {{ main_form.city }}
             </div>
+            <div class="input-group mb-3">
+                {{ main_form.farm_size }}
+            </div>           
             <div class="input-group mb-3">
                 {{ main_form.harvest_season }}
             </div>
@@ -500,12 +508,12 @@
             <div class="input-group mb-3">
                 {{ main_form.cup_scores_received }}
             </div>
-            <div class="input-group mb-3">
+            <!-- <div class="input-group mb-3">
                 {{ main_form.source_of_cup_scores }}
             </div>
             <div class="input-group mb-3">
                 {{ main_form.quality_report_link }}
-            </div>
+            </div> -->
             <div class="input-group mb-3">
                 {{ main_form.affiliation }}
             </div>
