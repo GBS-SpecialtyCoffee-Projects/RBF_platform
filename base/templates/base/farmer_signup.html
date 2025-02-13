@@ -67,25 +67,13 @@
                                     {{ farmer_form.firstname }}
                                     <label for="{{ farmer_form.firstname.id_for_label }}">{{ farmer_form.firstname.label }}</label>
                                 </div>
-                                <div class="form-floating form-group">
+                                <!-- <div class="form-floating form-group">
                                     {{ farmer_form.middlename }}
                                     <label for="{{ farmer_form.middlename.id_for_label }}">{{ farmer_form.middlename.label }}</label>
-                                </div>
+                                </div> -->
                                 <div class="form-floating form-group">
                                     {{ farmer_form.lastname }}
                                     <label for="{{ farmer_form.lastname.id_for_label }}">{{ farmer_form.lastname.label }}</label>
-                                </div>
-                                <div class="form-floating form-group">
-                                    {{ farmer_form.country }}
-                                    <label for="{{ farmer_form.country.id_for_label }}">{{ farmer_form.country.label }}</label>
-                                </div>
-                                <div class="form-floating form-group">
-                                    {{ farmer_form.state }}
-                                    <label for="{{ farmer_form.state.id_for_label }}">{{ farmer_form.state.label }}</label>
-                                </div>
-                                <div class="form-floating form-group">
-                                    {{ farmer_form.city }}
-                                    <label for="{{ farmer_form.city.id_for_label }}">{{ farmer_form.city.label }}</label>
                                 </div>
                                 <div class="form-floating form-group">
                                     {{ farmer_form.phone_number }}
@@ -145,9 +133,21 @@
                                 <label for="{{ farmer_form.farm_name.id_for_label }}">{{ farmer_form.farm_name.label }}</label>
                             </div>
                             <div class="form-floating form-group">
+                                {{ farmer_form.country }}
+                                <label for="{{ farmer_form.country.id_for_label }}">{{ farmer_form.country.label }}</label>
+                            </div>
+                            <div class="form-floating form-group">
+                                {{ farmer_form.state }}
+                                <label for="{{ farmer_form.state.id_for_label }}">{{ farmer_form.state.label }}</label>
+                            </div>
+                            <div class="form-floating form-group">
+                                {{ farmer_form.city }}
+                                <label for="{{ farmer_form.city.id_for_label }}">{{ farmer_form.city.label }}</label>
+                            </div>
+                            <!-- <div class="form-floating form-group">
                                 {{ farmer_form.location }}
                                 <label for="{{ farmer_form.location.id_for_label }}">{{ farmer_form.location.label }}</label>
-                            </div>
+                            </div> -->
                             <div class="form-floating form-group">
                                 {{ farmer_form.farm_size_unit }}
                                 <label for="{{ farmer_form.farm_size_unit.id_for_label }}">{{ farmer_form.farm_size_unit.label }}</label>
@@ -156,16 +156,17 @@
                                 {{ farmer_form.farm_size }}
                                 <label for="{{ farmer_form.farm_size.id_for_label }}">{{ farmer_form.farm_size.label }}</label>
                             </div>
-                            <div class="form-floating form-group">
+                            <!-- <div class="form-floating form-group">
                                 {{ farmer_form.annual_production_unit }}
                                 <label for="{{ farmer_form.annual_production_unit.id_for_label }}">{{ farmer_form.annual_production_unit.label }}</label>
-                            </div>
+                            </div> -->
                             <div class="form-floating form-group">
                                 {{ farmer_form.annual_production }}
-                                <label for="{{ farmer_form.annual_production.id_for_label }}">{{ farmer_form.annual_production.label }}</label>
+                                <label class="mb-0" for="{{ farmer_form.annual_production.id_for_label }}">{{ farmer_form.annual_production.label }}</label>
+                                <small class="form-text mt-0 text-muted">number only annual production value in kilograms.</small>
                             </div>
                         
-                            <div>{{ farmer_form.harvest_season.label }}</div>
+                            <div ><p style="font-weight: bold;">{{ farmer_form.harvest_season.label }}</p></div>
                             {% for checkbox in farmer_form.harvest_season %}
                             <div class="form-check form-check-inline">
                                 {{checkbox}}
@@ -179,28 +180,29 @@
                             <div class="form-floating form-group">
                                 {{ farmer_form.cultivars }}
                                 <label for="{{ farmer_form.cultivars.id_for_label }}">{{ farmer_form.cultivars.label }}</label>
+                                <small class="form-text mt-0 text-muted">provide 3 most represented cultivars, separate with comma</small>
                             </div>
                             <!-- <div class="form-floating form-group">
                                 {{ farmer_form.cup_scores_received }}
                                 <label for="{{ farmer_form.cup_scores_received.id_for_label }}">{{ farmer_form.cup_scores_received.label }}</label>
                             </div> -->
-                            <div>{{ farmer_form.cup_scores_received.label }}</div>
+                            <div><p style="font-weight: bold;">{{ farmer_form.cup_scores_received.label }}</p></div>
                             <!-- <div>{{ farmer_form.harvest_season }}</div> -->
                             {% for checkbox in farmer_form.cup_scores_received %}
                             <div class="form-check form-check-inline">
                                 {{checkbox}}
                             </div>
                             {% endfor %}
-                            <div class="form-floating form-group">
+                            <!-- <div class="form-floating form-group">
                                 {{ farmer_form.source_of_cup_scores }}
                                 <label for="{{ farmer_form.source_of_cup_scores.id_for_label }}">{{ farmer_form.source_of_cup_scores.label }}</label>
-                            </div>
-                            <div class="form-floating form-group">
+                            </div> -->
+                            <!-- <div class="form-floating form-group">
                                 {{ farmer_form.quality_report_link }}
                                 <label for="{{ farmer_form.quality_report_link.id_for_label }}">{{ farmer_form.quality_report_link.label }}</label>
-                            </div>
+                            </div> -->
                             <fieldset>
-                                <div>{{ farmer_form.processing_method.label }}</div>
+                                <div><p style="font-weight: bold;">{{ farmer_form.processing_method.label }}</p></div>
                                 {% for checkbox in farmer_form.processing_method %}
                                 <div class="form-check form-check-inline">
                                     {{ checkbox }}
@@ -224,6 +226,15 @@
                             <div class="form-floating form-group">
                                 {{ farmer_form.main_role }}
                                 <label for="{{ farmer_form.main_role.id_for_label }}">{{ farmer_form.main_role.label }}</label>
+                            </div>
+                            <div>
+                                <label for="{{ farmer_form.is_member_organization.id_for_label }}">{{ farmer_form.is_member_organization.label }}</label>
+                            </div>
+                            <div class="form-floating form-group">
+                                
+                                {{ farmer_form.is_member_organization }}
+                                
+
                             </div>
                             
                             

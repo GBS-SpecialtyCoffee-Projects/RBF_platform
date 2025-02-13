@@ -40,15 +40,15 @@ class FarmerForm(forms.ModelForm):
             'farm_size' , 'annual_production', 'cultivars',
             'cup_scores_received', 'source_of_cup_scores', 'quality_report_link',
             'processing_method', 'processing_description', 'profile_picture',
-            'preferred_communication_method', 'main_role','farm_size_unit','annual_production_unit','harvest_season'
+            'preferred_communication_method', 'main_role','farm_size_unit','annual_production_unit','harvest_season','is_member_organization'
         ]
         
         labels = {
             "farm_name": "Farm Name*",
             'bio': 'Bio*',
-            'country': 'Country*',
-            'state': 'State*',
-            'city': 'City*',
+            'country': 'Farm Country*',
+            'state': 'State/Province/Department*',
+            'city': 'County/Municipality/City*',
             'firstname':'First Name*',
             'lastname': 'Last Name*',
             'middlename': 'Middle Name',
@@ -66,6 +66,7 @@ class FarmerForm(forms.ModelForm):
             'preferred_communication_method': 'Preferred Communication Method',
             "farm_size_unit": "Farm Size Unit",
             "annual_production_unit": "Annual Production Unit",
+            'is_member_organization': 'Are you a member of an organization that represents you commercially? (in which you have a voice and/or vote, not just a buyer, for example cooperatives, collectives, or associations)',
         }
         widgets = {
             'farm_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Name','autocomplete':'off'},),
@@ -92,6 +93,7 @@ class FarmerForm(forms.ModelForm):
             'main_role': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Main Role'}),
             'farm_size_unit': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Farm Size Unit'}),
             'annual_production_unit': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Annual Production Unit'}),
+            'is_member_organization': forms.RadioSelect(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Is Member Organization'}),
         }
 
 
@@ -101,7 +103,7 @@ class FarmerProfileForm(forms.ModelForm):
         fields = [
             'farm_name','farm_size', 'harvest_season', 'annual_production', 'cultivars',
             'cup_scores_received', 'source_of_cup_scores', 'quality_report_link',
-            'processing_method', 'processing_description', 'preferred_communication_method',
+            'processing_method', 'processing_description', 'preferred_communication_method','country','state','city'
         ]
         labels = {
             "farm_name": "Farm Name*",
@@ -115,6 +117,9 @@ class FarmerProfileForm(forms.ModelForm):
             'processing_method': 'Processing Method',
             'processing_description': 'Processing Description',
             'preferred_communication_method': 'Preferred Communication Method',
+            'country': 'Country',
+            'state': 'State',
+            'city': 'City',
             # 'profile_picture': 'Profile Picture',
         }
         widgets = {
@@ -129,6 +134,9 @@ class FarmerProfileForm(forms.ModelForm):
             'processing_method': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Processing Method'}),
             'processing_description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Processing Description'}),
             'preferred_communication_method': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Preferred Communication Method'}),
+            'country': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Country','required':'true','autocomplete':'off'},),
+            'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State','required':'true','autocomplete':'off'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City','required':'true','autocomplete':'off'}),
 
         }
 

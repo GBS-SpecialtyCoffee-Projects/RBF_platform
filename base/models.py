@@ -122,7 +122,7 @@ class Farmer(models.Model):
     # harvest_season = models.CharField(max_length=255,choices=HARVEST_CHOICES, null=True)
     harvest_season = models.ManyToManyField(Season, blank=True)
     annual_production = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Annual production in tons")
-    annual_production_unit = models.CharField(max_length=255, choices=PROD_UNIT_CHOICES, blank=True, null=True)
+    annual_production_unit = models.CharField(max_length=255, choices=PROD_UNIT_CHOICES, default='kilograms', blank=True, null=True)
     cultivars = models.CharField(max_length=255, blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     cup_scores_received = models.ManyToManyField(CupScore, blank=True, null=True)
@@ -147,6 +147,8 @@ class Farmer(models.Model):
     video_comm_tips = models.BooleanField(default=False)
     video_relationships = models.BooleanField(default=False)
     video_perceptions = models.BooleanField(default=False)
+    is_details_filled = models.BooleanField(default=False)
+    is_member_organization = models.BooleanField(default=False,choices=[(True, 'Yes'), (False, 'No')])
 
     def __str__(self):
         return f'{self.firstname} {self.lastname} - {self.farm_name}'
