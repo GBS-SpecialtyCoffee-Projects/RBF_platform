@@ -75,9 +75,24 @@
                                     {{ farmer_form.lastname }}
                                     <label for="{{ farmer_form.lastname.id_for_label }}">{{ farmer_form.lastname.label }}</label>
                                 </div>
-                                <div class="form-floating form-group">
-                                    {{ farmer_form.phone_number }}
-                                    <label for="{{ farmer_form.phone_number.id_for_label }}">{{ farmer_form.phone_number.label }}</label>
+                                <div class="d-flex gap-3">
+                                    <div class="form-floating form-group">
+                                        {{ farmer_form.country_code }}
+                                        <label for="{{ farmer_form.country_code.id_for_label }}">{{ farmer_form.country_code.label }}</label>
+
+                                    </div>
+                                    <div class="form-floating form-group">
+                                        {{ farmer_form.phone_number }}
+                                        <label for="{{ farmer_form.phone_number.id_for_label }}">{{ farmer_form.phone_number.label }}</label>
+                                    </div>
+                                    
+
+                                </div>
+                                <div class="form-floating form-group d-flex">
+                                    <!-- <label for="{{ farmer_form.country_code.id_for_label }}">{{ farmer_form.country_code.label }}</label> -->
+                                    <!-- {{ farmer_form.country_code }}
+                                    {{ farmer_form.phone_number }} -->
+                                    <!-- <label for="{{ farmer_form.phone_number.id_for_label }}">{{ farmer_form.phone_number.label }}</label> -->
                                 </div>
                                 <div class="form-floating form-group">
                                     {{ story_form.language }}
@@ -148,13 +163,15 @@
                                 {{ farmer_form.location }}
                                 <label for="{{ farmer_form.location.id_for_label }}">{{ farmer_form.location.label }}</label>
                             </div> -->
-                            <div class="form-floating form-group">
+                            <!-- <div class="form-floating form-group">
                                 {{ farmer_form.farm_size_unit }}
                                 <label for="{{ farmer_form.farm_size_unit.id_for_label }}">{{ farmer_form.farm_size_unit.label }}</label>
-                            </div>
+                            </div> -->
                             <div class="form-floating form-group">
                                 {{ farmer_form.farm_size }}
-                                <label for="{{ farmer_form.farm_size.id_for_label }}">{{ farmer_form.farm_size.label }}</label>
+                                <small class="form-text mt-0 text-muted">use a period(.) to separate decimals.</small>
+                                <label class="mb-0" for="{{ farmer_form.farm_size.id_for_label }}">{{ farmer_form.farm_size.label }}</label>
+                                
                             </div>
                             <!-- <div class="form-floating form-group">
                                 {{ farmer_form.annual_production_unit }}
@@ -235,6 +252,11 @@
                                 {{ farmer_form.is_member_organization }}
                                 
 
+                            </div>
+
+                            <div class="form-floating form-group">
+                                {{ farmer_form.member_organization_name }}
+                                <label for="{{ farmer_form.member_organization_name.id_for_label }}">{{ farmer_form.member_organization_name.label }}</label>
                             </div>
                             
                             
