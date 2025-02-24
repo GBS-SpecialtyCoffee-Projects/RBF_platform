@@ -10,6 +10,8 @@ from django.contrib.auth import authenticate
 from PIL import Image
 from django_countries.widgets import CountrySelectWidget
 from django_countries.fields import CountryField
+from phonenumber_field.formfields import PhoneNumberField,SplitPhoneNumberField
+from phonenumber_field.widgets import PhoneNumberPrefixWidget
 import re
 
 HARVEST_CHOICES = (
@@ -36,11 +38,11 @@ class FarmerForm(forms.ModelForm):
 
         fields = [
             'farm_name',  'bio', 'country', 'state', 'city',
-            'firstname', 'lastname', 'middlename', 'phone_number',
+            'firstname', 'lastname', 'middlename','country_code','phone_number',
             'farm_size' , 'annual_production', 'cultivars',
             'cup_scores_received', 'source_of_cup_scores', 'quality_report_link',
             'processing_method', 'processing_description', 'profile_picture',
-            'preferred_communication_method', 'main_role','farm_size_unit','annual_production_unit','harvest_season','is_member_organization'
+            'preferred_communication_method', 'main_role','annual_production_unit','harvest_season','is_member_organization','member_organization_name'
         ]
         
         labels = {
@@ -52,8 +54,9 @@ class FarmerForm(forms.ModelForm):
             'firstname':'First Name*',
             'lastname': 'Last Name*',
             'middlename': 'Middle Name',
+            'country_code': 'Code',
             'phone_number': 'Phone Number*',
-            'farm_size': 'Farm Size',
+            'farm_size': 'Farm Size(in hectares)',
             'harvest_season': 'Harvest Season',
             'annual_production': 'Annual Production',
             'cultivars': 'Cultivars/Varieties',
@@ -67,6 +70,7 @@ class FarmerForm(forms.ModelForm):
             "farm_size_unit": "Farm Size Unit",
             "annual_production_unit": "Annual Production Unit",
             'is_member_organization': 'Are you a member of an organization that represents you commercially? (in which you have a voice and/or vote, not just a buyer, for example cooperatives, collectives, or associations)',
+            'member_organization_name': "If yes, please provide the name of your organization"
         }
         widgets = {
             'farm_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Name','autocomplete':'off'},),
@@ -78,7 +82,8 @@ class FarmerForm(forms.ModelForm):
             'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name','required':'true','autocomplete':'off',}),
             'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name','required':'true','autocomplete':'off'}),
             'middlename': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Middle Name','autocomplete':'off'}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number','required':'true','autocomplete':'off'}),
+            'country_code': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Country Code','autocomplete':'off'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number','autocomplete':'off'}),
             'farm_size': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Size','autocomplete':'off'}),
             'harvest_season': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Harvest Season'}),
             'annual_production': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Annual Production','autocomplete':'off'}),
@@ -91,9 +96,10 @@ class FarmerForm(forms.ModelForm):
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
             'preferred_communication_method': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Preferred Communication Method'}),
             'main_role': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Main Role'}),
-            'farm_size_unit': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Farm Size Unit'}),
+            # 'farm_size_unit': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Farm Size Unit'}),
             'annual_production_unit': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Annual Production Unit'}),
             'is_member_organization': forms.RadioSelect(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Is Member Organization'}),
+            'member_organization_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Member Organization Name','autocomplete':'off'}),
         }
 
 
@@ -103,7 +109,7 @@ class FarmerProfileForm(forms.ModelForm):
         fields = [
             'farm_name','farm_size', 'harvest_season', 'annual_production', 'cultivars',
             'cup_scores_received', 'source_of_cup_scores', 'quality_report_link',
-            'processing_method', 'processing_description', 'preferred_communication_method','country','state','city'
+            'processing_method', 'processing_description', 'preferred_communication_method','country','state','city','member_organization_name'
         ]
         labels = {
             "farm_name": "Farm Name*",
@@ -120,6 +126,7 @@ class FarmerProfileForm(forms.ModelForm):
             'country': 'Country',
             'state': 'State',
             'city': 'City',
+            'member_organization_name': 'Member Organization Name',
             # 'profile_picture': 'Profile Picture',
         }
         widgets = {
@@ -137,6 +144,7 @@ class FarmerProfileForm(forms.ModelForm):
             'country': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Country','required':'true','autocomplete':'off'},),
             'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State','required':'true','autocomplete':'off'}),
             'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City','required':'true','autocomplete':'off'}),
+            'member_organization_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Member Organization Name','required':'true','autocomplete':'off'}),
 
         }
 
@@ -316,7 +324,7 @@ class RoasterProfileForm(forms.ModelForm):
 class FarmerProfilePhotoForm(forms.ModelForm):
     class Meta:
         model = Farmer
-        fields = ['profile_picture','firstname','lastname', 'city', 'state', 'country']
+        fields = ['profile_picture','firstname','lastname', 'city', 'state', 'country','country_code','phone_number']
         widgets = {
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
             'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country'}),
@@ -324,6 +332,8 @@ class FarmerProfilePhotoForm(forms.ModelForm):
             'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
             'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
             'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}),
+            'country_code': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Code'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number'}),
 
         }
 

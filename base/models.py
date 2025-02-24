@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django_countries import countries
 from rbf_platform.storage_backends import ProfileStorage,PhotoStorage
 from PIL import Image
+from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
 
 
 # For admin purpose
@@ -95,6 +96,8 @@ class Farmer(models.Model):
         ('winter','winter'),  
     ]
 
+    COUNTRY_REGION_CODES = [ (f'{code}', f'{item} (+{code})') for code in COUNTRY_CODE_TO_REGION_CODE for item in COUNTRY_CODE_TO_REGION_CODE[code] ]
+
     COUNTRY_CHOICES = [ (country.name, country.name) for country in countries ]
 
     PROCESSING_METHOD_CHOICES = [
@@ -124,7 +127,8 @@ class Farmer(models.Model):
     annual_production = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Annual production in tons")
     annual_production_unit = models.CharField(max_length=255, choices=PROD_UNIT_CHOICES, default='kilograms', blank=True, null=True)
     cultivars = models.CharField(max_length=255, blank=True, null=True)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    country_code = models.CharField(max_length=255, blank=True, null=True,choices=COUNTRY_REGION_CODES, default='US (+1)')
+    phone_number = models.CharField(max_length=255, blank=True, null=True)
     cup_scores_received = models.ManyToManyField(CupScore, blank=True, null=True)
     source_of_cup_scores = models.CharField(max_length=255, blank=True, null=True)
     quality_report_link = models.URLField(blank=True, null=True)
@@ -149,6 +153,7 @@ class Farmer(models.Model):
     video_perceptions = models.BooleanField(default=False)
     is_details_filled = models.BooleanField(default=False)
     is_member_organization = models.BooleanField(default=False,choices=[(True, 'Yes'), (False, 'No')])
+    member_organization_name = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return f'{self.firstname} {self.lastname} - {self.farm_name}'

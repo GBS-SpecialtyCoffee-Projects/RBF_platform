@@ -18,7 +18,7 @@
                     <img class="rounded-circle border border-info" style="object-fit: cover;" width="90px" height="90px" src="{{farmer_profile.profile_picture.url}}" alt="" style="margin-top: -30px;">
                     {% endif %}
                 </div>
-                <div class="ms-4 mt-2" >
+                <div class="ms-4 mt-4" >
                     <div class="d-flex">
                         <h3>{{farmer_profile.firstname}} {{farmer_profile.lastname}}</h3>
                         <a  href="#profModal" data-bs-toggle="modal" data-bs-target="#profModal">
@@ -31,6 +31,7 @@
                           </button> -->
             
                     </div>
+                    <span>+{{farmer_profile.country_code}} {{farmer_profile.phone_number}}</span>
                     <!-- <span>{{farmer_profile.city}}, </span>
                     <span>{{farmer_profile.state}}, </span>
                     <span>{{farmer_profile.country}}</span> -->
@@ -242,6 +243,10 @@
                         <span class="fw-medium">Preferred Communication Method: </span>
                         <span>{{ farmer_profile.preferred_communication_method }}</span>
                     </div>
+                    <div class="d-flex mt-3 gap-3">
+                        <span class="fw-medium">Member Organization: </span>
+                        <span>{{ farmer_profile.member_organization_name }}</span>
+                    </div>
     
                     
                 </div>
@@ -362,6 +367,11 @@
              </div>
              <div class="input-group mb-3">
                 {{ dp_form.lastname }}
+            </div>
+            <div class="input-group mb-3">
+                {{dp_form.country_code}}
+                {{dp_form.phone_number}}
+
             </div>
             <!-- <div class="input-group mb-3">
                 {{ dp_form.city }}
@@ -519,6 +529,9 @@
             </div>
             <div class="input-group mb-3">
                 {{ main_form.processing_method }}
+            </div>
+            <div class="input-group mb-3">
+                {{ main_form.processing_description }}
             </div>
             <div class="input-group mb-3">
                 {{ main_form.processing_description }}
