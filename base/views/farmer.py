@@ -159,6 +159,17 @@ def farmer_orientation(request):
     
     farmer = request.user.farmer_profile
 
+    profile_completed = farmer.profile_completed
+
+    
+    if not profile_completed:
+        profile_completed = check_is_complete(farmer)
+        if profile_completed:
+            farmer.profile_completed = True
+            farmer.save()
+        
+    print(profile_completed)
+
     tasks_completed = [
         farmer.profile_completed,
         farmer.storytelling_workshop,
@@ -341,4 +352,20 @@ def add_story(request):
     # return render(request, 'base/farmer_dashboard.html.html', {'form': form})
     # return redirect('farmer_dashboard')
     return JsonResponse({'success': 'success'}, status=200)
+
+def check_is_complete(farmer):
+     
+      if  farmer.firstname and farmer.lastname and farmer.profile_picture and farmer.country_code and farmer.phone_number and farmer.farm_name and farmer.country and farmer.state and farmer.city and farmer.farm_size and farmer.annual_production:
+          return True
+      else:
+          return False
+      
+def publish_profile(request):
+     farmer = request.user.farmer_profile
+     
+     farmer.is_profile_published = True
+     farmer.save()
+     return redirect('farmer_dashboard')
+     
+     
 
