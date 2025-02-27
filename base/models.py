@@ -154,6 +154,7 @@ class Farmer(models.Model):
     is_details_filled = models.BooleanField(default=False)
     is_member_organization = models.BooleanField(default=False,choices=[(True, 'Yes'), (False, 'No')])
     member_organization_name = models.CharField(max_length=255, blank=True, null=True)
+    is_profile_published = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.firstname} {self.lastname} - {self.farm_name}'
