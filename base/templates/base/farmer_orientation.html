@@ -22,12 +22,6 @@
     - consider card structure / bg color, etc
 
     -->
-
-    
-    
-
-
-
     <div class="row">
         <div class="task-tracker col-sm-4 p-0">
             <div class="row pb-2 pt-4 px-5">
@@ -235,126 +229,6 @@
 
                     <!-- Button trigger modal -->
                      <a href="{% url 'edit_farmer_details' %}" class="btn btn-primary">Complete</a>
-                    
-                        <!-- Modal -->
-                        <div
-                            class="modal fade"
-                            id="modalId1"
-                            tabindex="-1"
-                            role="dialog"
-                            aria-labelledby="modalTitleId"
-                            aria-hidden="true"
-                        >
-                            <div
-                                class="modal-dialog modal-lg"
-                                role="document"
-                            >
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="modalTitleId">
-                                            Missing information
-                                        </h5>
-                                        <button
-                                            type="button"
-                                            class="btn-close"
-                                            data-bs-dismiss="modal"
-                                            aria-label="Close"
-                                        ></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="container-fluid">
-                                            <div class="container mt-5">
-                                                <div class="d-flex mt-5 justify-content-between">
-
-                                                    <!-- Form that displays fields which are empty? Or displays entire form but with values already filled in if not empty
-                                                    just farm information is an example -->
-
-                                                    <div>
-                                                        <h3>Farm information</h3>
-                                                        <p>Provide information about your farm and production</p>
-                                                    </div>                                                
-                                                    <div>
-                                                        <form action="">
-                                                    
-                                                            <div class="">
-                                                                <div>
-                                                                    <input type="text" class="form-control col mt-3" placeholder="Farm name">
-                                                                </div>
-                                            
-                                                                <div>
-                                                                    <input type="text" class="form-control mt-3" placeholder="Farm location">
-                                                                </div>
-                                        
-                                                                <div>
-                                                                    <input type="text" class="form-control mt-5" placeholder="Production estimate in the last 12 months (kg)">
-                                                                </div>
-                                            
-                                                                
-                                                                <div class="row mt-3">
-                                                                    <div class="col">
-                                                                        <input type="text" class="form-control" placeholder="Harvest season">
-                                                                    </div>
-                                                                    <div class="col">
-                                                                        <input type="text" class="form-control" placeholder="Cultivars">
-                                                                    </div>
-                                                                </div>
-                                                                <div class="row mt-3">
-                                                                    <div class="col">
-                                                                        <input type="text" class="form-control" placeholder="Cup scores received">
-                                                                    </div>
-                                                                    <div class="col">
-                                                                        <input type="text" class="form-control" placeholder="Source of scores">
-                                                                    </div>
-                                                                    <div class="col">
-                                                                        <input type="text" class="form-control" placeholder="Link to quality report">
-                                                                    </div>
-                                                                </div>
-                                                                
-                                                                <div>
-                                                                    <input type="text" class="form-control mt-5" placeholder="Processing method">
-                                                                </div>
-                                                                <div class="mt-2">
-                                                                    <textarea rows="5" cols="5" name="" class="form-control" placeholder="Processing description"></textarea>
-                                                                </div>
-                                                                
-                                            
-                                                                
-                                        
-                                                                <!-- <input hidden  type="file" class="form-control mt-2" placeholder="Upload Photo"> -->
-                                        
-                                                                <button class="btn btn-primary mt-2 float-end">Save and Continue</button>
-                                                                <div style="padding-bottom:200px">
-                                                                </div>
-                                                            </div>
-                                        
-                                                        
-                                                        </form>
-                                        
-                                                    </div>
-                                        
-                                                </div>
-                                            </div>
-                                        
-                                        
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <form action="" method="post" id="OrientationTasksForm">
-                                            {% csrf_token %}
-                                            
-                                            <div class="form-check">
-                                                {{ form.profile_completed }}
-                                                <label class="form-check-label" for="profileCheck">
-                                                    Complete Profile
-                                                </label>
-                                            </div>
-
-                                            <button type="submit" class="btn btn-primary">Save</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -377,9 +251,7 @@
                     <div class="card-body">
 
                         <div class="row ps-1">
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Cumque vero sint inventore numquam doloremque est.
-                            Esse, temporibus? Magnam dignissimos laborum necessitatibus pariatur consequuntur a libero iusto quasi, 
-                            quaerat earum? Neque?
+                            Pricing your Coffee, International Coffee Logistics, Considerate Communication Tips, Forming Equitable Commercial Relationships, Perceptions & Definition of Quality & Value.
                         </div>
                         
                         <div class="row ps-1 pt-3">
