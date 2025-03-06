@@ -29,7 +29,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     GROUP_CHOICES = [
         ('farmer', 'Farmer'),
-        ('roaster', 'Roaster')
+        ('roaster', 'Buyer')
     ]
 
     id = models.AutoField(primary_key=True)

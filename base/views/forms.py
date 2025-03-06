@@ -70,7 +70,7 @@ class FarmerForm(forms.ModelForm):
             "farm_size_unit": "Farm Size Unit",
             "annual_production_unit": "Annual Production Unit",
             'is_member_organization': 'Are you a member of an organization that represents you commercially? (in which you have a voice and/or vote, not just a buyer, for example cooperatives, collectives, or associations)',
-            'member_organization_name': "If yes, please provide the name of your organization"
+            'member_organization_name': "If yes,name the organization"
         }
         widgets = {
             'farm_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Name','autocomplete':'off'},),

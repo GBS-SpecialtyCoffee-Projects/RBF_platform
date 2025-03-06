@@ -6,9 +6,9 @@
 
     {% include "base/navbar.html" %}
     <div style="margin-top: 150px" class="">
-        <div class="text-center" >
-            <h1 style="color: white; font-weight: bolder; font-size: 60px;;">Quality coffee,<br>straight from the<br> source. </h1>
-            <p class="mt-3" style="color: ghostwhite; font-size: 20px;">Connecting specialty coffee producers <br> and roasters DIRECTLY</p>
+        <div class="text-center px-2" >
+            <h1 class="landing-text" style="color: white; font-weight: bolder;">Quality coffee,<br>straight from the<br> source. </h1>
+            <p class="mt-3" style="color: ghostwhite; font-size: 20px;">Communication and connectivity for a<br>more collaborative specialty coffee sector</p>
         </div>
         <div class="text-center">
             <a style="background-color: #303C50; color: white;font-weight: bold;" class="btn mt-3 ml-3 px-4 py-2" href="{% url 'signup' %}">Start Now</a>
@@ -21,15 +21,15 @@
 
     </div>
 
-    <div style="background-color:#212529 ; height: 70vh;">
+    <div style="background-color:#212529 ;">
         <div class="container" style="padding-top: 100px;padding-bottom: 60px; color: ghostwhite;">
             <div class="row" >
                 <div class="col-md-6 coll-info">
-                    <h2 width="10px" style="font-weight:bold ; font-size: 40px;" class="">Understanding Coffee Circuit</h2>
-                    <p width="50px" class="" style="font-weight: 400; font-size: 24px;">Coffee producers are often obscured within specialty coffee supply chains. We allow producers to be seen and heard in the stories they want to tell … without curation, censorship, or filters. We allow roasters to connect with producers they might never meet otherwise, and to know them in ways that are real and authentic.</p>
-                    <div class="pt-4">
-                        <button style="background-color:#9DAD6F ;color: ghostwhite;font-weight: 500;" class="btn btn-lg ">I Am A Producer</button>
-                        <button style="background-color:#503B31 ;color: ghostwhite;font-weight: 500;" class="btn btn-lg mx-3">I Am A Roaster</button>
+                    <h2 width="10px" style="font-weight:bold;" class="">Understanding Coffee Circuit</h2>
+                    <p width="50px" class="">Coffee producers are often obscured within specialty coffee supply chains. We allow producers to be seen and heard in the stories they want to tell … without curation, censorship, or filters. We allow roasters to connect with producers they might never meet otherwise, and to know them in ways that are real and authentic.</p>
+                    <div class="pt-4 ">
+                        <button style="background-color:#9DAD6F ;color: ghostwhite;font-weight: 500;" class="btn btn-lg">I Am A Producer</button>
+                        <button style="background-color:#503B31 ;color: ghostwhite;font-weight: 500;" class="btn btn-lg">I Am A Roaster</button>
                     </div>
         
                 </div>
@@ -55,7 +55,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-sm-4">
-                    <div class="card me-5 text-center rounded-lg info-card">
+                    <div class="card  text-center rounded-lg info-card">
                         <img class="card-img-top"   src="{% static 'img/cardimg1.jpeg' %}" alt="Card image cap">
                         <div class="card-body" style="height:200px">
                           <h5 class="card-title font-weight-bold">What It Is</h5>
@@ -65,7 +65,7 @@
                     </div>
                 </div>
                 <div class="col-sm-4">
-                    <div class="card me-5 text-center rounded-lg info-card" style="height: max-content;" >
+                    <div class="card  text-center rounded-lg info-card" style="height: max-content;" >
                         <img class="card-img-top" src="{% static 'img/cardimg2.jpeg' %}" alt="Card image cap">
                         <div class="card-body" style="height:200px">
                           <h5 class="card-title font-weight-bold">What It does</h5>
@@ -75,7 +75,7 @@
                     </div>
                 </div>
                 <div class="col-sm-4">
-                    <div class="card me-5 text-center border border-radius rounded-5 info-card" style="height: max-content;" >
+                    <div class="card  text-center border border-radius rounded-5 info-card" style="height: max-content;" >
                         <img class="card-img-top" src="{% static 'img/bernd-dittrich-qpB6Kl_ckQM-unsplash.jpg' %}" alt="Card image cap">
                         <div class="card-body" style="height:200px">
                           <h5 class="card-title font-weight-bold">What It Isn't</h5>
@@ -101,7 +101,7 @@
 
                     <h3 class="ms-3">
                         <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="true" aria-controls="collapseExample">
-                            Who is Coffee Circuit for?
+                            How it works
                         </div>
                     </h3>
 
@@ -109,7 +109,7 @@
 
                   <div style="background-color:#2C3136" class="collapse" id="collapseExample">
                     <div class="card card-body" style="background-color:#2C3136">
-                        Lorem ipsum dolor sit amet consectetur. Sagittis sit ut donec purus purus. Ornare amet blandit gravida iaculis tellus ut quis. Tortor euismod justo facilisi tincidunt accumsan a neque tortor.
+                        Farmers can create profiles to share their work, stories, and harvests, owning their identities. Roasters also share pertinent information and can express interest in working with farmers. Farmers decide whether it's a good fit. They can talk with one another in a free but facilitated environment.
                     </div>
                   </div>
             </div>
@@ -130,7 +130,9 @@
 
                   <div style="background-color:#2C3136" class="collapse" id="collapseExample1">
                     <div class="card card-body" style="background-color:#2C3136">
-                        Lorem ipsum dolor sit amet consectetur. Sagittis sit ut donec purus purus. Ornare amet blandit gravida iaculis tellus ut quis. Tortor euismod justo facilisi tincidunt accumsan a neque tortor.
+                        It allows farmers whose identities are normally lost in the supply chain the chance to be seen and heard the way they want to be, without curation, censorship, or marketing filter. It allows roasters to connect directly with farmers who normally would never find, even if they travel to farming communities.
+                        Provides farmers with a space to make themselves visible and known
+                        Facilitates direct communication and collaboration between smallholder farmers and roasters.
                     </div>
                   </div>
             </div>
@@ -143,7 +145,7 @@
 
                     <h3 class="ms-3">
                         <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#collapseExample2" aria-expanded="true" aria-controls="collapseExample">
-                            Who is behind Coffee Circuit?
+                            What it doesn't do?
                         </div>
                     </h3>
 
@@ -151,7 +153,9 @@
 
                   <div style="background-color:#2C3136" class="collapse" id="collapseExample2">
                     <div class="card card-body" style="background-color:#2C3136">
-                        Lorem ipsum dolor sit amet consectetur. Sagittis sit ut donec purus purus. Ornare amet blandit gravida iaculis tellus ut quis. Tortor euismod justo facilisi tincidunt accumsan a neque tortor.
+                        Get involved in trading in any way
+                        Take a cut of the money roasters pay or the money farmers earn
+                        Buy, sell, source, or market coffee, in any way, directly or indirectly.                        
                     </div>
                   </div>
             </div>
@@ -163,16 +167,18 @@
                     </div>
 
                     <h3 class="ms-3">
-                        <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#collapseExample2" aria-expanded="true" aria-controls="collapseExample">
-                            How do I benefit from Coffee Circuit?
+                        <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#collapseExample3" aria-expanded="true" aria-controls="collapseExample3">
+                            Who is behind it?
                         </div>
                     </h3>
 
                 </div>
 
-                  <div style="background-color:#2C3136" class="collapse" id="collapseExample2">
+                  <div style="background-color:#2C3136" class="collapse" id="collapseExample3">
                     <div class="card card-body" style="background-color:#2C3136">
-                        Lorem ipsum dolor sit amet consectetur. Sagittis sit ut donec purus purus. Ornare amet blandit gravida iaculis tellus ut quis. Tortor euismod justo facilisi tincidunt accumsan a neque tortor.
+                        Academic researchers with coffee trading experience
+                        Smallholder farmers
+                        Programmers & data scientists
                     </div>
                   </div>
             </div>
@@ -184,16 +190,16 @@
                     </div>
 
                     <h3 class="ms-3">
-                        <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#collapseExample2" aria-expanded="true" aria-controls="collapseExample">
-                            Who else benefit?
+                        <div style="background-color:#2C3136;color: ghostwhite;" data-bs-toggle="collapse" data-bs-target="#collapseExample4" aria-expanded="true" aria-controls="collapseExample4">
+                            How does it make money?
                         </div>
                     </h3>
 
                 </div>
 
-                  <div style="background-color:#2C3136" class="collapse" id="collapseExample2">
+                  <div style="background-color:#2C3136" class="collapse" id="collapseExample4">
                     <div class="card card-body" style="background-color:#2C3136">
-                        Lorem ipsum dolor sit amet consectetur. Sagittis sit ut donec purus purus. Ornare amet blandit gravida iaculis tellus ut quis. Tortor euismod justo facilisi tincidunt accumsan a neque tortor.
+                        It doesn't make money.
                     </div>
                   </div>
             </div>

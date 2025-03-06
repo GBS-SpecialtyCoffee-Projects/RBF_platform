@@ -33,6 +33,9 @@
                 <form method="post" id="signupForm">
                     {% csrf_token %}
                     {{ form.non_field_errors }}
+                    <div id="signup-alert">
+                        
+                      </div>
                     <div class="mb-0">
                         <label class="form-label">Username</label> {{ form.username }}
                         <div id="username-error" class="text-danger"></div>
@@ -195,25 +198,30 @@
         var passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d\W_]{8,}$/;
 
         if (email !== confirmEmail) {
-            alert("Email addresses don't match");
+            // alert("Email addresses don't match");
+            document.getElementById("signup-alert").innerHTML = '<div class="alert alert-danger" role="alert">Email addresses do not match.</div>';
             event.preventDefault();
             this.querySelector('button[type="submit"]').disabled = false;
         }
 
         if (password1 !== password2) {
-            alert("Passwords don't match");
+            // alert("Passwords don't match");
+            document.getElementById("signup-alert").innerHTML = '<div class="alert alert-danger" role="alert">Passwords do not match.</div>';
             event.preventDefault();
             this.querySelector('button[type="submit"]').disabled = false;
         }
 
         if (!passwordRegex.test(password1)) {
-            alert("Password must be at least 8 characters long, contain at least one uppercase letter, and one number.");
+        
+            //alert("Password must be at least 8 characters long, contain at least one uppercase letter, and one number.");
+            document.getElementById("signup-alert").innerHTML = '<div class="alert alert-danger" role="alert">Password must be at least 8 characters long, contain at least one uppercase letter, and one number!</div>';
             event.preventDefault();
             this.querySelector('button[type="submit"]').disabled = false;
         }
 
         if (!termsChecked) {
-            alert("You must accept the terms and policies before signing up.");
+            // alert("You must accept the terms and policies before signing up.");
+            document.getElementById("signup-alert").innerHTML = '<div class="alert alert-danger" role="alert">You must accept the terms and policies before signing up.</div>';
             event.preventDefault();
             this.querySelector('button[type="submit"]').disabled = false;
         }
