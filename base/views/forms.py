@@ -154,19 +154,48 @@ class RoasterForm(forms.ModelForm):
     class Meta:
         model = Roaster
         fields = [
-            'company_name', 'country', 'state', 'city', 'bio',
-            'min_lot_size', 'annual_throughput',
+           'firstname','lastname', 'job_title', 'company_name', 'company_website','company_socials', 'country', 'state', 'city',
+            'company_functions','coffee_purchase_involvement','purchase_volume','company_description','company_approach','company_goals',
             'origins_interested', 'coffee_types_interested', 'profile_picture'
         ]
+        labels = {
+            "Company_name": "Company Name*",
+            'country': 'Country*',
+            'state': 'State/Province/Department*',
+            'city': 'County/Municipality/City*',
+            'firstname':'First Name*',
+            'lastname': 'Last Name*',
+            'middlename': 'Middle Name',
+            'job_title': 'Job Title',
+            'company_website': 'Company Website',
+            'company_socials': 'Company social media profile',
+            'company_functions': 'Company Functions',
+            'coffee_purchase_involvement': 'Are you directly involved in green coffee purchase decisions?',
+            'purchase_volume': 'Average green coffee purchase volume (last 3 years)',
+            'company_description': 'Describe your company',
+            'company_approach': 'Describe your approach to coffee sourcing',
+            'company_goals': 'Describe what you hope to accomplish with Coffee Circuit',
+            'profile_picture': 'Profile Picture',
+        }
         widgets = {
+            'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name','required':'true','autocomplete':'off'}),
+            'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name','required':'true','autocomplete':'off'}),
+            'job_title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Job Title'}),
             'company_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Company Name'}),
-            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country'}),
+            'company_website': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'Company Website'}),
+            'country': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Country'}),
             'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State'}),
             'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
-            'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Bio'}),
-            'min_lot_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Minimum Lot Size'}),
-            'annual_throughput': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Annual Throughput'}),
-            'origins_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Origins Interested'}),
+            'company_functions': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Company Functions'}),
+            'company_description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Company Description'}),
+            'company_approach': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Company Approach'}),
+            'company_goals': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Company Goals'}),
+            'coffee_purchase_involvement': forms.RadioSelect(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Coffee Purchase Involvement'}),
+            'purchase_volume': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Purchase Volume'}),
+            # 'bio': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Bio'}),
+            # 'min_lot_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Minimum Lot Size'}),
+            # 'annual_throughput': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Annual Throughput'}),
+            # 'origins_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Origins Interested'}),
             'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Coffee Types Interested'}),
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
         }
@@ -341,12 +370,11 @@ class FarmerProfilePhotoForm(forms.ModelForm):
 class RoasterInfoForm(forms.ModelForm):
     class Meta:
         model = Roaster
-        fields = ['company_name', 'country', 'state', 'city', 'profile_picture']
+        fields = ['firstname','lastname','job_title', 'profile_picture']
         widgets = {
-            'company_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Company Name'}),
-            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country'}),
-            'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State'}),
-            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
+            'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
+            'lastname': forms.TextInput(attrs={'class':'form-control','placeholder':'Last Name'}),
+            'job_title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Job Title'}),
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
@@ -363,16 +391,31 @@ class RoasterSourcingForm(forms.ModelForm):
     class Meta:
         model = Roaster
         fields = [
-            'min_lot_size',
-            'annual_throughput',
-            'coffee_types_interested',
-            'origins_interested'
+            'company_name',
+            'country',
+            'state',
+            'city',
+            'company_functions',
+            'purchase_volume',
+            'company_description',
+            'company_approach',
+            'company_goals',
         ]
         widgets = {
-            'min_lot_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Minimum Lot Size'}),
-            'annual_throughput': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Annual Throughput'}),
-            'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Coffee Types Interested'}),
-            'origins_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Origins Interested'}),
+
+            'company_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Company Name'}),
+            'country': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Country'}),
+            'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State'}),
+            'city': forms.TextInput(attrs={'class':'form-control', 'placeholder': 'State'}),
+            'company_functions': forms.CheckboxSelectMultiple(attrs={'class': 'form-inline ', 'placeholder': 'Company Functions'}),
+            'purchase_volume': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Purchase Volume'}),
+            'company_description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Company Description'}),
+            'company_approach': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Company Approach'}),
+            'company_goals': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Company Goals'}),
+            # 'min_lot_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Minimum Lot Size'}),
+            # 'annual_throughput': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Annual Throughput'}),
+            # 'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Coffee Types Interested'}),
+            # 'origins_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Origins Interested'}),
         }
 
 class FarmerStoryForm(forms.ModelForm):

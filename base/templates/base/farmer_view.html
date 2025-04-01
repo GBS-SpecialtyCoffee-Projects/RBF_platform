@@ -4,117 +4,261 @@
 {% block content %}
 
 {% include 'base/roaster_profile_navbar.html' %}
-<div class="container-fluid profile-bg " style="height: 100vh;">
+<div class="container-fluid profile-bg pb-5">
 
+    <div class="container">
     <div class="d-flex justify-content-center pt-5" >
-        <div class="shadow-sm rounded" style="background-color: white; width:95%" >
+        <div class="shadow-sm rounded" style="background-color: white; width:100%" >
         <div class="">
-            <img  width="100%" height="150px" src="{% static 'img/dan-meyers-IQVFVH0ajag-unsplash.jpg' %}" alt="">
+            <img  width="100%" height="150px" style="object-fit: cover;" src="{% static 'img/dan-meyers-IQVFVH0ajag-unsplash.jpg' %}" alt="">
         </div>
         <div>
-            <div class="d-flex justify-content-center py-2" style="" >
-                <div class="">
+            <div class="d-flex justify-content-center py-2" >
+                <div class="" style="margin-top: -40px;">
                      {% if farmer_profile.profile_picture %}
-                    <img class="rounded-circle border border-info" width="90px" height="90px" src="{{farmer_profile.profile_picture.url}}" alt="" style="margin-top: -30px;">
+                    <img class="rounded-circle border border-info" style="object-fit: cover;" width="110px" height="110px" src="{{farmer_profile.profile_picture.url}}" alt="" style="margin-top: -30px;">
                     {% endif %}
                 </div>
-                <div class="ms-4 mt-2" >
-                    <div class="d-flex">
+                <div class="ms-2 mt-1" >
+                    <div class="">
                         <h3>{{farmer_profile.firstname}} {{farmer_profile.lastname}}</h3>
+                        <button class="btn btn-success">Connect</button>
+                        <!-- <a  href="#profModal" data-bs-toggle="modal" data-bs-target="#profModal">
+                            <svg class="ms-2 mt-1" xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="green" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                            </svg>
+                        </a> -->
+            
                     </div>
-                    <span>{{farmer_profile.city}}, </span>
-                    <span>{{farmer_profile.state}}, </span>
-                    <span>{{farmer_profile.country}}</span>
+                    <!-- <span>+{{farmer_profile.country_code}} {{farmer_profile.phone_number}}</span> -->
                 </div>
-            </div>
+            
+            
+                </div>
         </div>
+
     </div>
     </div>
-    
-    <div class="container-fluid pt-5 px-4">
+</div>
+
+    <div class="container pt-2">
         <div class="row">
-            <div class="col-sm-6" >
+            <div class="col-md-8 mt-3">
                 <div class="px-4 py-2 rounded shadow-sm" style="background-color: white;height: 100%;">
-                    <h2> Your Story</h2>
-                    <p>
-                       {{farmer_stories.story_text}}
+                    <div class="d-flex justify-content-between">
+                        <div class="d-flex">
+                            <div>
+                                <h2>{{farmer_profile.firstname}}'s Story</h2> 
+                            </div>
+                            <div class="mt-2 ms-2">
+                                 <!-- <span style="background-color: #5078C5;" class="badge rounded-pill text-bg-info">{{farmer_stories.language}}</span>  -->
+                                 <div class="dropdown">
+                                    <a id="lang_a" class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        {{farmer_stories.first.language}}
+                                    </a>
+                                   
+
+                                    <ul id="lang_ul" class="dropdown-menu ">
+                                        {% for story in farmer_stories %}
+                                        {% if story.language != farmer_stories.first.language %}
+                                        <input type="hidden" value="{{story.story_text}}">
+                                        <li class="lang_dd2" data-user={{story.user_id}} data-language={{story.language_id}} ><a class="dropdown-item" href="#">{{story.language}}</a></li>
+                                        {% endif %}
+                                        {% endfor %}
+
+                                    </ul>
+                                  </div>
+
+                            </div>
+                            
+                        </div>   
+                        <!-- <div class="mt-1">
+                            <button id="edit_story" class="ms-2 btn btn-sm"  style="background-color: blue; color: white; " data-bs-toggle="modal" data-bs-target="#storyModal">edit</button>
+                        </div> -->
+                        
+                        
+                    </div> 
+                    <div id="story_div" translate="no">
+
+                    
+                    <p id="story-text">
+                       {{farmer_stories.first.story_text}}
                     </p>
                 </div>
+    
+                </div>
+
             </div>
 
-            <div class="col-sm-6">
-                <div class="px-4 py-2 pt-5 rounded shadow-sm" style="background-color: white; height: 100%;">
-                    <div id="cale"  >
-                        <!-- Placeholder for calendar or additional information -->
+            <div class="col-md-4 mt-3">
+
+                <div class="px-4 py-2  rounded shadow-sm" style="background-color: white; height: 100%;">
+                    <div>
+                        <h2>Gallery</h2> 
                     </div>
+
+                    <div class="row">
+                        {% if farmer_photos %}
+                        {% for photo in farmer_photos %}
+                            {% if photo.photo %}
+                            <div class="col-sm-4 mb-3" >
+                                <img style="width: 110px;height: 110px;object-fit: cover;"   class="rounded" src="{{photo.photo.url}}" alt="..." >
+                                <!-- <a href="{% url 'delete_farmer_photo' photo.id %}" class="btn btn-danger btn-sm mt-2">Delete</a> -->
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    
+                
+                    <!-- <div class="d-flex justify-content-between align-items-center">
+                        <h2>Connections</h2>
+                        <a href="">View all</a>
+                    <style>
+                        .meeting-accepted {
+                            background-color: #8A9A5B; /* Green */
+                            color: black;
+                        }
+                        .meeting-pending {
+                            background-color: #5078C5; /* Blue */
+                            color: black;
+                        }
+                        .meeting-rejected {
+                            background-color: #FCD6DB; /* Red */
+                            color: black;
+                        }
+                        .meeting-container {
+                            padding: 10px;
+                            border-radius: 8px;
+                            margin-bottom: 10px;
+                        }
+                    </style>
+                    </div> -->
+                   
+                     
+
                 </div>
+               
             </div>
+
+           
         </div>
-
-        <div class="row mt-3 px-3 py-3 shadow-sm rounded" style="background-color: white;">
-            <div class="d-flex py-2 ms-3 justify-content-between">
-                <div>
-                <h2>{{ farmer_profile.farm_name }}</h2>
+        <div class="row mt-1 px-3 py-3 shadow-sm rounded">
+           
+            <div class="col-md-4 pt-2 mt-3" style="background-color: white;">
+                <div class="d-flex py-2 ms-3 " >
+                    <div>
+                    <h2>{{ farmer_profile.farm_name }} Details</h2>
+                    </div>
+    
                 </div>
-            </div>
-            <div class="col-sm-6">
-                <div class="py-2 ms-3 rounded">
-                    <div class="d-flex gap-3">
-                        <span class="fw-medium">Farm Size:   </span>
-                        <span>{{ farmer_profile.farm_size }}</span>
+                <div class=" py-2 ms-3 rounded farm-info" >
+                    <div class="gap-3">
+                        <p class="fw-bold mb-1">Farm Location</p>
+                        <span>{{farmer_profile.city}}, </span>
+                        <span>{{farmer_profile.state}}, </span>
+                        <span>{{farmer_profile.country}}</span>
                     </div>
-                    <div class="d-flex mt-3  gap-3">
-                        <span class="fw-medium">Harvest Season: </span>
-                        <span>{{ farmer_profile.harvest_season }}</span>
+                    
+                   
+                    <div class="mt-3 gap-3">
+                        <p class="fw-bold mb-1">Annual Yield</p>
+                        <span>{{ farmer_profile.annual_production }} Kilograms</span>
                     </div>
-                    <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Annual Yield: </span>
-                        <span>{{ farmer_profile.annual_production }}</span>
-                    </div>
-                    <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Cultivars (Variety): </span>
-                        <span>{{ farmer_profile.cultivars }}</span>
-                    </div>
-                    <div class="d-flex mt-3 gap-3">
+                    <!-- <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Cup Scores: </span>
                         <span>{{ farmer_profile.cup_scores_received }}</span>
-                    </div> 
-                    <div class="d-flex mt-3 gap-3">
+                    </div>  -->
+                    <!-- <div class="d-flex mt-3 gap-3">
                         <span class="fw-medium">Cup Scores Source: </span>
                         <span>{{ farmer_profile.source_of_cup_scores }}</span>
-                    </div>
-                    <div class="d-flex mt-3 gap-3">
+                    </div> -->
+                    <!-- <div class="d-flex mt-3 gap-3" style="word-wrap: break-word;">
                         <span class="fw-medium">Quality Report: </span>
-                        <span>{{ farmer_profile.quality_report_link }}</span>
-                    </div>
-                    <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Affiliation: </span>
+                        <a href="{{ farmer_profile.quality_report_link }}"><span>{{ farmer_profile.quality_report_link }}</span></a>
+                    </div> -->
+                    <!-- <div class="mt-3 gap-3">
+                        <p class="fw-bold mb-1">Affiliation </p>
                         <span>{{ farmer_profile.affiliation }}</span>
+                    </div> -->
+                    <div class="mt-3 gap-3">
+                        <p class="fw-bold mb-1">Processing Method </p>
+                        {% for method in processing_methods %}
+                        <span class="px-2 py-1 rounded" style="background-color:rgb(180, 203, 207) ; color: black;">{{ method }}</span>
+                        {% endfor %}
                     </div>
-                    <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Processing Method: </span>
-                        <span>{{ farmer_profile.processing_method }}</span>
-                    </div>
-                    <div class="d-flex mt-3 gap-3">
-                        <span class="fw-medium">Processing Desc: </span>
+                    <div class="mt-3">
+                        <p class="fw-bold mb-1">Processing Description </p>
                         <span>{{ farmer_profile.processing_description }}</span>
                     </div>
+                    
+                    
+    
+                    
                 </div>
+    
             </div>
 
-            <div class="col-sm-6"> 
-                <div class="row">
-                    {% for photo in farmer_photos %}
-                        {% if photo.photo %}
-                        <div class="col-sm-4 mb-3">
-                            <img width="100%" height="200px" class="rounded" src="{{photo.photo.url}}" alt="..." >
-                        </div>
-                        {% endif %}
-                    {% endfor %}
+            <div class="col-md-4 pt-2 mt-3" style="background-color: white;" > 
+                <div class=" ps-5 pt-5 ms-3  rounded farm-info" >
+                    <div class="mt-4 gap-3">
+                        <p class="fw-bold mb-1">Farm Size</p>
+                        <span class="">{{ farmer_profile.farm_size }} hectares</span>
+                        <!-- <span>{{ farmer_profile.farm_size }} </span> -->
+                    </div>
+
+                    <div class="mt-3 gap-3">
+                        <p class="fw-bold mb-1">Cultivars(Variety) </p>
+                        <!-- <span>{{ farmer_profile.cultivars }}</span> -->
+                        {% for variety in variety %}
+                        <span class="px-2 py-1 rounded" style="background-color:rgb(180, 203, 207) ; color: black; ">{{ variety }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-3 gap-3">
+                        <p class="fw-bold mb-1">Preferred Communication Method </p>
+                        <span>{{ farmer_profile.preferred_communication_method }}</span>
+                    </div>
+
                 </div>
+                
+    
             </div>
+
+            <div class="col-md-4 pt-2 mt-3" style="background-color: white;" > 
+                <div class=" ps-5 pt-5 py-2 ms-3 rounded farm-info" >
+                    <div class="mt-3  gap-3">
+                        <p class="fw-bold mb-1">Harvest Seasons </p>
+                        {% for season in harvest_seasons %}
+                        <span class="px-2 py-1 rounded" style="background-color:rgb(180, 203, 207) ; color: black; ">{{ season }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-3 gap-3">
+                        <p class="fw-bold mb-1">Cup Scores:</p>
+                        {% for score in cup_scores %}
+                        <span class="px-2 py-1 rounded" style="background-color:rgb(180, 203, 207) ; color: black; ">{{ score }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-3 gap-3">
+                        <p class="fw-bold mb-1">Member Organization: </p>
+                        <span>{{ farmer_profile.member_organization_name }}</span>
+                    </div>
+
+
+
+                </div>
+                
+    
+            </div>
+            
+
         </div>
     </div>
+
+
 </div>
 
 {% endblock %}

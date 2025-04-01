@@ -9,7 +9,7 @@
         <div class="row g-5">
             <!-- Left Column -->
             <div class="col-12 col-md-4">
-                <h3 class="ps-md-5">
+                <h3 class="">
                     Search by:
                 </h3>
                              <!-- Filters -->
@@ -87,59 +87,9 @@
             <!-- Right Column -->
             <div class="col-12 col-md-8" style="overflow-x: auto; max-height: 100vh;">
                 <h3 class="pb-3">
-                    Search Results:
+                    Producer Profiles:
                 </h3>
 
-                <!-- Example Card -->
-<!--                <div class="card mb-3">-->
-<!--                    <div class="card-body">-->
-<!--                        &lt;!&ndash; Top Section &ndash;&gt;-->
-<!--                        <div class="row">-->
-<!--                            <div class="col-auto">-->
-<!--                                <img class="rounded-circle"-->
-<!--                                    src="{% static 'img/placeholder.png' %}"-->
-<!--                                    alt=""-->
-<!--                                    width="100"-->
-<!--                                    height="100"-->
-<!--                                    style="object-fit: cover;">-->
-<!--                            </div>-->
-<!--                            <div class="col">-->
-<!--                                <h4 class="mb-0"> 'Farmer's Name' </h4>-->
-<!--                                <p class="mb-2"> 'Role' of 'Farm name' in 'Farmer location'</p>-->
-<!--                                <p class="mb-0">-->
-<!--                                    The story text will go here, however not all of it will be displayed. Perhaps the first three or four sentences, then, the user can click to expand the story if interested, and be prompted to view their full profile, where they can then request a meeting and...-->
-<!--                                </p>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                        <hr>-->
-<!--                        &lt;!&ndash; Details Section &ndash;&gt;-->
-<!--                        <div class="row">-->
-<!--                            <div class="col-6 col-sm-3">-->
-<!--                                <p class="mb-1 fw-semibold">Cultivars:</p>-->
-<!--                                <p class="mb-1"> Arabica </p>-->
-<!--                            </div>-->
-<!--                            <div class="col-6 col-sm-3">-->
-<!--                                <p class="mb-1 fw-semibold">Annual Yield:</p>-->
-<!--                                <p class="mb-1">12,000 lbs</p>-->
-<!--                            </div>-->
-<!--                            <div class="col-6 col-sm-3">-->
-<!--                                <p class="mb-1 fw-semibold">Cup Scores:</p>-->
-<!--                                <p class="mb-1">95 - 98</p>-->
-<!--                            </div>-->
-<!--                            <div class="col-6 col-sm-3">-->
-<!--                                <p class="mb-1 fw-semibold">Processing:</p>-->
-<!--                                <p class="mb-1">Washed</p>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                        &lt;!&ndash; Action Buttons &ndash;&gt;-->
-<!--                        <div class="row">-->
-<!--                            <div class="col text-end">-->
-<!--                                <a href="#" class="btn btn-primary me-2">Connect</a>-->
-<!--                                <a href="#" class="btn btn-primary">View Profile</a>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
 
                 <!-- Display Farmers -->
                 {% for farmer in farmers %}
@@ -149,17 +99,18 @@
                             <div class="row">
                                 <div class="col-auto">
                                     <img class="rounded-circle"
-                                        src="{% if farmer.profile_picture %}{{ farmer.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}"
+                                        src="{% if farmer.farmer.profile_picture %}{{ farmer.farmer.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}"
                                         alt=""
                                         width="100"
                                         height="100"
                                         style="object-fit: cover;">
                                 </div>
                                 <div class="col">
-                                    <h4 class="mb-0"> {{ farmer.firstname }} {{ farmer.lastname }} </h4>
-                                    <p class="mb-2">{{ farmer.main_role }} of {{ farmer.farm_name }} located in {{ farmer.city }}, {{ farmer.country }}</p>
+                                    <h4 class="mb-0"> {{ farmer.farmer.firstname }} {{ farmer.farmer.lastname }} </h4>
+                                    <p class="mb-2">{{ farmer.farmer.main_role }} of {{ farmer.farmer.farm_name }} located in {{ farmer.farmer.city }}, {{ farmer.farmer.country }}</p>
                                     <p class="mb-0">
-                                        {{ farmer.bio|truncatewords:50 }}
+                                        {{farmer.story_text|truncatewords:50}}
+                                        <!-- {{ farmer.bio|truncatewords:50 }} -->
                                     </p>
                                 </div>
                             </div>
@@ -167,20 +118,24 @@
                             <!-- Details Section -->
                             <div class="row">
                                 <div class="col-6 col-sm-3">
-                                    <p class="mb-1 fw-semibold">Cultivars:</p>
-                                    <p class="mb-1"> {{ farmer.cultivars }} </p>
+                                    <p class="mb-1 fw-semibold">Farm Size:</p>
+                                    <p class="mb-1"> {{ farmer.farmer.farm_size }} hectares</p>
                                 </div>
                                 <div class="col-6 col-sm-3">
                                     <p class="mb-1 fw-semibold">Annual Yield:</p>
-                                    <p class="mb-1"> {{ farmer.annual_production }} </p>
+                                    <p class="mb-1"> {{ farmer.farmer.annual_production }} kilograms </p>
                                 </div>
                                 <div class="col-6 col-sm-3">
                                     <p class="mb-1 fw-semibold">Cup Scores:</p>
-                                    <p class="mb-1"> {{ farmer.cup_scores_received }} </p>
+                                    {% for cupscore in farmer.cup_scores_received %}
+                                    <span class="mb-2 px-2 py-1 rounded me-1" style="background-color:rgb(180, 203, 207) ; color: black; "> {{ cupscore}}</span>
+                                    {% endfor %}
                                 </div>
                                 <div class="col-6 col-sm-3">
                                     <p class="mb-1 fw-semibold">Processing:</p>
-                                    <p class="mb-1"> {{ farmer.processing_method }} </p>
+                                    {% for method in farmer.processing_method %}
+                                    <span class="mb-2 px-2 py-1 rounded me-1" style="background-color:rgb(180, 203, 207) ; color: black; "> {{ method}} </span>
+                                    {% endfor %}
                                 </div>
                             </div>
                             <!-- Action Buttons -->
@@ -237,13 +192,6 @@
 </div>
 
 <script>
-    // Show modal if `show_modal` is True
-    {% if show_modal %}
-    var myModal = new bootstrap.Modal(document.getElementById('requestMeetingModal'), {
-        keyboard: false
-    });
-    myModal.show();
-    {% endif %}
 
     // Capture the user ID when clicking the Connect button
     document.querySelectorAll('[data-bs-target="#requestMeetingModal"]').forEach(button => {

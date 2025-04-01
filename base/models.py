@@ -3,9 +3,11 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django_countries import countries
-from rbf_platform.storage_backends import ProfileStorage,PhotoStorage
+from rbf_platform.storage_backends import ProfileStorage,PhotoStorage, ProfileStorageRoaster
 from PIL import Image
 from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
+
+COUNTRY_CHOICES = [ (country.name, country.name) for country in countries ]
 
 
 # For admin purpose
@@ -78,6 +80,15 @@ class CupScore(models.Model):
 
     def __str__(self):
         return self.name
+    
+class BuyerFunctions(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
 
 class Farmer(models.Model):
     SIZE_CHOICES = [
@@ -97,8 +108,6 @@ class Farmer(models.Model):
     ]
 
     COUNTRY_REGION_CODES = [ (f'{code}', f'{item} (+{code})') for code in COUNTRY_CODE_TO_REGION_CODE for item in COUNTRY_CODE_TO_REGION_CODE[code] ]
-
-    COUNTRY_CHOICES = [ (country.name, country.name) for country in countries ]
 
     PROCESSING_METHOD_CHOICES = [
         ('Washed','Washed'),
@@ -129,7 +138,7 @@ class Farmer(models.Model):
     cultivars = models.CharField(max_length=255, blank=True, null=True)
     country_code = models.CharField(max_length=255, blank=True, null=True,choices=COUNTRY_REGION_CODES, default='US (+1)')
     phone_number = models.CharField(max_length=255, blank=True, null=True)
-    cup_scores_received = models.ManyToManyField(CupScore, blank=True, null=True)
+    cup_scores_received = models.ManyToManyField(CupScore, blank=True)
     source_of_cup_scores = models.CharField(max_length=255, blank=True, null=True)
     quality_report_link = models.URLField(blank=True, null=True)
     processing_method = models.ManyToManyField(ProcessingMethod, blank=True)
@@ -161,18 +170,31 @@ class Farmer(models.Model):
 class Roaster(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='roaster_profile')
+    firstname = models.CharField(max_length=255, blank=False, null=True)
+    middlename = models.CharField(max_length=255, blank=True, null=True)
+    lastname = models.CharField(max_length=255, blank=False, null=True)
+    job_title = models.CharField(max_length=255, blank=False, null=True)
     company_name = models.CharField(max_length=255, blank=False, null=True)
-    country = models.CharField(max_length=100, blank=False, null=True)
+    company_website = models.URLField(blank=True, null=True)
+    company_socials = models.URLField(blank=True, null=True)
+    country = models.TextField(default='United States of America',choices=COUNTRY_CHOICES, blank=True, null=False)
     state = models.CharField(max_length=100, blank=False, null=True)
     city = models.CharField(max_length=100, blank=False, null=True)
-    bio = models.TextField(blank=False, null=True)
+    bio = models.TextField(blank=True, null=True)
+    company_functions = models.ManyToManyField(BuyerFunctions, blank=True)
+    coffee_purchase_involvement = models.BooleanField(default=False, choices=[(True, 'Yes'), (False, 'No')])
+    purchase_volume = models.DecimalField(max_digits=10,decimal_places=2, blank=False, null=True)
+    company_description = models.TextField(blank=False, null=True)
+    company_approach = models.TextField(blank=False, null=True)
+    company_goals = models.TextField(blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     min_lot_size = models.PositiveIntegerField(blank=False, null=True)
     annual_throughput = models.PositiveIntegerField(blank=False, null=True)
-    origins_interested = models.TextField(blank=False, null=True)
-    coffee_types_interested = models.TextField(blank=False, null=True)
-    profile_picture = models.ImageField(upload_to='roaster_profiles/', blank=True, null=True)
+    origins_interested = models.TextField(blank=True, null=True)
+    coffee_types_interested = models.TextField(blank=True, null=True)
+    profile_picture = models.ImageField(storage=ProfileStorageRoaster(),blank=True, null=True)
+    is_details_filled = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         try:
@@ -190,6 +212,7 @@ class Roaster(models.Model):
         return self.company_name    # def clean(self):
     #     if self.user.group != 'roaster':
     #         raise ValidationError('The user must be a roaster to add a RoasterProfile.')
+
 # third table: farmerphoto is related with user by userid, one can only input data into it if user group is farmer
 class FarmerPhoto(models.Model):
     id = models.AutoField(primary_key=True)
@@ -276,6 +299,7 @@ class Story(models.Model):
     # language_list = [ (language.name,language.name) for language in Language.objects.all()]
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farmer_stories')
+    farmer = models.ForeignKey(Farmer, on_delete=models.SET_NULL, null=True, blank=True, related_name='farmer_stories')
     language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True, blank=True, related_name='story_languages')
     # language = models.CharField(max_length=255, choices=language_list, null=True, blank=True)
     story_text = models.TextField()

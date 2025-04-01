@@ -19,6 +19,10 @@
    
 }
 
+h1.landing-text{
+    font-size: 40px;
+}
+
 .profile-bg{
  background-color: ghostwhite;
  height: 100%;

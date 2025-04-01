@@ -4,98 +4,221 @@
 <link href="{% static 'styles/farmer_signup.css' %}" rel="stylesheet">
 {% endblock %}
 {% block content %}
-{% include 'base/roaster_profile_navbar.html' %}
+<div class="container-fluid pb-2">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+        <div class="ms-4 d-flex">
+            <img src="{% static 'image/LogoDarkText.png' %}" width="150px" alt="">
+            <div class="me-4" id="google_translate_element"></div>
+        </div>
+    </nav>
+    <hr>
 
-<div class="container-fluid">
+    <div class="container mt-5 whole-cont">
+
+        <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+            <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </symbol>
+            <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+            </symbol>
+            <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </symbol>
+          </svg>
+
+        <div class="alert alert-primary d-flex align-items-center" role="alert">
+            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+            <div class="">
+                All fields marked with an asterisk are required, fields without one may be completed later.
+            </div>
+          </div>
+
+          <!-- Display form errors -->
+          {% if form.errors %}
+          <div class="alert alert-dismissible alert-danger">
+              <ul>
+                  {% for field, errors in form.errors.items %}
+                      <li>{{ field }}: {{ errors }}</li>
+                  {% endfor %}
+                  <!-- {% for field, errors in story_form.errors.items %}
+                      <li>{{ field }}: {{ errors }}</li>
+                  {% endfor %} -->
+
+              </ul>
+          </div>
+      {% endif %}
 
 
-    <div class="container mt-5" style="max-width: 1400px; padding-left: 100px; padding-right: 100px;">
         <div>
-            <h2>About you</h2>
+            <h2 class="ms-3">About you</h2>
         </div>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            <div class="d-flex mt-5 justify-content-between">
-                <div>
-                    <h3>Personal information</h3>
-                    <p>Provide your personal information</p>
+            <div class="container mt-4">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>Personal information</h3>
+                        <p>Provide your personal information</p>
+                    </div>
+
+                    <div class="col-md-6">
+                                <div class="form-floating form-group">
+                                    {{ form.firstname }}
+                                    <label for="{{ form.firstname.id_for_label }}">{{ form.firstname.label }}</label>
+                                </div>
+                                <div class="form-floating form-group">
+                                    {{ form.lastname }}
+                                    <label for="{{ form.lastname.id_for_label }}">{{ form.lastname.label }}</label>
+                                </div>
+                                <div class="form-floating form-group">
+                                    {{ form.job_title }}
+                                    <label for="{{ form.job_title.id_for_label }}">{{ form.job_title.label }}</label>
+                                </div>
+                                <!-- <div class="d-flex gap-3">
+                                    <div class="form-floating form-group">
+                                        {{ farmer_form.country_code }}
+                                        <label for="{{ farmer_form.country_code.id_for_label }}">{{ farmer_form.country_code.label }}</label>
+
+                                    </div>
+                                    <div class="form-floating form-group">
+                                        {{ farmer_form.phone_number }}
+                                        <label for="{{ farmer_form.phone_number.id_for_label }}">{{ farmer_form.phone_number.label }}</label>
+                                    </div>
+                                </div> -->  
+                            <div class="row mt-3">
+                                <div class="col-12 d-flex align-items-center upload-btn" onclick="document.getElementById('id_profile_picture').click();">
+                                    <div class="upload-btn-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="white" class="bi bi-cloud-arrow-up-fill" viewBox="0 0 16 16">
+                                            <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 5.146a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ps-3" style="flex-grow: 1;">
+                                        <p id="upload-label">Upload Profile Photo</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col">
+                                    <input type="file" id="id_profile_picture" name="profile_picture" style="display:none;" onchange="updateUploadLabel()">
+                                </div>
+                            </div>
+                    </div>
+    
+                    
                 </div>
 
-                <div class="form-wrapper">
-                    <div class="row">
-                        <div class="col-12 form-group">
-                            {{ form.company_name }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 form-group">
-                            {{ form.min_lot_size }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 form-group">
-                            {{ form.annual_throughput }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 form-group">
-                            {{ form.country }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 form-group">
-                            {{ form.state }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 form-group">
-                            {{ form.city }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 form-group">
-                            {{ form.origins_interested }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 form-group">
-                            {{ form.coffee_types_interested }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 form-group">
-                            {{ form.bio }}
-                        </div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-12 d-flex align-items-center upload-btn" onclick="document.getElementById('id_profile_picture').click();">
-                            <div class="upload-btn-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="white" class="bi bi-cloud-arrow-up-fill" viewBox="0 0 16 16">
-                                    <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 5.146a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0z"/>
-                                </svg>
-                            </div>
-                            <div class="ps-3" style="flex-grow: 1;">
-                                <p id="upload-label">Upload Profile Photo</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mt-2">
-                        <div class="col">
-                            <input type="file" id="id_profile_picture" name="profile_picture" style="display:none;" onchange="updateUploadLabel()">
-                        </div>
-                    </div>
-                </div>
             </div>
-            <div class="row mt-5">
-                <div class="col">
+           
+
+            <div style="margin-top: 7rem; margin-bottom: 7rem;"></div> <!-- Adding more empty space -->
+
+            <div>
+                <h2>Tell us more about your activities</h2>
+            </div>
+            <div class="container mt-2">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>Company Information</h3>
+                        <p>Provide info about your Company</p>
+                    </div>
+                    <div class="col-md-6">
+                            <div class="form-floating form-group">
+                                {{ form.company_name }}
+                                <label for="{{ form.company_name.id_for_label }}">{{ form.company_name.label }}</label>
+                            </div>
+                            <div class="form-floating form-group">
+                                {{ form.country }}
+                                <label for="{{ form.country.id_for_label }}">{{ form.country.label }}</label>
+                            </div>
+                            <div class="form-floating form-group">
+                                {{ form.state }}
+                                <label for="{{ form.state.id_for_label }}">{{ form.state.label }}</label>
+                            </div>
+                            <div class="form-floating form-group">
+                                {{ form.city }}
+                                <label for="{{ form.city.id_for_label }}">{{ form.city.label }}</label>
+                            </div>
+                            <fieldset>
+                                <div><p style="font-weight: bold;">{{ form.company_functions.label }}</p></div>
+                                {% for checkbox in form.company_functions %}
+                                <div class="form-check form-check-inline">
+                                    {{ checkbox }}
+                                </div>
+                                {% endfor %}
+                            </fieldset>
+                            <div>
+                                <label for="{{ form.coffee_purchase_involvement.id_for_label }}">{{ form.coffee_purchase_involvement.label }}</label>
+                            </div>
+                            <div class="form-floating form-group">
+                                {{form.coffee_purchase_involvement }}
+                            </div>
+                            <div class="form-floating form-group">
+                                {{form.purchase_volume }}
+                                <label for="{{ form.purchase_volume.id_for_label }}">{{ form.purchase_volume.label }}</label>
+
+                            </div>
+                            <div class="form-floating form-group">
+                                {{ form.company_description }}
+                                <label for="{{ form.company_description.id_for_label }}">{{ form.company_description.label }}</label>
+                            </div>
+                            <div class="form-floating form-group">
+                                {{ form.company_approach }}
+                                <label for="{{ form.company_approach.id_for_label }}">{{ form.company_approach.label }}</label>
+                            </div>
+                            <div class="form-floating form-group">
+                                {{ form.company_goals }}
+                                <label for="{{ form.company_goals.id_for_label }}">{{ form.company_goals.label }}</label>
+                            </div>
+                            <!-- <div class="form-floating form-group">
+                                {{ farmer_form.preferred_communication_method }}
+                                <label for="{{ farmer_form.preferred_communication_method.id_for_label }}">{{ farmer_form.preferred_communication_method.label }}</label>
+                            </div> -->
+                        <!-- <p>Main Role</p> -->
+                            <!-- <div class="form-floating form-group">
+                                {{ farmer_form.main_role }}
+                                <label for="{{ farmer_form.main_role.id_for_label }}">{{ farmer_form.main_role.label }}</label>
+                            </div> -->
+                            <!-- <div>
+                                <label for="{{ farmer_form.is_member_organization.id_for_label }}">{{ farmer_form.is_member_organization.label }}</label>
+                            </div> -->
+                            <!-- <div class="form-floating form-group">
+                                
+                                {{ farmer_form.is_member_organization }}
+                                
+
+                            </div> -->
+
+                            <!-- <div class="form-floating form-group">
+                                {{ farmer_form.member_organization_name }}
+                                <label for="{{ farmer_form.member_organization_name.id_for_label }}">{{ farmer_form.member_organization_name.label }}</label>
+                            </div> -->
+                            
+                            
+
+                    </div>
+
+                    <div class="col">
+
+                    
                     <button type="submit" class="btn btn-primary float-end">Save and Continue</button>
+                    </div>
+
                 </div>
+               
+                   
             </div>
-             <div style="margin-top: 7rem; margin-bottom: 7rem;"></div> <!-- Adding more empty space -->
+            
+        
+            
+                
+           
+            <div style="margin-top: 7rem; margin-bottom: 7rem;"></div> <!-- Adding more empty space -->
+
+            
         </form>
     </div>
 </div>
-
 <script>
     function updateUploadLabel() {
         const input = document.getElementById('id_profile_picture');

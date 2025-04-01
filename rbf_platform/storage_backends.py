@@ -12,6 +12,11 @@ class ProfileStorage(S3Boto3Storage,):
     default_acl = 'public-read'
     file_overwrite = False
 
+class ProfileStorageRoaster(S3Boto3Storage,):
+    location = 'media/roaster_profiles'
+    default_acl = 'public-read'
+    file_overwrite = False
+
 class PhotoStorage(S3Boto3Storage,):
     location = 'media/farmer_photos'
     default_acl = 'public-read'

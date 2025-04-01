@@ -86,6 +86,7 @@ def farmer_details(request):
             farmer.is_details_filled = True
             farmer.save()
             story = story_form.save(commit=False)
+            story.farmer = farmer
             story.user = request.user
             story.save()
             return redirect('farmer_dashboard')  # Redirect to signin after successful update
@@ -108,6 +109,8 @@ def roaster_details(request):
         form = RoasterForm(request.POST, request.FILES, instance=roaster)
         if form.is_valid():
             form.save()
+            roaster.is_details_filled = True
+            roaster.save()
             return redirect('roaster_dashboard')
         else:
             print(form.errors)  # Print errors to the console
