@@ -113,10 +113,63 @@
             },
     });
     });
- 
+    
+    pageLanguage = 'en';
     function googleTranslateElementInit() {
-        new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,es,fr,de,it',},    'google_translate_element');
+        new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'en,es,fr,de,it',}, 'google_translate_element');
     }
+
+    $(document).ready(function () {
+        setTimeout(function () {
+            let selectElement = $(".goog-te-combo");
+
+            // Restore language selection from localStorage
+            let storedLang = localStorage.getItem("selectedLanguage");
+            if (storedLang) {
+                selectElement.val(storedLang).trigger("change");
+            }
+
+            // Listen for language selection change
+            selectElement.on("change", function () {
+                let selectedLang = $(this).val();
+                localStorage.setItem("selectedLanguage", selectedLang);
+            });
+        }, 2000); // Delay to allow Google Translate to load
+    });
+
+    $(document).on("click",".lang_dd2",function() {
+        var lang = $(this).data("language");
+        var user = $(this).data("user");
+        var lang_name = $(this).text();
+        console.log(lang);
+        $.ajax({
+            url: "/roaster/switch_story/" + lang +"/" + user,       // URL endpoint
+            type: "GET",    // Data to send to the server
+            success: function (response) {
+                console.log(response.story); // "Hello, {name}!"
+                console.log(response.languages);
+                $("#story_div").html('<p id="story-text">' + response.story + '</p>');
+                // $("#edit_story_modal").val(response.story);
+                // $('#edit_story_lang').val(lang)
+                // $("#edit_story_form").attr('action',"");
+                // $("#lang_ul").text(response.languages);
+                $("#lang_a").text(lang_name);
+                new_li = '';
+                for (var i = 0; i < response.languages.length; i++) {
+                    new_li += '<li class="lang_dd2" data-user="' + user + '" data-language="' + response.languages[i][0] + '"><a class="dropdown-item" href="#">' + response.languages[i][1] + '</a></li>\n';
+                }
+                $("#lang_ul").html(new_li);
+                // $('#result').text(response.message); // Update a div with the response
+            },
+            error: function (xhr, status, error) {
+                $("#lang_a").text(lang_name);
+                $('#add_story_lang').val(lang)
+                $('#story_div').html('Could not fetch story in this language');
+                console.error("Error:", error);
+            },
+            });
+        
+    })
 
     
 

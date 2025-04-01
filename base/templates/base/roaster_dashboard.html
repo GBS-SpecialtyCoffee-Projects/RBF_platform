@@ -4,7 +4,7 @@
 {% block content %}
 {% include 'base/roaster_profile_navbar.html' %}
 
-<div class="container-fluid profile-bg">
+<div class="container-fluid profile-bg pb-5">
     <!-- First Container: Profile Header -->
     <div class="d-flex justify-content-center pt-3">
         <div class="shadow-sm rounded" style="background-color: white; width:95%">
@@ -25,16 +25,15 @@
                     </div>
                     <div class="ms-4 mt-2">
                         <div class="d-flex">
-                            <h3>{{roaster_profile.company_name}}</h3>
+                            <h3>{{roaster_profile.firstname}} {{roaster_profile.lastname}}</h3>
                             <a href="#editProfileModal" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                                 <svg class="ms-2 mt-1" xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="green" class="bi bi-pencil-fill" viewBox="0 0 16 16">
                                     <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
                                 </svg>
                             </a>
                         </div>
-                        <span>{{roaster_profile.city}}, </span>
-                        <span>{{roaster_profile.state}}, </span>
-                        <span>{{roaster_profile.country}}</span>
+                        <span> {{roaster_profile.job_title}} </span>
+                       
                     </div>
                 </div>
             </div>
@@ -45,13 +44,43 @@
     <div class="container-fluid pt-4 px-4">
         <div class="row">
             <!-- About Section and Photos -->
-            <div class="col-md-6">
+            <div class="col-md-6 mt-3">
                 <div class="px-4 py-2 rounded shadow-sm" style="background-color: white; height: 100%;">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h2>About</h2>
-                        <button class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#editBioModal" style="background-color: Blue; color: white;">Edit Profile</button>
+                        <h2>{{roaster_profile.company_name}}</h2>
+                        <button class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#editdetailsModal" style="background-color: Blue; color: white;">Edit Profile</button>
                     </div>
-                    <p>{{roaster_profile.bio}}</p>
+                    <div class="gap-3">
+                        <span class="fw-light">Location:  <span>{{roaster_profile.city}}, </span>
+                        <span>{{roaster_profile.state}}, </span>
+                        <span>{{roaster_profile.country}}</span> </span>
+                    </div>
+                    <div class="mt-3  gap-3">
+                        <span class="fw-light">Functions: </span>
+                        {% for function in functions %}
+                        <span>{{ function }},</span>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Average green coffee purchase volume:</span>
+                        <span>{{roaster_profile.purchase_volume}} </span>
+
+                    </div>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Company Description:</span>
+                        <span>{{roaster_profile.company_description}}</span>
+                    </div>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Company approach:</span>
+                        <span>{{roaster_profile.company_approach}}</span>
+
+                    </div>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Goals with Coffee Circuit:</span>
+                        <span>{{roaster_profile.company_goals}}</span>
+
+                    </div>
+                    <!-- <p>{{roaster_profile.bio}}</p> -->
 
                     <div style="margin-top: 3rem; margin-bottom: 3rem;"></div> <!-- Adding more empty space -->
 
@@ -61,7 +90,7 @@
             </div>
 <!-- Placeholder Container -->
 
-          <div class="col-md-6">
+    <div class="col-md-6 mt-3">
     <div class="px-4 py-2 rounded shadow-sm" style="background-color: white; height: 100%;">
         <div class="d-flex justify-content-between align-items-center">
             <h2>Connections</h2>
@@ -126,84 +155,6 @@
 
 
 
-               <!-- Sourcing Container -->
-<div class="row mt-3 px-1 py-3 shadow-sm rounded mx-auto" style="background-color: white; width: 95%;">
-    <!-- Header Section for Sourcing -->
-    <div class="d-flex justify-content-between">
-        <div>
-            <h2>Sourcing</h2>
-        </div>
-        <div>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editSourcingModal">Edit Sourcing</button>
-        </div>
-    </div>
-
-    <!-- Main Row with Two Columns -->
-    <div class="row mt-3">
-        <!-- Left Column: Sourcing Info -->
-        <div class="col-md-6">
-            <div class="py-2 rounded">
-                <div class="d-flex justify-content-start">
-                    <span style="min-width: 250px;">Minimum Lot Size:</span> <!-- Adjust the width as necessary -->
-                    <span>{{ roaster_profile.min_lot_size }}</span>
-                </div>
-
-                <!-- Second Row: Annual Throughput -->
-                <div class="d-flex mt-3 justify-content-start">
-                    <span style="min-width: 250px;">Annual Throughput:</span>
-                    <span>{{ roaster_profile.annual_throughput }}</span>
-                </div>
-
-                <!-- Third Row: Coffee Type Interested -->
-                <div class="d-flex mt-3 justify-content-start">
-                    <span style="min-width: 250px;">Coffee Type Interested:</span>
-                    <span>{{ roaster_profile.coffee_types_interested }}</span>
-                </div>
-
-                <!-- Fourth Row: Origins Interested -->
-                <div class="d-flex mt-3 justify-content-start">
-                    <span style="min-width: 250px;">Origins Interested:</span>
-                    <span>{{ roaster_profile.origins_interested }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column: Photo Section -->
-        <div class="col-md-6 d-flex flex-column justify-content-between">
-            <!-- Show the message if the user has reached the limit of 6 photos -->
-            {% if roaster_photos.count >= 6 %}
-                <div class="alert alert-warning">
-                    You have reached the maximum number of 6 photos. Please delete a photo to upload a new one.
-                </div>
-            {% endif %}
-            <div class="row">
-                {% for photo in roaster_photos %}
-                    <div class="col-6 col-md-4 mb-3">
-                        <img src="{{ photo.photo.url }}" alt="Photo {{ photo.id }}" class="roaster-photo" style="width: 100%; height: 100px; object-fit: cover;">
-                        <form method="post" action="{% url 'delete_roaster_photo' photo.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-danger mt-2" style="font-size: 12px; padding: 1px 6px;">Delete</button>
-                        </form>
-                    </div>
-                {% empty %}
-                    <p>No photos available.</p>
-                {% endfor %}
-            </div>
-
-        </div>
-        <div class="mt-auto">
-                <button class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#editPhotoModal" style="background-color: Blue; color: white;">Add Photo</button>
-            </div>
-    </div>
-
-</div>
-
-
-
-<div style="margin-top: 7rem; margin-bottom: 7rem;"></div> <!-- Adding more empty space -->
-
-
-
 
 <!-- Edit Profile Modal -->
 <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
@@ -218,25 +169,22 @@
                 <input type="hidden" name="roaster_info_form" value="1">  <!-- Hidden input to distinguish form submissions -->
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="company_name" class="form-label">Company Name</label>
-                        {{ roaster_info_form.company_name.errors }}
-                        {{ roaster_info_form.company_name }} <!-- This should render an input element -->
+                        <label for="firstname" class="form-label">First Name</label>
+                        {{ roaster_info_form.firstname.errors }}
+                        {{ roaster_info_form.firstname }} <!-- This should render an input element -->
                     </div>
                     <div class="mb-3">
-                        <label for="country" class="form-label">Country</label>
-                        {{ roaster_info_form.country.errors }}
-                        {{ roaster_info_form.country }} <!-- This should render an input element -->
+                        <label for="firstname" class="form-label">Last Name</label>
+                        {{ roaster_info_form.lastname.errors }}
+                        {{ roaster_info_form.lastname }} <!-- This should render an input element -->
                     </div>
                     <div class="mb-3">
-                        <label for="state" class="form-label">State</label>
-                        {{ roaster_info_form.state.errors }}
-                        {{ roaster_info_form.state }} <!-- This should render an input element -->
+                        <label for="job_title" class="form-label">Job Title</label>
+                        {{ roaster_info_form.job_title.errors }}
+                        {{ roaster_info_form.job_title }} <!-- This should render an input element -->
+
                     </div>
-                    <div class="mb-3">
-                        <label for="city" class="form-label">City</label>
-                        {{ roaster_info_form.city.errors }}
-                        {{ roaster_info_form.city }} <!-- This should render an input element -->
-                    </div>
+
                     <div class="mb-3">
                         <label for="profile_picture" class="form-label">Profile Picture</label>
                         {{ roaster_info_form.profile_picture.errors }}
@@ -304,7 +252,7 @@
     </div>
 </div>
     <!-- Edit Sourcing Modal -->
-<div class="modal fade" id="editSourcingModal" tabindex="-1" aria-labelledby="editSourcingModalLabel" aria-hidden="true">
+<!-- <div class="modal fade" id="editSourcingModal" tabindex="-1" aria-labelledby="editSourcingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -343,6 +291,81 @@
             </form>
         </div>
     </div>
+</div> -->
+
+<div class="modal fade" id="editdetailsModal" tabindex="-1" aria-labelledby="editDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editSourcingModalLabel">Edit Sourcing</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'roaster_dashboard' %}">
+                {% csrf_token %}
+                <input type="hidden" name="roaster_sourcing_form" value="1">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="company_name" class="form-label">Company Name</label>
+                        {{ roaster_sourcing_form.company_name.errors }}
+                        {{ roaster_sourcing_form.company_name }}
+
+                    </div>
+                    <div class="mb-3">
+                        <label for="country" class="form-label">Country</label>
+                        {{ roaster_sourcing_form.country.errors }}
+                        {{ roaster_sourcing_form.country }}
+
+                    </div>
+                    <div class="mb-3">
+                        <label for="state" class="form-label">State</label>
+                        {{ roaster_sourcing_form.state.errors }}
+                        {{ roaster_sourcing_form.state }}
+
+                    </div>
+                    <div class="mb-3">
+                        <label for="city" class="form-label">City</label>
+                        {{ roaster_sourcing_form.city.errors }}
+                        {{ roaster_sourcing_form.city }}
+
+                    </div>
+                    <div class="mb-3">
+                        <label for="company_functions" class="form-label">Company Functions</label>
+                        {{ roaster_sourcing_form.company_functions.errors }}
+                        {{ roaster_sourcing_form.company_functions }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="purchase_volume" class="form-label">Average green coffee purchase volume</label>
+                        {{ roaster_sourcing_form.purchase_volume.errors }}
+                        {{ roaster_sourcing_form.purchase_volume }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="company_description" class="form-label">Describe your company</label>
+                        {{ roaster_sourcing_form.company_description.errors }}
+                        {{ roaster_sourcing_form.company_description }}
+
+                    </div>
+                    <div class="mb-3">
+                        <label for="company_approach" class="form-label">Describe your company approach</label>
+                        {{ roaster_sourcing_form.company_approach.errors }}
+                        {{ roaster_sourcing_form.company_approach }}
+
+                    </div>
+                    <div class="mb-3">
+                        <label for="company_goals" class="form-label">Describe your company goals</label>
+                        {{ roaster_sourcing_form.company_goals.errors }}
+                        {{ roaster_sourcing_form.company_goals }}
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
+
 
 {% endblock %}

@@ -1,23 +1,29 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm
-from base.models import Farmer, MeetingRequest, RoasterPhoto,Roaster, FarmerPhoto
+from base.models import Farmer, Language, MeetingRequest, RoasterPhoto,Roaster, FarmerPhoto, BuyerFunctions,Story,Season,ProcessingMethod,CupScore
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 import os
 from django.urls import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
+from django.db.models import Prefetch
 
 
 def roaster_dashboard(request):
     if request.user.group != 'roaster':
         return redirect('farmer_dashboard')
+    
+    roaster_profile = Roaster.objects.filter(user=request.user).first()
+    if roaster_profile and roaster_profile.is_details_filled == False:
+        return redirect('roaster_details')
 
     farmers = Farmer.objects.all()
     meeting_requests_as_requestee = MeetingRequest.objects.filter(requestee=request.user)
     meeting_requests_as_requester = MeetingRequest.objects.filter(requester=request.user)
     roaster_profile = Roaster.objects.filter(user=request.user).first()
     roaster_photos = RoasterPhoto.objects.filter(user=request.user)
+    roaster_functions = BuyerFunctions.objects.filter(roaster=roaster_profile)
     pending_meetings = MeetingRequest.objects.filter(
         requester=request.user, status='accepted'
     ) | MeetingRequest.objects.filter(
@@ -102,6 +108,7 @@ def roaster_dashboard(request):
         'roaster_bio_form': roaster_bio_form,
         'roaster_photo_form': roaster_photo_form,
         'roaster_sourcing_form': roaster_sourcing_form,
+        'functions': roaster_functions
 
     })
 
@@ -199,7 +206,11 @@ def delete_roaster_photo(request, photo_id):
         return redirect('roaster_dashboard')
 
 def connections(request):
-    farmers = Farmer.objects.all()
+    # farmers = Farmer.objects.all()
+    farmers = Story.objects.select_related('farmer').prefetch_related('farmer__cup_scores_received', 'farmer__processing_method').filter(farmer__isnull=False)
+    for farmer in farmers:
+        farmer.cup_scores_received = farmer.farmer.cup_scores_received.all()
+        farmer.processing_method = farmer.farmer.processing_method.all()
     form = MeetingRequestForm()
     show_modal = False  # Initially, the modal should not be shown
 
@@ -209,26 +220,26 @@ def connections(request):
 
     # Filter the farmers queryset accordingly
     if annual_production:
-        farmers = farmers.filter(annual_production__isnull=False)
+        farmers = farmers.filter(farmer__annual_production__isnull=False)
         if annual_production == '0.1-5':
-            farmers = farmers.filter(annual_production__gte=0.1, annual_production__lte=5)
+            farmers = farmers.filter(farmer__annual_production__gte=0.1, farmer__annual_production__lte=5)
         elif annual_production == '5-20':
-            farmers = farmers.filter(annual_production__gte=5, annual_production__lte=20)
+            farmers = farmers.filter(farmer__annual_production__gte=5, farmer__annual_production__lte=20)
         elif annual_production == '20-50':
-            farmers = farmers.filter(annual_production__gte=20, annual_production__lte=50)
+            farmers = farmers.filter(famrer__annual_production__gte=20, farmer__annual_production__lte=50)
         elif annual_production == '50+':
-            farmers = farmers.filter(annual_production__gte=50)
+            farmers = farmers.filter(farmer__annual_production__gte=50)
 
     if farm_size:
-        farmers = farmers.filter(farm_size__isnull=False)
+        farmers = farmers.filter(farmer__farm_size__isnull=False)
         if farm_size == '0.1-2':
-            farmers = farmers.filter(farm_size__gte=0.1, farm_size__lte=2)
+            farmers = farmers.filter(farmer__farm_size__gte=0.1, farmer__farm_size__lte=2)
         elif farm_size == '2-10':
-            farmers = farmers.filter(farm_size__gte=2, farm_size__lte=10)
+            farmers = farmers.filter(farmer__farm_size__gte=2, farmer__farm_size__lte=10)
         elif farm_size == '10-50':
-            farmers = farmers.filter(farm_size__gte=10, farm_size__lte=50)
+            farmers = farmers.filter(farmer__farm_size__gte=10, farmer__farm_size__lte=50)
         elif farm_size == '50+':
-            farmers = farmers.filter(farm_size__gte=50)
+            farmers = farmers.filter(farmer__farm_size__gte=50)
 
     if request.method == 'POST':
         # Handle retrieval or deletion of meeting requests
@@ -303,8 +314,39 @@ def farmer_view(request, user_id):
     farmer_profile = get_object_or_404(Farmer, user__id=user_id)
     # Fetch related photos of the farmer using 'user' instead of 'farmer'
     farmer_photos = FarmerPhoto.objects.filter(user=farmer_profile.user)
+    #get farmer stories
+    farmer_stories = Story.objects.filter(user=farmer_profile.user)
+    farmer_harvest_seasons = Season.objects.filter(farmer=farmer_profile)
+    farmer_processing_methods = ProcessingMethod.objects.filter(farmer=farmer_profile)
+    farmer_cup_scores = CupScore.objects.filter(farmer=farmer_profile)
+    variety = farmer_profile.cultivars.split(',')
 
     return render(request, 'base/farmer_view.html', {
         'farmer_profile': farmer_profile,
         'farmer_photos': farmer_photos,
+        'farmer_stories': farmer_stories,
+        'harvest_seasons': farmer_harvest_seasons,
+        'processing_methods': farmer_processing_methods,
+        'cup_scores': farmer_cup_scores, 
+        'variety': variety
     })
+
+def switch_story(request,language_id,user_id):
+     try:
+        #get current farmer
+        # farmer = request.user
+        #get the id of the story i am meant to return 
+        language= Language.objects.get(id=language_id)
+        #get story with that id 
+        story = Story.objects.get(language=language,user_id=user_id)
+        #get all stories excluding story in the language
+        # languages = [ (story.language.id,story.language.name) for story in Story.objects.filter(user=farmer).exclude(language=language)]
+        languages = [ (language.id,language.name) for language in Language.objects.all()]
+
+        # print(languages)
+        # print(story.story_text)
+     except:
+         return JsonResponse({'error': 'Language not found',}, status=404)
+    
+     #return response to page with story 
+     return JsonResponse({'story': story.story_text,'languages':languages, 'success': 'success'}, status=200)
