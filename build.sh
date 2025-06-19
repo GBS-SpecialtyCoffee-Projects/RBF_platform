@@ -10,3 +10,5 @@ python manage.py collectstatic --no-input
 
 # Apply any outstanding database migrations
 python manage.py migrate
+
+echo "python-3.11.8" > runtime.txt
