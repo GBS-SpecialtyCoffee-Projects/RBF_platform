@@ -75,7 +75,7 @@
                                     {{ farmer_form.lastname }}
                                     <label for="{{ farmer_form.lastname.id_for_label }}">{{ farmer_form.lastname.label }}</label>
                                 </div>
-                                <div class="d-flex gap-3">
+                                <!-- <div class="d-flex gap-3">
                                     <div class="form-floating form-group">
                                         {{ farmer_form.country_code }}
                                         <label for="{{ farmer_form.country_code.id_for_label }}">{{ farmer_form.country_code.label }}</label>
@@ -85,9 +85,25 @@
                                         {{ farmer_form.phone_number }}
                                         <label for="{{ farmer_form.phone_number.id_for_label }}">{{ farmer_form.phone_number.label }}</label>
                                     </div>
+                                </div> -->
+                                <!-- phone number implmementation -->
+                                <div class="form-group">
+                                    <label for="country_code_search">Search Country Code</label>
+                                    <input type="text" id="country_code_search" class="form-control mb-2" placeholder="Type a country or code...">
                                     
-
+                                    <label for="country_code">Country Code</label>
+                                    <select id="country_code" name="country_code" class="form-select" size="6">
+                                        {% include 'partials/country_code_options.html' %}
+                                    </select>
                                 </div>
+
+                                <div class="form-group mt-2">
+                                    <label for="phone_number">Phone Number</label>
+                                    <input id="phone_number" name="phone_number" type="text" class="form-control" placeholder="e.g. 12345678">
+                                </div>
+
+                                <input type="hidden" id="full_phone_number" name="full_phone_number">
+                                <!-- end of phone number implementation -->
                                 <div class="form-floating form-group d-flex">
                                     <!-- <label for="{{ farmer_form.country_code.id_for_label }}">{{ farmer_form.country_code.label }}</label> -->
                                     <!-- {{ farmer_form.country_code }}
@@ -295,4 +311,49 @@
         }
     }
 </script>
+
+<script>
+    document.querySelector("form").addEventListener("submit", function(e) {
+        const code = document.getElementById("country_code").value;
+        const number = document.getElementById("phone_number").value;
+        document.getElementById("full_phone_number").value = code + number;
+    });
+
+    const searchInput = document.getElementById('country_code_search');
+    const selectBox = document.getElementById('country_code');
+
+    searchInput.addEventListener('focus', () => {
+        selectBox.style.display = 'block';
+        selectBox.size = 6;
+    });
+
+    searchInput.addEventListener('input', () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        let foundMatch = false;
+
+        Array.from(selectBox.options).forEach(option => {
+            const text = option.text.toLowerCase();
+            const visible = text.includes(searchTerm);
+            option.style.display = visible ? '' : 'none';
+            if (visible) foundMatch = true;
+        });
+
+        selectBox.size = foundMatch ? 6 : 0;
+    });
+
+    selectBox.addEventListener('change', () => {
+        const selectedOption = selectBox.options[selectBox.selectedIndex];
+        searchInput.value = selectedOption.text;
+        selectBox.style.display = 'none';
+        selectBox.size = 0;
+    });
+
+    document.addEventListener('click', e => {
+        if (!searchInput.contains(e.target) && !selectBox.contains(e.target)) {
+            selectBox.style.display = 'none';
+            selectBox.size = 0;
+        }
+    });
+</script>
+
 {% endblock %}
