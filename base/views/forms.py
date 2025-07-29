@@ -12,6 +12,7 @@ from django_countries.widgets import CountrySelectWidget
 from django_countries.fields import CountryField
 from phonenumber_field.formfields import PhoneNumberField,SplitPhoneNumberField
 from phonenumber_field.widgets import PhoneNumberPrefixWidget
+from base.views.country_codes import COUNTRY_CODE_CHOICES
 import re
 
 HARVEST_CHOICES = (
@@ -20,6 +21,16 @@ HARVEST_CHOICES = (
     ('autumn','autumn'),        
     ('winter','winter')   
 )
+
+# COUNTRY_CODE_CHOICES = [
+#     ('+1', 'United States (+1)'),
+#     ('+502', 'Guatemala (+502)'),
+#     ('+52', 'Mexico (+52)'),
+#     ('+91', 'India (+91)'),
+#     ('+254', 'Kenya (+254)'),
+#     ('+251', 'Ethiopia (+251)'),
+# ]
+
 
 
 class FarmerPhotoForm(forms.ModelForm):
@@ -32,10 +43,15 @@ class FarmerPhotoForm(forms.ModelForm):
 
 
 class FarmerForm(forms.ModelForm):
+    # country codes that can be selected
+    country_code = forms.ChoiceField(
+        choices=COUNTRY_CODE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control', 'placeholder': 'Country Code', 'autocomplete': 'off'})
+    )
 
     class Meta:
         model = Farmer
-
+        
         fields = [
             'farm_name',  'bio', 'country', 'state', 'city',
             'firstname', 'lastname', 'middlename','country_code','phone_number',
@@ -82,7 +98,7 @@ class FarmerForm(forms.ModelForm):
             'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name','required':'true','autocomplete':'off',}),
             'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name','required':'true','autocomplete':'off'}),
             'middlename': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Middle Name','autocomplete':'off'}),
-            'country_code': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Country Code','autocomplete':'off'}),
+            # 'country_code': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Country Code','autocomplete':'off'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number','autocomplete':'off'}),
             'farm_size': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Farm Size','autocomplete':'off'}),
             'harvest_season': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Harvest Season'}),
