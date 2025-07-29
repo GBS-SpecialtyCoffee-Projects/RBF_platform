@@ -106,8 +106,8 @@ class Farmer(models.Model):
         ('autumn','autumn'),        
         ('winter','winter'),  
     ]
-
-    COUNTRY_REGION_CODES = [ (f'{code}', f'{item} (+{code})') for code in COUNTRY_CODE_TO_REGION_CODE for item in COUNTRY_CODE_TO_REGION_CODE[code] ]
+    # error for previous country code choices, but it doesnt need to be called anymore
+    # COUNTRY_REGION_CODES = [ (f'{code}', f'{item} (+{code})') for code in COUNTRY_CODE_TO_REGION_CODE for item in COUNTRY_CODE_TO_REGION_CODE[code] ]
 
     PROCESSING_METHOD_CHOICES = [
         ('Washed','Washed'),
@@ -136,7 +136,7 @@ class Farmer(models.Model):
     annual_production = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Annual production in tons")
     annual_production_unit = models.CharField(max_length=255, choices=PROD_UNIT_CHOICES, default='kilograms', blank=True, null=True)
     cultivars = models.CharField(max_length=255, blank=True, null=True)
-    country_code = models.CharField(max_length=255, blank=True, null=True,choices=COUNTRY_REGION_CODES, default='US (+1)')
+    country_code = models.CharField(max_length=255, blank=True, null=True, default='US (+1)')
     phone_number = models.CharField(max_length=255, blank=True, null=True)
     cup_scores_received = models.ManyToManyField(CupScore, blank=True)
     source_of_cup_scores = models.CharField(max_length=255, blank=True, null=True)
