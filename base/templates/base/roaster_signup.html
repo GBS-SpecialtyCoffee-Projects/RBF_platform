@@ -4,6 +4,23 @@
 <link href="{% static 'styles/farmer_signup.css' %}" rel="stylesheet">
 {% endblock %}
 {% block content %}
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11;">
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-danger text-white">
+            <strong class="me-auto">Error</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="errorToastMessage"></div>
+    </div>
+    <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="successToastMessage">Profile saved! Redirecting...</div>
+    </div>
+</div>
 <div class="container-fluid pb-2">
     <nav class="navbar navbar-expand-lg navbar-dark ">
         <div class="ms-4 d-flex">
@@ -229,5 +246,32 @@
             label.textContent = 'Upload Profile Photo';
         }
     }
+
+    // Display Django messages as toasts
+    document.addEventListener('DOMContentLoaded', function() {
+        const messages = document.querySelectorAll('[data-message]');
+        if (messages.length > 0) {
+            messages.forEach(msg => {
+                const messageText = msg.getAttribute('data-message');
+                const messageType = msg.getAttribute('data-type');
+                const toastElement = messageType === 'error' ? document.getElementById('errorToast') : document.getElementById('successToast');
+                const messageElement = messageType === 'error' ? document.getElementById('errorToastMessage') : document.getElementById('successToastMessage');
+                messageElement.textContent = messageText;
+                const toast = new bootstrap.Toast(toastElement);
+                toast.show();
+            });
+        }
+    });
+
+    // Show success toast on form submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // Check if form is valid (no errors)
+        const errorAlert = document.querySelector('.alert-danger');
+        if (!errorAlert || errorAlert.style.display === 'none') {
+            const successToast = document.getElementById('successToast');
+            const toast = new bootstrap.Toast(successToast);
+            toast.show();
+        }
+    });
 </script>
 {% endblock %}

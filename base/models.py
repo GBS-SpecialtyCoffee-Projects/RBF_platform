@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django_countries import countries
-from rbf_platform.storage_backends import ProfileStorage,PhotoStorage, ProfileStorageRoaster
+from rbf_platform.storage_backends import ProfileStorage,PhotoStorage, ProfileStorageRoaster,get_profile_storage
 from PIL import Image
 from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
 
@@ -144,7 +144,7 @@ class Farmer(models.Model):
     processing_method = models.ManyToManyField(ProcessingMethod, blank=True)
     processing_description = models.TextField(blank=True, null=True)
     # profile_picture = models.ImageField(upload_to='farmer_profiles/', blank=True, null=True)
-    profile_picture = models.ImageField(storage=ProfileStorage(),blank=True, null=True)
+    profile_picture = models.ImageField(storage=get_profile_storage,blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
