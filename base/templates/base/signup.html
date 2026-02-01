@@ -9,6 +9,17 @@
 {% endblock %}
 
 {% block content %}
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11;">
+    <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage"></div>
+    </div>
+</div>
+
 <div style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
     <div id="google_translate_element"></div>
     <a href="{% url 'landing_page' %}" class="close-button" style="text-decoration: none; color: white; font-size: 18px;">Close X</a>
@@ -33,29 +44,39 @@
                 <form method="post" id="signupForm">
                     {% csrf_token %}
                     {{ form.non_field_errors }}
-                    <div id="signup-alert">
-                        
-                      </div>
+                    <div id="signup-alert"></div>
                     <div class="mb-0">
-                        <label class="form-label">Username</label> {{ form.username }}
-                        <div id="username-error" class="text-danger"></div>
+                        <label class="form-label">Username</label>
+                        {{ form.username }}
+                        <div id="username-error" class="text-danger small"></div>
+                        {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors.0 }}</div>{% endif %}
                     </div>
                     <div class="mb-0">
-                        <label class="form-label">Email address</label> {{ form.email }}
-                        <div id="email-error" class="text-danger"></div>
+                        <label class="form-label">Email address</label>
+                        {{ form.email }}
+                        <div id="email-error" class="text-danger small"></div>
+                        {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors.0 }}</div>{% endif %}
                     </div>
                     <div class="mb-0">
-                        <label class="form-label">Confirm email address </label> {{ form.confirm_email }}
+                        <label class="form-label">Confirm email address</label>
+                        {{ form.confirm_email }}
+                        {% if form.confirm_email.errors %}<div class="text-danger small">{{ form.confirm_email.errors.0 }}</div>{% endif %}
                     </div>
                     <div class="mb-0">
-                        <label class="form-label">Select group</label> {{ form.group }}
+                        <label class="form-label">Select group</label>
+                        {{ form.group }}
+                        {% if form.group.errors %}<div class="text-danger small">{{ form.group.errors.0 }}</div>{% endif %}
                     </div>
                     <div class="mb-0">
-                        <label class="form-label">Password</label> {{ form.password1 }}
+                        <label class="form-label">Password</label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}<div class="text-danger small">{{ form.password1.errors.0 }}</div>{% endif %}
                     </div>
                     <small class="text-muted" style="font-size: 0.8em; display: block; margin-top: 5px; margin-left: 1.7rem;">Password must be at least 8 characters long, contain at least one uppercase letter, and one number.</small>
                     <div class="mb-3">
-                        <label class="form-label">Confirm password</label> {{ form.password2 }}
+                        <label class="form-label">Confirm password</label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}<div class="text-danger small">{{ form.password2.errors.0 }}</div>{% endif %}
                     </div>
                     <!-- Checkbox for terms and conditions -->
                     <div class="form-check mb-3 text-start">
@@ -185,8 +206,29 @@
 <!-- JavaScript for Client-Side Validation -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Add is-invalid class to fields with errors on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('signupForm');
+        const fields = ['username', 'email', 'confirm_email', 'group', 'password1', 'password2'];
+
+        fields.forEach(fieldName => {
+            const field = document.getElementById(`id_${fieldName}`);
+            if (field) {
+                // Check if field has errors
+                const errorDiv = field.parentElement.querySelector('.text-danger');
+                if (errorDiv && errorDiv.textContent.trim()) {
+                    field.classList.add('is-invalid');
+                }
+            }
+        });
+
+        // Disable submit button if terms not checked
+        const termsCheck = document.getElementById('termsCheck');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = !termsCheck.checked;
+    });
+
     document.getElementById('signupForm').addEventListener('submit', function(event) {
-        //disable button
         this.querySelector('button[type="submit"]').disabled = true;
         var email = document.getElementById('{{ form.email.id_for_label }}').value;
         var confirmEmail = document.getElementById('{{ form.confirm_email.id_for_label }}').value;
@@ -194,33 +236,27 @@
         var password2 = document.getElementById('{{ form.password2.id_for_label }}').value;
         var termsChecked = document.getElementById('termsCheck').checked;
 
-        // Regex for password validation
         var passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d\W_]{8,}$/;
 
         if (email !== confirmEmail) {
-            // alert("Email addresses don't match");
             document.getElementById("signup-alert").innerHTML = '<div class="alert alert-danger" role="alert">Email addresses do not match.</div>';
             event.preventDefault();
             this.querySelector('button[type="submit"]').disabled = false;
         }
 
         if (password1 !== password2) {
-            // alert("Passwords don't match");
             document.getElementById("signup-alert").innerHTML = '<div class="alert alert-danger" role="alert">Passwords do not match.</div>';
             event.preventDefault();
             this.querySelector('button[type="submit"]').disabled = false;
         }
 
         if (!passwordRegex.test(password1)) {
-        
-            //alert("Password must be at least 8 characters long, contain at least one uppercase letter, and one number.");
             document.getElementById("signup-alert").innerHTML = '<div class="alert alert-danger" role="alert">Password must be at least 8 characters long, contain at least one uppercase letter, and one number!</div>';
             event.preventDefault();
             this.querySelector('button[type="submit"]').disabled = false;
         }
 
         if (!termsChecked) {
-            // alert("You must accept the terms and policies before signing up.");
             document.getElementById("signup-alert").innerHTML = '<div class="alert alert-danger" role="alert">You must accept the terms and policies before signing up.</div>';
             event.preventDefault();
             this.querySelector('button[type="submit"]').disabled = false;
@@ -229,14 +265,18 @@
 
     document.getElementById('{{ form.username.id_for_label }}').addEventListener('blur', function() {
         var username = this.value;
+        const field = this;
         if (username) {
             fetch(`{% url 'check_user' %}?username=${username}`)
                 .then(response => response.json())
                 .then(data => {
+                    const errorDiv = document.getElementById('username-error');
                     if (data.username_exists) {
-                        document.getElementById('username-error').innerText = 'Username already exists';
+                        errorDiv.innerText = 'Username already exists';
+                        field.classList.add('is-invalid');
                     } else {
-                        document.getElementById('username-error').innerText = '';
+                        errorDiv.innerText = '';
+                        field.classList.remove('is-invalid');
                     }
                 });
         }
@@ -244,14 +284,18 @@
 
     document.getElementById('{{ form.email.id_for_label }}').addEventListener('blur', function() {
         var email = this.value;
+        const field = this;
         if (email) {
             fetch(`{% url 'check_user' %}?email=${email}`)
                 .then(response => response.json())
                 .then(data => {
+                    const errorDiv = document.getElementById('email-error');
                     if (data.email_exists) {
-                        document.getElementById('email-error').innerText = 'Email already exists';
+                        errorDiv.innerText = 'Email already exists';
+                        field.classList.add('is-invalid');
                     } else {
-                        document.getElementById('email-error').innerText = '';
+                        errorDiv.innerText = '';
+                        field.classList.remove('is-invalid');
                     }
                 });
         }
@@ -259,11 +303,7 @@
 
     document.getElementById('termsCheck').addEventListener('change', function() {
         const signupButton = document.querySelector('button[type="submit"]');
-        if (this.checked) {
-            signupButton.disabled = false;
-        } else {
-            signupButton.disabled = true;
-        }
+        signupButton.disabled = !this.checked;
     });
 </script>
 {% endblock %}

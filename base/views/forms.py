@@ -255,6 +255,7 @@ class SignupForm(forms.ModelForm):
         confirm_email = cleaned_data.get('confirm_email')
         password1 = cleaned_data.get('password1')
         password2 = cleaned_data.get('password2')
+        username = cleaned_data.get('username')
 
         # Email confirmation check
         if email and confirm_email and email != confirm_email:
@@ -272,6 +273,14 @@ class SignupForm(forms.ModelForm):
                 self.add_error('password1', "Password must contain at least one uppercase letter")
             if not re.search(r'\d', password1):
                 self.add_error('password1', "Password must contain at least one number")
+
+        # Check for duplicate email
+        if email and User.objects.filter(email=email).exists():
+            self.add_error('email', "Email already registered")
+
+        # Check for duplicate username
+        if username and User.objects.filter(username=username).exists():
+            self.add_error('username', "Username already taken")
 
         return cleaned_data
 

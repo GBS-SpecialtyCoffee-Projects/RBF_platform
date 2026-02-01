@@ -96,3 +96,5 @@ base/migrations/0001_initial.py
 rbf_platform/settings.py
 media/farmer_photos/
 img/
+static/image/
+CLAUDE.md

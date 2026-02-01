@@ -11,14 +11,15 @@ from django.utils.encoding import force_bytes, force_str
 from django.core.mail import EmailMessage
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib import messages
-from django.contrib.auth import get_user_model
 from .tokens import account_activation_token
-from base.models import User,Farmer,Roaster,Language
+from base.models import User, Farmer, Roaster, Language
 from django.utils import translation
 from django.conf import settings
 from django.http import JsonResponse
 from django.urls import reverse
 from django.contrib.auth.tokens import default_token_generator
+from django.views.decorators.csrf import csrf_protect
+from django.db import IntegrityError
 import re
 
 
@@ -32,6 +33,7 @@ def language_select(request):
 User = get_user_model()
 
 
+@csrf_protect
 def check_user(request):
     username = request.GET.get('username', None)
     email = request.GET.get('email', None)
@@ -46,15 +48,17 @@ def signup_view(request):
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            request.session['username'] = user.username
-            request.session['group'] = user.group
-            if user.group == 'farmer':
-                return redirect('farmer_details')
-            elif user.group == 'roaster':
-                return redirect('roaster_details')
-  
+            try:
+                user = form.save()
+                login(request, user)
+                request.session['username'] = user.username
+                request.session['group'] = user.group
+                if user.group == 'farmer':
+                    return redirect('farmer_details')
+                elif user.group == 'roaster':
+                    return redirect('roaster_details')
+            except IntegrityError:
+                form.add_error(None, 'An account with this email or username already exists. Please try again.')
     else:
         form = SignupForm()
     return render(request, 'base/signup.html', {'form': form})
@@ -83,18 +87,20 @@ def farmer_details(request):
         story_form = StoryForm(story_data)
         if farmer_form.is_valid() and story_form.is_valid():
             farmer_form.save()
-            # farmer = farmer_form.save(commit=False)
             farmer.is_details_filled = True
             farmer.save()
             story = story_form.save(commit=False)
             story.farmer = farmer
             story.user = request.user
             story.save()
-            return redirect('farmer_dashboard')  # Redirect to signin after successful update
+            return redirect('farmer_dashboard')
         else:
-            # Print form errors for debugging
-            print(farmer_form.errors)
-            print(story_form.errors)
+            for field, errors in farmer_form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+            for field, errors in story_form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
         story_form = StoryForm()
         farmer_form = FarmerForm(instance=farmer)
@@ -114,8 +120,9 @@ def roaster_details(request):
             roaster.save()
             return redirect('roaster_dashboard')
         else:
-            print(form.errors)  # Print errors to the console
-
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
         form = RoasterForm(instance=roaster)
 
