@@ -10,7 +10,6 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import EmailMessage
 from django.contrib.sites.shortcuts import get_current_site
-from django.contrib import messages
 from .tokens import account_activation_token
 from base.models import User, Farmer, Roaster, Language
 from django.utils import translation
