@@ -392,6 +392,15 @@ class FarmerProfilePhotoForm(forms.ModelForm):
         }
 
 
+class FarmerHeaderImageForm(forms.ModelForm):
+    class Meta:
+        model = Farmer
+        fields = ['header_image']
+        widgets = {
+            'header_image': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+
 class RoasterInfoForm(forms.ModelForm):
     class Meta:
         model = Roaster

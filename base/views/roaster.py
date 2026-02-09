@@ -320,6 +320,7 @@ def farmer_view(request, user_id):
     farmer_processing_methods = ProcessingMethod.objects.filter(farmer=farmer_profile)
     farmer_cup_scores = CupScore.objects.filter(farmer=farmer_profile)
     variety = farmer_profile.cultivars.split(',')
+    is_own_profile = request.user == farmer_profile.user
 
     return render(request, 'base/farmer_view.html', {
         'farmer_profile': farmer_profile,
@@ -327,8 +328,9 @@ def farmer_view(request, user_id):
         'farmer_stories': farmer_stories,
         'harvest_seasons': farmer_harvest_seasons,
         'processing_methods': farmer_processing_methods,
-        'cup_scores': farmer_cup_scores, 
-        'variety': variety
+        'cup_scores': farmer_cup_scores,
+        'variety': variety,
+        'is_own_profile': is_own_profile
     })
 
 def switch_story(request,language_id,user_id):

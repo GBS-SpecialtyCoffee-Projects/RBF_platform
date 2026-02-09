@@ -146,6 +146,7 @@ class Farmer(models.Model):
     # profile_picture = models.ImageField(upload_to='farmer_profiles/', blank=True, null=True)
     profile_picture = models.ImageField(storage=get_profile_storage,blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
+    header_image = models.ImageField(storage=get_profile_storage, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     affiliation = models.CharField(max_length=255, blank=True, null=True)

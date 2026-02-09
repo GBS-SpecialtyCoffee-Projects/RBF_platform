@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck
+from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck, FarmerHeaderImageForm
 from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore
 from django.contrib import messages
 from django.http import JsonResponse
@@ -120,13 +120,23 @@ def update_profile(request):
         farmer_profile = Farmer.objects.filter(user=request.user).first()
         form = FarmerProfilePhotoForm(request.POST, request.FILES, instance=farmer_profile)
         if form.is_valid():
-            # print('in valid')
             form.save()
-            return redirect('farmer_dashboard')  # Redirect to a profile page or any other page
+            referer = request.META.get('HTTP_REFERER', '')
+            if 'farmer/' in referer:
+                return redirect('farmer_profile', user_id=request.user.id)
+            return redirect('farmer_dashboard')
     else:
-        return redirect('farmer_dashboard')  # If not a POST request, redirect to profile page
+        return redirect('farmer_dashboard')
 
-    # return render(request, 'base/farmer_dashboard.html.html', {'form': form})
+    return redirect('farmer_dashboard')
+
+def update_header_image(request):
+    if request.method == 'POST':
+        farmer_profile = Farmer.objects.filter(user=request.user).first()
+        form = FarmerHeaderImageForm(request.POST, request.FILES, instance=farmer_profile)
+        if form.is_valid():
+            form.save()
+            return redirect('farmer_profile', user_id=request.user.id)
     return redirect('farmer_dashboard')
 
 def delete_farmer_photo(request, photo_id):
