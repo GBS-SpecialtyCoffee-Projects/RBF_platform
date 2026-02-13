@@ -136,7 +136,10 @@ def update_header_image(request):
         form = FarmerHeaderImageForm(request.POST, request.FILES, instance=farmer_profile)
         if form.is_valid():
             form.save()
-            return redirect('farmer_profile', user_id=request.user.id)
+            referer = request.META.get('HTTP_REFERER', '')
+            if 'farmer/' in referer:
+                return redirect('farmer_profile', user_id=request.user.id)
+            return redirect('farmer_dashboard')
     return redirect('farmer_dashboard')
 
 def delete_farmer_photo(request, photo_id):

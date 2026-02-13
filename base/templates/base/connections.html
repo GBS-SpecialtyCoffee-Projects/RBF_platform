@@ -107,7 +107,7 @@
                                 </div>
                                 <div class="col">
                                     <h4 class="mb-0"> {{ farmer.farmer.firstname }} {{ farmer.farmer.lastname }} </h4>
-                                    <p class="mb-2">{{ farmer.farmer.main_role }} of {{ farmer.farmer.farm_name }} located in {{ farmer.farmer.city }}, {{ farmer.farmer.country }}</p>
+                                    <p class="mb-2">{% for role in farmer.farmer.main_roles.all %}{{ role.name }}{% if not forloop.last %}, {% endif %}{% endfor %} of {{ farmer.farmer.farm_name }} located in {{ farmer.farmer.city }}, {{ farmer.farmer.country }}</p>
                                     <p class="mb-0">
                                         {{farmer.story_text|truncatewords:50}}
                                         <!-- {{ farmer.bio|truncatewords:50 }} -->

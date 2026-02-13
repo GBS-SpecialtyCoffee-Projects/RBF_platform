@@ -200,37 +200,101 @@
                                 {{ farmer_form.farm_size_unit }}
                                 <label for="{{ farmer_form.farm_size_unit.id_for_label }}">{{ farmer_form.farm_size_unit.label }}</label>
                             </div> -->
+                            <small class="form-text text-muted d-block mb-1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-info-circle me-1" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/></svg>Please enter the total coffee area. Use a period (.) for decimals (e.g 2.5).</small>
                             <div class="form-floating form-group">
                                 {{ farmer_form.farm_size }}
-                                <small class="form-text mt-0 text-muted">use a period(.) to separate decimals.</small>
                                 <label class="mb-0" for="{{ farmer_form.farm_size.id_for_label }}">{{ farmer_form.farm_size.label }}</label>
-                                
                             </div>
                             <!-- <div class="form-floating form-group">
                                 {{ farmer_form.annual_production_unit }}
                                 <label for="{{ farmer_form.annual_production_unit.id_for_label }}">{{ farmer_form.annual_production_unit.label }}</label>
                             </div> -->
+                            <small class="form-text text-muted d-block mb-1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-info-circle me-1" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/></svg>Total kg produced last year. Numbers only (e.g., 1200).</small>
                             <div class="form-floating form-group">
                                 {{ farmer_form.annual_production }}
                                 <label class="mb-0" for="{{ farmer_form.annual_production.id_for_label }}">{{ farmer_form.annual_production.label }}</label>
-                                <small class="form-text mt-0 text-muted">number only annual production value in kilograms.</small>
                             </div>
-                        
+
+                            <div class="accordion mb-3" id="conversionAccordion">
+                                <div class="accordion-item border-0">
+                                    <h2 class="accordion-header" id="conversionHeading">
+                                        <button class="accordion-button collapsed py-2 px-3 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#conversionTable" aria-expanded="false" aria-controls="conversionTable" style="font-size: 0.875rem; background-color: #2b6b2b;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-calculator me-2" viewBox="0 0 16 16"><path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/><path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/></svg>
+                                            Unit Conversion Reference
+                                        </button>
+                                    </h2>
+                                    <div id="conversionTable" class="accordion-collapse collapse" aria-labelledby="conversionHeading" data-bs-parent="#conversionAccordion">
+                                        <div class="accordion-body py-3 px-3" style="background-color: #f8f9fa;">
+                                            <p class="fw-bold mb-2" style="font-size: 0.85rem;">Farm Size</p>
+                                            <table class="table table-sm table-bordered mb-1" style="font-size: 0.8rem;">
+                                                <tbody>
+                                                    <tr><td>1 hectare/hectár</td><td>0.33</td><td>cuerda</td></tr>
+                                                    <tr><td>1 hectare/hectár</td><td>0.64</td><td>cuadra</td></tr>
+                                                    <tr><td>1 hectare/hectár</td><td>0.64</td><td>fanegada</td></tr>
+                                                    <tr><td>1 hectare/hectár</td><td>1.56</td><td>fanega</td></tr>
+                                                    <tr><td>1 hectare/hectár</td><td>1.4</td><td>manzana</td></tr>
+                                                    <tr><td>1 hectare/hectár</td><td>0.4</td><td>acre</td></tr>
+                                                </tbody>
+                                            </table>
+                                            <small class="text-muted d-block mb-3" style="font-size: 0.75rem;">Example: 10 manzanas, divided by 1.4 (manzanas per hectare) is 7.14 hectares</small>
+
+                                            <p class="fw-bold mb-2" style="font-size: 0.85rem;">Coffee Purchased</p>
+                                            <table class="table table-sm table-bordered mb-1" style="font-size: 0.8rem;">
+                                                <tbody>
+                                                    <tr><td>1 kg</td><td>2.20462</td><td>lb</td></tr>
+                                                    <tr><td>1 container</td><td>19250</td><td>kg</td></tr>
+                                                    <tr><td>1 container</td><td>275-320</td><td>bags</td></tr>
+                                                    <tr><td>1 bag</td><td>60-70</td><td>kg</td></tr>
+                                                </tbody>
+                                            </table>
+                                            <small class="text-muted d-block mb-3" style="font-size: 0.75rem;">Example: 10,000 pounds, divided by 2.20462 (pounds per kilogram) is 4,536 kg</small>
+
+                                            <p class="fw-bold mb-2" style="font-size: 0.85rem;">Coffee Production — Weight Conversion</p>
+                                            <table class="table table-sm table-bordered mb-1" style="font-size: 0.8rem;">
+                                                <tbody>
+                                                    <tr><td>1 kg</td><td>2.20462</td><td>lb</td></tr>
+                                                    <tr><td>1 arroba</td><td>12.5</td><td>kg</td></tr>
+                                                    <tr><td>1 carga</td><td>125</td><td>kg</td></tr>
+                                                    <tr><td>1 cajuela</td><td>12.9</td><td>kg</td></tr>
+                                                    <tr><td>1 quintal</td><td>46</td><td>kg</td></tr>
+                                                </tbody>
+                                            </table>
+                                            <small class="text-muted d-block mb-3" style="font-size: 0.75rem;">Example: 200 arrobas, times 12.5 (kilos per arroba) is 2,500 kg</small>
+
+                                            <p class="fw-bold mb-2" style="font-size: 0.85rem;">Form Conversion</p>
+                                            <table class="table table-sm table-bordered mb-1" style="font-size: 0.8rem;">
+                                                <tbody>
+                                                    <tr><td>1 green</td><td>1.3</td><td>dry parchment</td></tr>
+                                                    <tr><td>1 green</td><td>2.5</td><td>wet parchment</td></tr>
+                                                    <tr><td>1 green</td><td>2.6</td><td>dry cherry (natural process)</td></tr>
+                                                    <tr><td>1 green</td><td>6.6</td><td>fresh cherry</td></tr>
+                                                </tbody>
+                                            </table>
+                                            <small class="text-muted d-block mb-0" style="font-size: 0.75rem;">Example: 2,500 kg dry parchment, divided by 1.3 (dry parchment to green ratio) is 1,923 kg</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div ><p style="font-weight: bold;">{{ farmer_form.harvest_season.label }}</p></div>
+                            <div>
                             {% for checkbox in farmer_form.harvest_season %}
                             <div class="form-check form-check-inline">
                                 {{checkbox}}
                             </div>
                             {% endfor %}
+                            </div>
                             
                             <!-- <div class="form-group">
                                 <label for="{{ farmer_form.harvest_season.id_for_label }}">{{ farmer_form.harvest_season.label }}</label>
                                 {{ farmer_form.harvest_season }}
                             </div> -->
+                            <small class="form-text mt-0 text-muted"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-info-circle me-1" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/></svg>
+                                    provide 3 most represented cultivars, separate with comma</small>
                             <div class="form-floating form-group">
                                 {{ farmer_form.cultivars }}
                                 <label for="{{ farmer_form.cultivars.id_for_label }}">{{ farmer_form.cultivars.label }}</label>
-                                <small class="form-text mt-0 text-muted">provide 3 most represented cultivars, separate with comma</small>
+                                
                             </div>
                             <!-- <div class="form-floating form-group">
                                 {{ farmer_form.cup_scores_received }}
@@ -259,6 +323,7 @@
                                 </div>
                                 {% endfor %}
                             </fieldset>
+                            <small class="form-text text-muted d-block mb-1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-info-circle me-1" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/></svg>Please describe your fermentation, washing, or drying techniques, according to your selections in the previous question (e.g., 24-hour dry fermentation).</small>
                             <div class="form-floating form-group">
                                 {{ farmer_form.processing_description }}
                                 <label for="{{ farmer_form.processing_description.id_for_label }}">{{ farmer_form.processing_description.label }}</label>
@@ -268,14 +333,18 @@
                                 <label for="{{ farmer_form.processing_description.id_for_label }}">{{ farmer_form.processing_description.label }}</label>
                             </div> -->
                         <!-- <p>Preferred Communication Method</p> -->
+                            <small class="form-text text-muted d-block mb-1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-info-circle me-1" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/></svg>Select the best way for a buyer to reach you.</small>
                             <div class="form-floating form-group">
                                 {{ farmer_form.preferred_communication_method }}
                                 <label for="{{ farmer_form.preferred_communication_method.id_for_label }}">{{ farmer_form.preferred_communication_method.label }}</label>
                             </div>
-                        <!-- <p>Main Role</p> -->
-                            <div class="form-floating form-group">
-                                {{ farmer_form.main_role }}
-                                <label for="{{ farmer_form.main_role.id_for_label }}">{{ farmer_form.main_role.label }}</label>
+                            <div><p style="font-weight: bold;">{{ farmer_form.main_roles.label }}</p></div>
+                            <div>
+                            {% for checkbox in farmer_form.main_roles %}
+                            <div class="form-check form-check-inline">
+                                {{ checkbox }}
+                            </div>
+                            {% endfor %}
                             </div>
                             <div>
                                 <label for="{{ farmer_form.is_member_organization.id_for_label }}">{{ farmer_form.is_member_organization.label }}</label>

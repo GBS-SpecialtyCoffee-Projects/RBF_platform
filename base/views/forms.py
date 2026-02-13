@@ -58,7 +58,7 @@ class FarmerForm(forms.ModelForm):
             'farm_size' , 'annual_production', 'cultivars',
             'cup_scores_received', 'source_of_cup_scores', 'quality_report_link',
             'processing_method', 'processing_description', 'profile_picture',
-            'preferred_communication_method', 'main_role','annual_production_unit','harvest_season','is_member_organization','member_organization_name'
+            'preferred_communication_method', 'main_roles','annual_production_unit','harvest_season','is_member_organization','member_organization_name'
         ]
         
         labels = {
@@ -83,6 +83,7 @@ class FarmerForm(forms.ModelForm):
             'processing_description': 'Processing Description',
             'profile_picture': 'Profile Picture',
             'preferred_communication_method': 'Preferred Communication Method',
+            'main_roles': 'Main Role',
             "farm_size_unit": "Farm Size Unit",
             "annual_production_unit": "Annual Production Unit",
             'is_member_organization': 'Are you a member of an organization that represents you commercially? (in which you have a voice and/or vote, not just a buyer, for example cooperatives, collectives, or associations)',
@@ -111,7 +112,7 @@ class FarmerForm(forms.ModelForm):
             'processing_description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Processing Description','autocomplete':'off'}),
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
             'preferred_communication_method': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Preferred Communication Method'}),
-            'main_role': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Main Role'}),
+            'main_roles': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline'}),
             # 'farm_size_unit': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Farm Size Unit'}),
             'annual_production_unit': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Annual Production Unit'}),
             'is_member_organization': forms.RadioSelect(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Is Member Organization'}),

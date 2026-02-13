@@ -81,6 +81,15 @@ class CupScore(models.Model):
     def __str__(self):
         return self.name
     
+class Role(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
 class BuyerFunctions(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
@@ -151,7 +160,8 @@ class Farmer(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     affiliation = models.CharField(max_length=255, blank=True, null=True)
     preferred_communication_method = models.CharField(max_length=50, choices=[('whatsapp', 'WhatsApp'), ('email', 'Email')], blank=True, null=True)
-    main_role = models.CharField(max_length=50, choices=[('owner', 'Owner'), ('manager', 'Manager'), ('worker', 'Worker')], blank=True, null=True)
+    main_role = models.CharField(max_length=50, choices=[('owner', 'Owner'), ('manager', 'Manager'), ('worker', 'Worker')], blank=True, null=True)  # deprecated — will be removed after data migration
+    main_roles = models.ManyToManyField(Role, blank=True)
 
     profile_completed = models.BooleanField(
         default=False)  # this + all bools below are used to indicate required orientation task completion
