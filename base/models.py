@@ -12,7 +12,7 @@ COUNTRY_CHOICES = [ (country.name, country.name) for country in countries ]
 
 # For admin purpose
 class UserManager(BaseUserManager):
-    def create_user(self, username, email, password=None, **extra_fields):
+    def create_user(self, email, password=None, username=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
@@ -21,11 +21,11 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, email, password=None, **extra_fields):
+    def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
-        return self.create_user(username, email, password, **extra_fields)
+        return self.create_user(email, password, **extra_fields)
 
 # first table: User
 class User(AbstractBaseUser, PermissionsMixin):
@@ -35,7 +35,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     ]
 
     id = models.AutoField(primary_key=True)
-    username = models.CharField(max_length=30, unique=True)
+    username = models.CharField(max_length=30, unique=True, blank=True, null=True)
     email = models.EmailField(unique=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
@@ -50,7 +50,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     def __str__(self):
-        return self.username
+        return self.email
 
 # second table: Farmer is related with User by userid, one userid can only match one farmer profile
 
