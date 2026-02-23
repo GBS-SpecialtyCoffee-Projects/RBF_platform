@@ -34,23 +34,24 @@ User = get_user_model()
 
 @csrf_protect
 def check_user(request):
-    username = request.GET.get('username', None)
     email = request.GET.get('email', None)
     data = {
-        'username_exists': User.objects.filter(username=username).exists() if username else False,
         'email_exists': User.objects.filter(email=email).exists() if email else False
     }
     return JsonResponse(data)
 
 
 def signup_view(request):
+    if request.user.is_authenticated:
+        if request.user.group == 'farmer':
+            return redirect('farmer_dashboard')
+        return redirect('roaster_dashboard')
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
             try:
                 user = form.save()
                 login(request, user)
-                request.session['username'] = user.username
                 request.session['group'] = user.group
                 if user.group == 'farmer':
                     return redirect('farmer_details')
@@ -129,24 +130,24 @@ def roaster_details(request):
 
 
 def signin_view(request):
+    if request.user.is_authenticated:
+        if request.user.group == 'farmer':
+            return redirect('farmer_dashboard')
+        return redirect('roaster_dashboard')
     if request.method == 'POST':
         form = SigninForm(request.POST)
         if form.is_valid():
-            user = form.authenticate_user()
-            if user:
-                login(request, user)
-                request.session['username'] = user.username
-                if user.group == 'farmer':
-                    redirect_url = reverse('farmer_dashboard')
-                else:
-                    redirect_url = reverse('roaster_dashboard')
-
-                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                    return JsonResponse({'success': True, 'redirect_url': redirect_url})
-                else:
-                    return redirect(redirect_url)
+            user = form.get_user()
+            login(request, user)
+            if user.group == 'farmer':
+                redirect_url = reverse('farmer_dashboard')
             else:
-                message = 'Invalid email or password.'
+                redirect_url = reverse('roaster_dashboard')
+
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'redirect_url': redirect_url})
+            else:
+                return redirect(redirect_url)
         else:
             message = 'Invalid email or password.'
 
@@ -221,28 +222,6 @@ def verify_email(request):
     return redirect('email_verify')
 
 
-# def verify_email(request):
-#     try:
-#         # get the user
-#         user = User.objects.get(email='israelwhiz@gmail.com')
-#     except User.DoesNotExist:
-#         messages.error(request, 'User does not exist')
-#     mail_subject = 'Verify your email'
-#     message = render_to_string('base/template_verify_email.html', {
-#         'user': user.username,
-#         'domain': get_current_site(request).domain,
-#         'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-#         'token': account_activation_token.make_token(user),
-#         'protocol': 'https' if request.is_secure() else 'http'
-#     })
-#     email = EmailMessage(
-#         mail_subject, message, to=[user.email]
-#     )
-#     if email.send():
-#        messages.success(request, f'Dear {user.username}, please check your email to confirm your registration.')
-#     else:
-#        messages.error(request, 'Something went wrong. Please try again.')
-#     return render(request, 'base/email_verify.html')
 
 
 def activate(request, uidb64, token):
@@ -286,7 +265,7 @@ def activate_email(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
-    except:
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
 
     if user is not None and account_activation_token.check_token(user, token):
