@@ -52,3 +52,16 @@ class AuthMiddleware(MiddlewareMixin):
         if not request.user.is_authenticated:
             return redirect('signin')
 
+        # Enforce profile completion — allow profile detail pages themselves
+        profile_detail_urls = ['farmer_details', 'roaster_details']
+        if resolved_url.url_name in profile_detail_urls:
+            return
+
+        user = request.user
+        if user.group == 'farmer':
+            if hasattr(user, 'farmer_profile') and not user.farmer_profile.is_details_filled:
+                return redirect('farmer_details')
+        elif user.group == 'roaster':
+            if hasattr(user, 'roaster_profile') and not user.roaster_profile.is_details_filled:
+                return redirect('roaster_details')
+
