@@ -209,11 +209,9 @@ def delete_roaster_photo(request, photo_id):
         return redirect('roaster_dashboard')
 
 def connections(request):
-    # farmers = Farmer.objects.all()
-    farmers = Story.objects.select_related('farmer').prefetch_related('farmer__cup_scores_received', 'farmer__processing_method').filter(farmer__isnull=False)
-    for farmer in farmers:
-        farmer.cup_scores_received = farmer.farmer.cup_scores_received.all()
-        farmer.processing_method = farmer.farmer.processing_method.all()
+    farmers = Farmer.objects.prefetch_related(
+        'cup_scores_received', 'processing_method', 'farmer_stories'
+    ).filter(farmer_stories__isnull=False).distinct()
     form = MeetingRequestForm()
     show_modal = False  # Initially, the modal should not be shown
 
@@ -223,26 +221,26 @@ def connections(request):
 
     # Filter the farmers queryset accordingly
     if annual_production:
-        farmers = farmers.filter(farmer__annual_production__isnull=False)
+        farmers = farmers.filter(annual_production__isnull=False)
         if annual_production == '0.1-5':
-            farmers = farmers.filter(farmer__annual_production__gte=0.1, farmer__annual_production__lte=5)
+            farmers = farmers.filter(annual_production__gte=0.1, annual_production__lte=5)
         elif annual_production == '5-20':
-            farmers = farmers.filter(farmer__annual_production__gte=5, farmer__annual_production__lte=20)
+            farmers = farmers.filter(annual_production__gte=5, annual_production__lte=20)
         elif annual_production == '20-50':
-            farmers = farmers.filter(famrer__annual_production__gte=20, farmer__annual_production__lte=50)
+            farmers = farmers.filter(annual_production__gte=20, annual_production__lte=50)
         elif annual_production == '50+':
-            farmers = farmers.filter(farmer__annual_production__gte=50)
+            farmers = farmers.filter(annual_production__gte=50)
 
     if farm_size:
-        farmers = farmers.filter(farmer__farm_size__isnull=False)
+        farmers = farmers.filter(farm_size__isnull=False)
         if farm_size == '0.1-2':
-            farmers = farmers.filter(farmer__farm_size__gte=0.1, farmer__farm_size__lte=2)
+            farmers = farmers.filter(farm_size__gte=0.1, farm_size__lte=2)
         elif farm_size == '2-10':
-            farmers = farmers.filter(farmer__farm_size__gte=2, farmer__farm_size__lte=10)
+            farmers = farmers.filter(farm_size__gte=2, farm_size__lte=10)
         elif farm_size == '10-50':
-            farmers = farmers.filter(farmer__farm_size__gte=10, farmer__farm_size__lte=50)
+            farmers = farmers.filter(farm_size__gte=10, farm_size__lte=50)
         elif farm_size == '50+':
-            farmers = farmers.filter(farmer__farm_size__gte=50)
+            farmers = farmers.filter(farm_size__gte=50)
 
     if request.method == 'POST':
         # Handle retrieval or deletion of meeting requests

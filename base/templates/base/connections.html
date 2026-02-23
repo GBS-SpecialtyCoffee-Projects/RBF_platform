@@ -99,18 +99,17 @@
                             <div class="row">
                                 <div class="col-auto">
                                     <img class="rounded-circle"
-                                        src="{% if farmer.farmer.profile_picture %}{{ farmer.farmer.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}"
+                                        src="{% if farmer.profile_picture %}{{ farmer.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}"
                                         alt=""
                                         width="100"
                                         height="100"
                                         style="object-fit: cover;">
                                 </div>
                                 <div class="col">
-                                    <h4 class="mb-0"> {{ farmer.farmer.firstname }} {{ farmer.farmer.lastname }} </h4>
-                                    <p class="mb-2">{% for role in farmer.farmer.main_roles.all %}{{ role.name }}{% if not forloop.last %}, {% endif %}{% endfor %} of {{ farmer.farmer.farm_name }} located in {{ farmer.farmer.city }}, {{ farmer.farmer.country }}</p>
+                                    <h4 class="mb-0"> {{ farmer.firstname }} {{ farmer.lastname }} </h4>
+                                    <p class="mb-2">{% for role in farmer.main_roles.all %}{{ role.name }}{% if not forloop.last %}, {% endif %}{% endfor %} of {{ farmer.farm_name }} located in {{ farmer.city }}, {{ farmer.country }}</p>
                                     <p class="mb-0">
-                                        {{farmer.story_text|truncatewords:50}}
-                                        <!-- {{ farmer.bio|truncatewords:50 }} -->
+                                        {{farmer.farmer_stories.first.story_text|truncatewords:50}}
                                     </p>
                                 </div>
                             </div>
@@ -119,21 +118,21 @@
                             <div class="row">
                                 <div class="col-6 col-sm-3">
                                     <p class="mb-1 fw-semibold">Farm Size:</p>
-                                    <p class="mb-1"> {{ farmer.farmer.farm_size }} hectares</p>
+                                    <p class="mb-1"> {{ farmer.farm_size }} hectares</p>
                                 </div>
                                 <div class="col-6 col-sm-3">
                                     <p class="mb-1 fw-semibold">Annual Yield:</p>
-                                    <p class="mb-1"> {{ farmer.farmer.annual_production }} kilograms </p>
+                                    <p class="mb-1"> {{ farmer.annual_production }} kilograms </p>
                                 </div>
                                 <div class="col-6 col-sm-3">
                                     <p class="mb-1 fw-semibold">Cup Scores:</p>
-                                    {% for cupscore in farmer.cup_scores_received %}
+                                    {% for cupscore in farmer.cup_scores_received.all %}
                                     <span class="mb-2 px-2 py-1 rounded me-1" style="background-color:rgb(180, 203, 207) ; color: black; "> {{ cupscore}}</span>
                                     {% endfor %}
                                 </div>
                                 <div class="col-6 col-sm-3">
                                     <p class="mb-1 fw-semibold">Processing:</p>
-                                    {% for method in farmer.processing_method %}
+                                    {% for method in farmer.processing_method.all %}
                                     <span class="mb-2 px-2 py-1 rounded me-1" style="background-color:rgb(180, 203, 207) ; color: black; "> {{ method}} </span>
                                     {% endfor %}
                                 </div>
