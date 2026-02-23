@@ -4,7 +4,10 @@ from base.models import Farmer, Language, MeetingRequest, RoasterPhoto,Roaster, 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib import messages
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 from django.urls import reverse
 from django.http import HttpResponseRedirect, JsonResponse
 from django.db.models import Prefetch
@@ -310,17 +313,20 @@ def connections(request):
     })
 
 def farmer_view(request, user_id):
-    # Fetch the farmer profile based on the user ID
     farmer_profile = get_object_or_404(Farmer, user__id=user_id)
-    # Fetch related photos of the farmer using 'user' instead of 'farmer'
-    farmer_photos = FarmerPhoto.objects.filter(user=farmer_profile.user)
-    #get farmer stories
-    farmer_stories = Story.objects.filter(user=farmer_profile.user)
-    farmer_harvest_seasons = Season.objects.filter(farmer=farmer_profile)
-    farmer_processing_methods = ProcessingMethod.objects.filter(farmer=farmer_profile)
-    farmer_cup_scores = CupScore.objects.filter(farmer=farmer_profile)
-    variety = farmer_profile.cultivars.split(',')
-    is_own_profile = request.user == farmer_profile.user
+
+    try:
+        farmer_photos = FarmerPhoto.objects.filter(user=farmer_profile.user)
+        farmer_stories = Story.objects.filter(user=farmer_profile.user)
+        farmer_harvest_seasons = Season.objects.filter(farmer=farmer_profile)
+        farmer_processing_methods = ProcessingMethod.objects.filter(farmer=farmer_profile)
+        farmer_cup_scores = CupScore.objects.filter(farmer=farmer_profile)
+        variety = farmer_profile.cultivars.split(',') if farmer_profile.cultivars else []
+        is_own_profile = request.user == farmer_profile.user
+    except Exception:
+        logger.exception("Error loading farmer profile data for user_id=%s", user_id)
+        messages.error(request, "Something went wrong loading this profile. Please try again later.")
+        return redirect('connections')
 
     return render(request, 'base/farmer_view.html', {
         'farmer_profile': farmer_profile,
@@ -330,7 +336,7 @@ def farmer_view(request, user_id):
         'processing_methods': farmer_processing_methods,
         'cup_scores': farmer_cup_scores,
         'variety': variety,
-        'is_own_profile': is_own_profile
+        'is_own_profile': is_own_profile,
     })
 
 def switch_story(request,language_id,user_id):
