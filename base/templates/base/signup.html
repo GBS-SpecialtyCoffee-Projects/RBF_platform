@@ -46,12 +46,6 @@
                     {{ form.non_field_errors }}
                     <div id="signup-alert"></div>
                     <div class="mb-0">
-                        <label class="form-label">Username</label>
-                        {{ form.username }}
-                        <div id="username-error" class="text-danger small"></div>
-                        {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors.0 }}</div>{% endif %}
-                    </div>
-                    <div class="mb-0">
                         <label class="form-label">Email address</label>
                         {{ form.email }}
                         <div id="email-error" class="text-danger small"></div>
@@ -209,7 +203,7 @@
     // Add is-invalid class to fields with errors on page load
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('signupForm');
-        const fields = ['username', 'email', 'confirm_email', 'group', 'password1', 'password2'];
+        const fields = ['email', 'confirm_email', 'group', 'password1', 'password2'];
 
         fields.forEach(fieldName => {
             const field = document.getElementById(`id_${fieldName}`);
@@ -237,48 +231,27 @@
         var termsChecked = document.getElementById('termsCheck').checked;
 
         var passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d\W_]{8,}$/;
+        var errors = [];
 
         if (email !== confirmEmail) {
-            document.getElementById("signup-alert").innerHTML = '<div class="alert alert-danger" role="alert">Email addresses do not match.</div>';
-            event.preventDefault();
-            this.querySelector('button[type="submit"]').disabled = false;
+            errors.push('Email addresses do not match.');
         }
-
         if (password1 !== password2) {
-            document.getElementById("signup-alert").innerHTML = '<div class="alert alert-danger" role="alert">Passwords do not match.</div>';
-            event.preventDefault();
-            this.querySelector('button[type="submit"]').disabled = false;
+            errors.push('Passwords do not match.');
         }
-
         if (!passwordRegex.test(password1)) {
-            document.getElementById("signup-alert").innerHTML = '<div class="alert alert-danger" role="alert">Password must be at least 8 characters long, contain at least one uppercase letter, and one number!</div>';
-            event.preventDefault();
-            this.querySelector('button[type="submit"]').disabled = false;
+            errors.push('Password must be at least 8 characters long, contain at least one uppercase letter, and one number.');
         }
-
         if (!termsChecked) {
-            document.getElementById("signup-alert").innerHTML = '<div class="alert alert-danger" role="alert">You must accept the terms and policies before signing up.</div>';
+            errors.push('You must accept the terms and policies before signing up.');
+        }
+
+        if (errors.length > 0) {
+            var listItems = errors.map(function(err) { return '<li>' + err + '</li>'; }).join('');
+            var alertHtml = '<div class="alert alert-danger" role="alert"><ul class="mb-0">' + listItems + '</ul></div>';
+            document.getElementById("signup-alert").innerHTML = alertHtml;
             event.preventDefault();
             this.querySelector('button[type="submit"]').disabled = false;
-        }
-    });
-
-    document.getElementById('{{ form.username.id_for_label }}').addEventListener('blur', function() {
-        var username = this.value;
-        const field = this;
-        if (username) {
-            fetch(`{% url 'check_user' %}?username=${username}`)
-                .then(response => response.json())
-                .then(data => {
-                    const errorDiv = document.getElementById('username-error');
-                    if (data.username_exists) {
-                        errorDiv.innerText = 'Username already exists';
-                        field.classList.add('is-invalid');
-                    } else {
-                        errorDiv.innerText = '';
-                        field.classList.remove('is-invalid');
-                    }
-                });
         }
     });
 

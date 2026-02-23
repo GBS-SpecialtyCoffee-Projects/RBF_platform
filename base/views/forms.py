@@ -228,6 +228,17 @@ class RoasterPhotoForm(forms.ModelForm):
 User = get_user_model()
 
 
+def validate_password_complexity(password):
+    """Shared password complexity validation."""
+    errors = []
+    if len(password) < 8:
+        errors.append("Password must be at least 8 characters long")
+    if not re.search(r'[A-Z]', password):
+        errors.append("Password must contain at least one uppercase letter")
+    if not re.search(r'\d', password):
+        errors.append("Password must contain at least one number")
+    return errors
+
 
 class SignupForm(forms.ModelForm):
     confirm_email = forms.EmailField(label="Confirm email address", widget=forms.EmailInput(attrs={'class': 'form-control'}))
@@ -236,16 +247,14 @@ class SignupForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'group', 'password1', 'password2']
+        fields = ['email', 'group', 'password1', 'password2']
         labels = {
-            'username': 'Username',
             'email': 'Email',
             'group': 'Select Group',
             'password1': 'Password',
             'password2': 'Confirm Password',
         }
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'group': forms.Select(attrs={'class': 'form-control'}),
         }
@@ -256,7 +265,6 @@ class SignupForm(forms.ModelForm):
         confirm_email = cleaned_data.get('confirm_email')
         password1 = cleaned_data.get('password1')
         password2 = cleaned_data.get('password2')
-        username = cleaned_data.get('username')
 
         # Email confirmation check
         if email and confirm_email and email != confirm_email:
@@ -268,20 +276,12 @@ class SignupForm(forms.ModelForm):
 
         # Password complexity check
         if password1:
-            if len(password1) < 8:
-                self.add_error('password1', "Password must be at least 8 characters long")
-            if not re.search(r'[A-Z]', password1):
-                self.add_error('password1', "Password must contain at least one uppercase letter")
-            if not re.search(r'\d', password1):
-                self.add_error('password1', "Password must contain at least one number")
+            for error in validate_password_complexity(password1):
+                self.add_error('password1', error)
 
         # Check for duplicate email
         if email and User.objects.filter(email=email).exists():
             self.add_error('email', "Email already registered")
-
-        # Check for duplicate username
-        if username and User.objects.filter(username=username).exists():
-            self.add_error('username', "Username already taken")
 
         return cleaned_data
 
@@ -311,22 +311,15 @@ class SigninForm(forms.Form):
         if email and password:
             try:
                 user = User.objects.get(email=email)
-                if not user.check_password(password):
-                    raise ValidationError('Invalid email or password.')
+                self._user = authenticate(username=user.username, password=password)
             except User.DoesNotExist:
+                self._user = None
+            if self._user is None:
                 raise ValidationError('Invalid email or password.')
         return self.cleaned_data
 
-
-    def authenticate_user(self):
-        email = self.cleaned_data.get('email')
-        password = self.cleaned_data.get('password')
-        try:
-            user = User.objects.get(email=email)
-            if user.check_password(password):
-                return user
-        except User.DoesNotExist:
-            return None
+    def get_user(self):
+        return getattr(self, '_user', None)
 
 class PasswordResetForm(forms.Form):
     password = forms.CharField(label='New Password', widget=forms.PasswordInput(attrs={'class': 'form-control'}), required=True)
@@ -341,14 +334,10 @@ class PasswordResetForm(forms.Form):
         if password != confirm_password:
             self.add_error('confirm_password', "Passwords do not match")
 
-        # Password complexity check (same as in SignupForm)
+        # Password complexity check
         if password:
-            if len(password) < 8:
-                self.add_error('password', "Password must be at least 8 characters long")
-            if not re.search(r'[A-Z]', password):
-                self.add_error('password', "Password must contain at least one uppercase letter")
-            if not re.search(r'\d', password):
-                self.add_error('password', "Password must contain at least one number")
+            for error in validate_password_complexity(password):
+                self.add_error('password', error)
 
         return cleaned_data
 
