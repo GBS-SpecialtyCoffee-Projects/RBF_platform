@@ -93,6 +93,16 @@
         <a href="{% url 'admin_roasters' %}" class="nav-link {% block nav_roasters %}{% endblock %}">
             <i class="fa-solid fa-fire-burner"></i> Roasters
         </a>
+        {% if request.user.is_superuser %}
+        <a href="{% url 'admin_users' %}" class="nav-link {% block nav_admins %}{% endblock %}">
+            <i class="fa-solid fa-user-shield"></i> Admins
+        </a>
+        {% endif %}
+        {% if request.user.is_superuser %}
+        <a href="{% url 'admin_audit_log' %}" class="nav-link {% block nav_audit %}{% endblock %}">
+            <i class="fa-solid fa-clock-rotate-left"></i> Audit Log
+        </a>
+        {% endif %}
     </nav>
     <div class="sidebar-footer">
         <small>{{ request.user.email }}</small>

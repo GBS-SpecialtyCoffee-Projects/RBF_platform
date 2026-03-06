@@ -10,9 +10,9 @@ from django.db.models.functions import Concat
 
 from base.models import (
     User, Farmer, Roaster, MeetingRequest, FarmerPhoto, RoasterPhoto,
-    Language, Story,
+    Language, Story, AuditLog, AuditAction,
 )
-from .forms import FarmerForm, RoasterForm, SigninForm
+from .forms import FarmerForm, RoasterForm, SigninForm, AdminCreateForm
 
 
 def admin_required(view_func):
@@ -20,6 +20,15 @@ def admin_required(view_func):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated or not request.user.is_staff:
             return redirect('admin_login')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def superadmin_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated or not request.user.is_superuser:
+            return redirect('admin_dashboard')
         return view_func(request, *args, **kwargs)
     return wrapper
 
@@ -173,4 +182,59 @@ def admin_roaster_detail(request, user_id):
         'roaster': roaster,
         'form': form,
         'photos': photos,
+    })
+
+
+@superadmin_required
+def admin_users(request):
+    admins = User.objects.filter(is_staff=True).order_by('-date_joined')
+    return render(request, 'base/platform_admin/admins.html', {'admins': admins})
+
+
+@superadmin_required
+def admin_create(request):
+    if request.method == 'POST':
+        form = AdminCreateForm(request.POST)
+        if form.is_valid():
+            user = User.objects.create_user(
+                email=form.cleaned_data['email'],
+                password=form.cleaned_data['password'],
+            )
+            user.is_staff = True
+            user.save(update_fields=['is_staff'])
+            messages.success(request, f'Admin account created for {user.email}.')
+            return redirect('admin_users')
+    else:
+        form = AdminCreateForm()
+    return render(request, 'base/platform_admin/admin_create.html', {'form': form})
+
+
+@superadmin_required
+def admin_toggle(request, user_id):
+    if request.method == 'POST':
+        user = get_object_or_404(User, id=user_id)
+        if user == request.user:
+            messages.error(request, 'You cannot change your own admin status.')
+        elif user.is_superuser:
+            messages.error(request, 'Cannot modify a super admin.')
+        else:
+            user.is_staff = not user.is_staff
+            user.save(update_fields=['is_staff'])
+            status = 'granted' if user.is_staff else 'revoked'
+            messages.success(request, f'Admin access {status} for {user.email}.')
+    return redirect('admin_users')
+
+
+@superadmin_required
+def admin_audit_log(request):
+    logs = AuditLog.objects.select_related('user').all()
+    action_filter = request.GET.get('action', '')
+    if action_filter:
+        logs = logs.filter(action=action_filter)
+    paginator = Paginator(logs, 50)
+    page = paginator.get_page(request.GET.get('page'))
+    return render(request, 'base/platform_admin/audit_log.html', {
+        'logs': page,
+        'action_choices': AuditAction.choices,
+        'current_filter': action_filter,
     })
