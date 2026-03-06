@@ -1,0 +1,91 @@
+{% extends "base/platform_admin/base.html" %}
+{% block title_suffix %} — Roasters{% endblock %}
+{% block nav_roasters %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">Roasters</h4>
+</div>
+
+<!-- Search -->
+<form method="get" class="mb-4">
+    <div class="input-group" style="max-width: 420px;">
+        <input type="text" name="q" class="form-control" placeholder="Search by name, company, email, country…" value="{{ query }}">
+        <button class="btn btn-primary" type="submit">Search</button>
+        {% if query %}
+        <a href="{% url 'admin_roasters' %}" class="btn btn-outline-secondary">Clear</a>
+        {% endif %}
+    </div>
+</form>
+
+<div class="card stat-card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Name</th>
+                    <th>Email</th>
+                    <th>Company</th>
+                    <th>Country</th>
+                    <th>Profile</th>
+                    <th>Joined</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in roasters %}
+                <tr>
+                    <td class="ps-3">{{ r.firstname }} {{ r.lastname }}</td>
+                    <td>{{ r.user.email }}</td>
+                    <td>{{ r.company_name|default:"—" }}</td>
+                    <td>{{ r.country|default:"—" }}</td>
+                    <td>
+                        {% if r.is_details_filled %}
+                            <span class="badge bg-success">Complete</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Incomplete</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ r.user.date_joined|date:"M d, Y" }}</td>
+                    <td class="text-end pe-3">
+                        <a href="{% url 'admin_roaster_detail' r.user.id %}" class="btn btn-sm btn-outline-primary">View / Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-muted ps-3 py-4">
+                        {% if query %}No roasters matching "{{ query }}".{% else %}No roasters yet.{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if roasters.has_other_pages %}
+<nav class="mt-3">
+    <ul class="pagination pagination-sm justify-content-center mb-0">
+        {% if roasters.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ roasters.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">Previous</a>
+        </li>
+        {% endif %}
+        {% for num in roasters.paginator.page_range %}
+            {% if roasters.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > roasters.number|add:"-3" and num < roasters.number|add:"3" %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+        {% if roasters.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ roasters.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

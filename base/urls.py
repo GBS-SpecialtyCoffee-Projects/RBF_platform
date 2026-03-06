@@ -1,9 +1,15 @@
 # user_management/urls.py
 from django.urls import path
-from .views import account, farmer,roaster
+from .views import account, farmer, roaster, platform_admin
 from django.conf import settings
 from django.conf.urls.static import static
 urlpatterns = [
+    path('platform-admin/login/', platform_admin.admin_login, name='admin_login'),
+    path('platform-admin/', platform_admin.admin_dashboard, name='admin_dashboard'),
+    path('platform-admin/farmers/', platform_admin.admin_farmers, name='admin_farmers'),
+    path('platform-admin/roasters/', platform_admin.admin_roasters, name='admin_roasters'),
+    path('platform-admin/farmer/<int:user_id>/', platform_admin.admin_farmer_detail, name='admin_farmer_detail'),
+    path('platform-admin/roaster/<int:user_id>/', platform_admin.admin_roaster_detail, name='admin_roaster_detail'),
     path('', account.landing_page, name='landing_page'),
     path('onboarding/', account.farmer_onboarding, name='onboarding'),
     path('farmer_dashboard/', farmer.farmer_dashboard, name='farmer_dashboard'),

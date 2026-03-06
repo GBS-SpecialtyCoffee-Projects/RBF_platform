@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #1a1a2e;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background-color: #16213e;
+            border-radius: 0.75rem;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.3);
+        }
+        .login-card h1 {
+            color: #fff;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .login-card .form-control {
+            background-color: #1a1a2e;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 0.65rem 0.85rem;
+        }
+        .login-card .form-control:focus {
+            background-color: #1a1a2e;
+            border-color: rgba(255, 255, 255, 0.4);
+            color: #fff;
+            box-shadow: none;
+        }
+        .login-card .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .login-card .btn-primary {
+            background-color: #0f3460;
+            border: none;
+            padding: 0.65rem;
+            font-weight: 600;
+            width: 100%;
+        }
+        .login-card .btn-primary:hover {
+            background-color: #1a4a7a;
+        }
+        .error-msg {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1>Platform Admin</h1>
+        {% if error %}
+            <p class="error-msg">{{ error }}</p>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <input type="email" name="email" class="form-control" placeholder="Email" required autocomplete="email">
+            </div>
+            <div class="mb-3">
+                <input type="password" name="password" class="form-control" placeholder="Password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary">Sign In</button>
+        </form>
+    </div>
+</body>
+</html>
