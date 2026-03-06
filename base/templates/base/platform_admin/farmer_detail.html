@@ -97,11 +97,17 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small">{{ form.farm_size.label }}</label>
-                            {{ form.farm_size }}
+                            <div class="input-group">
+                                {{ form.farm_size }}
+                                <span class="input-group-text">hectares</span>
+                            </div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small">Annual Production</label>
-                            {{ form.annual_production }}
+                            <div class="input-group">
+                                {{ form.annual_production }}
+                                <span class="input-group-text">kg</span>
+                            </div>
                         </div>
                     </div>
                     <div class="row g-3 mb-3">
