@@ -18,6 +18,7 @@ class AuthMiddleware(MiddlewareMixin):
             resolve_url('test'),
             resolve_url('check_user'),
             resolve_url('enter_email'),
+            resolve_url('admin_login'),
 
             settings.STATIC_URL,  # Exclude static files
             settings.MEDIA_URL,  # Exclude media files if you serve them in development
@@ -51,6 +52,10 @@ class AuthMiddleware(MiddlewareMixin):
         # Check if the user is authenticated
         if not request.user.is_authenticated:
             return redirect('signin')
+
+        # Staff bypass — skip all profile-completion redirects
+        if request.user.is_staff:
+            return
 
         # Enforce profile completion — allow profile detail pages themselves
         profile_detail_urls = ['farmer_details', 'roaster_details']

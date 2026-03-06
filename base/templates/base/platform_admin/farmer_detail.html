@@ -1,0 +1,260 @@
+{% extends "base/platform_admin/base.html" %}
+{% block title_suffix %} — {{ farmer.firstname }} {{ farmer.lastname }}{% endblock %}
+{% block nav_farmers %}active{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_farmers' %}">Farmers</a></li>
+        <li class="breadcrumb-item active">{{ farmer.firstname }} {{ farmer.lastname }}</li>
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="card stat-card mb-4">
+    <div class="card-body d-flex align-items-center gap-4">
+        {% if farmer.profile_picture %}
+            <img src="{{ farmer.profile_picture.url }}" alt="Profile" class="rounded-circle" style="width:72px;height:72px;object-fit:cover;">
+        {% else %}
+            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold fs-4" style="width:72px;height:72px;flex-shrink:0;">
+                {{ farmer.firstname|first|upper }}
+            </div>
+        {% endif %}
+        <div>
+            <h5 class="fw-bold mb-1">{{ farmer.firstname }} {{ farmer.lastname }}</h5>
+            <div class="text-muted small">{{ farmer.user.email }}</div>
+            <div class="text-muted small">{{ farmer.farm_name }} &bull; {{ farmer.city }}, {{ farmer.country }}</div>
+        </div>
+        <div class="ms-auto d-flex gap-2 flex-wrap">
+            {% if farmer.is_details_filled %}
+                <span class="badge bg-success fs-6 px-3 py-2">Profile Complete</span>
+            {% else %}
+                <span class="badge bg-warning text-dark fs-6 px-3 py-2">Profile Incomplete</span>
+            {% endif %}
+            {% if farmer.is_profile_published %}
+                <span class="badge bg-info fs-6 px-3 py-2">Published</span>
+            {% else %}
+                <span class="badge bg-secondary fs-6 px-3 py-2">Unpublished</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Edit profile form -->
+    <div class="col-lg-8">
+        <div class="card stat-card">
+            <div class="card-header bg-white py-3">
+                <span class="fw-semibold">Edit Profile</span>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <h6 class="text-muted text-uppercase small fw-bold mb-3 mt-1">Personal Info</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small">{{ form.firstname.label }}</label>
+                            {{ form.firstname }}
+                            {% if form.firstname.errors %}<div class="text-danger small">{{ form.firstname.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">{{ form.middlename.label }}</label>
+                            {{ form.middlename }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">{{ form.lastname.label }}</label>
+                            {{ form.lastname }}
+                            {% if form.lastname.errors %}<div class="text-danger small">{{ form.lastname.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small">{{ form.country_code.label }}</label>
+                            {{ form.country_code }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">{{ form.phone_number.label }}</label>
+                            {{ form.phone_number }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">{{ form.preferred_communication_method.label }}</label>
+                            {{ form.preferred_communication_method }}
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+                    <h6 class="text-muted text-uppercase small fw-bold mb-3">Farm Details</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ form.farm_name.label }}</label>
+                            {{ form.farm_name }}
+                            {% if form.farm_name.errors %}<div class="text-danger small">{{ form.farm_name.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">{{ form.farm_size.label }}</label>
+                            {{ form.farm_size }}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Annual Production</label>
+                            {{ form.annual_production }}
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small">{{ form.country.label }}</label>
+                            {{ form.country }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">{{ form.state.label }}</label>
+                            {{ form.state }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">{{ form.city.label }}</label>
+                            {{ form.city }}
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ form.cultivars.label }}</label>
+                            {{ form.cultivars }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ form.annual_production_unit.label }}</label>
+                            {{ form.annual_production_unit }}
+                        </div>
+                    </div>
+                    <hr class="my-3">
+                    <h6 class="text-muted text-uppercase small fw-bold mb-3">Quality & Processing</h6>
+                    <div class="mb-3">
+                        <label class="form-label small">{{ form.processing_method.label }}</label>
+                        {{ form.processing_method }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">{{ form.processing_description.label }}</label>
+                        {{ form.processing_description }}
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ form.cup_scores_received.label }}</label>
+                            {{ form.cup_scores_received }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ form.source_of_cup_scores.label }}</label>
+                            {{ form.source_of_cup_scores }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">{{ form.quality_report_link.label }}</label>
+                        {{ form.quality_report_link }}
+                    </div>
+
+                    <hr class="my-3">
+                    <h6 class="text-muted text-uppercase small fw-bold mb-3">Organization</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ form.main_roles.label }}</label>
+                            {{ form.main_roles }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ form.harvest_season.label }}</label>
+                            {{ form.harvest_season }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small d-block">{{ form.is_member_organization.label }}</label>
+                        {{ form.is_member_organization }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">{{ form.member_organization_name.label }}</label>
+                        {{ form.member_organization_name }}
+                    </div>
+
+                    <hr class="my-3">
+                    <h6 class="text-muted text-uppercase small fw-bold mb-3">Profile Picture</h6>
+                    {% if farmer.profile_picture %}
+                    <div class="mb-2">
+                        <img src="{{ farmer.profile_picture.url }}" alt="Current" class="rounded" style="height:80px;">
+                        <div class="text-muted small mt-1">Current picture — upload a new one to replace it</div>
+                    </div>
+                    {% endif %}
+                    <div class="mb-4">
+                        {{ form.profile_picture }}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar: status + photos -->
+    <div class="col-lg-4">
+        <!-- Account status -->
+        <div class="card stat-card mb-4">
+            <div class="card-header bg-white py-3">
+                <span class="fw-semibold">Account Status</span>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="status">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="is_details_filled" id="is_details_filled" {% if farmer.is_details_filled %}checked{% endif %}>
+                        <label class="form-check-label" for="is_details_filled">Profile complete</label>
+                    </div>
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" name="is_profile_published" id="is_profile_published" {% if farmer.is_profile_published %}checked{% endif %}>
+                        <label class="form-check-label" for="is_profile_published">Profile published</label>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Update Status</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Stories -->
+        <div class="card stat-card mb-4">
+            <div class="card-header bg-white py-3">
+                <span class="fw-semibold">Stories</span>
+            </div>
+            <div class="card-body">
+                {% for lang, story in language_stories %}
+                <form method="post" class="mb-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="story">
+                    <input type="hidden" name="language_id" value="{{ lang.id }}">
+                    <label class="form-label small fw-bold">{{ lang.name }}</label>
+                    <textarea name="story_text" class="form-control form-control-sm mb-2" rows="3">{% if story %}{{ story.story_text }}{% endif %}</textarea>
+                    <button type="submit" class="btn btn-sm {% if story %}btn-outline-primary{% else %}btn-outline-success{% endif %}">
+                        {% if story %}Save{% else %}Add{% endif %}
+                    </button>
+                </form>
+                {% if not forloop.last %}<hr class="my-2">{% endif %}
+                {% empty %}
+                <p class="text-muted small mb-0">No languages configured.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Photos -->
+        {% if photos %}
+        <div class="card stat-card">
+            <div class="card-header bg-white py-3">
+                <span class="fw-semibold">Photos ({{ photos.count }})</span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    {% for photo in photos %}
+                    <img src="{{ photo.photo.url }}" alt="Photo" class="rounded" style="width:80px;height:80px;object-fit:cover;">
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

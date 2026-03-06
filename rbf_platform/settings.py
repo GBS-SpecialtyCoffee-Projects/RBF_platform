@@ -66,7 +66,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'django.middleware.locale.LocaleMiddleware',
-    'base.middleware.auth.AuthMiddleware'
+    'base.middleware.auth.AuthMiddleware',
+    'base.middleware.audit.AuditMiddleware',
 ]
 
 ROOT_URLCONF = "rbf_platform.urls"

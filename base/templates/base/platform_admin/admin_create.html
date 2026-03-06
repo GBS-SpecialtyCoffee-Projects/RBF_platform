@@ -1,0 +1,49 @@
+{% extends "base/platform_admin/base.html" %}
+{% block title_suffix %} — Create Admin{% endblock %}
+{% block nav_admins %}active{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_users' %}">Admins</a></li>
+        <li class="breadcrumb-item active">Create Admin</li>
+    </ol>
+</nav>
+
+<div class="card stat-card" style="max-width: 500px;">
+    <div class="card-header bg-white py-3">
+        <span class="fw-semibold">New Admin Account</span>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="form-label small">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="text-danger small">{{ form.email.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <label class="form-label small">Password</label>
+                {{ form.password }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label small">Confirm Password</label>
+                {{ form.confirm_password }}
+            </div>
+            <button type="submit" class="btn btn-primary">Create Admin</button>
+            <a href="{% url 'admin_users' %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

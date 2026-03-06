@@ -556,3 +556,25 @@ class StoryForm(forms.ModelForm):
             'language': 'Story Language',}
 
 
+class AdminCreateForm(forms.Form):
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}),
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'}),
+    )
+    confirm_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm password'}),
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if User.objects.filter(email=email).exists():
+            raise ValidationError('A user with this email already exists.')
+        return email
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('password') != cleaned.get('confirm_password'):
+            raise ValidationError('Passwords do not match.')
+        return cleaned

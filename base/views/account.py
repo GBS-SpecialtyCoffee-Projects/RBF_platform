@@ -133,7 +133,11 @@ def signin_view(request):
     if request.user.is_authenticated:
         if request.user.group == 'farmer':
             return redirect('farmer_dashboard')
-        return redirect('roaster_dashboard')
+        elif request.user.group == 'roaster':
+            return redirect('roaster_dashboard')
+        elif request.user.is_staff:
+            return redirect('admin_dashboard')
+        return redirect('landing_page')
     if request.method == 'POST':
         form = SigninForm(request.POST)
         if form.is_valid():
@@ -141,8 +145,12 @@ def signin_view(request):
             login(request, user)
             if user.group == 'farmer':
                 redirect_url = reverse('farmer_dashboard')
-            else:
+            elif user.group == 'roaster':
                 redirect_url = reverse('roaster_dashboard')
+            elif user.is_staff:
+                redirect_url = reverse('admin_dashboard')
+            else:
+                redirect_url = reverse('landing_page')
 
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': True, 'redirect_url': redirect_url})

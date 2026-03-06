@@ -322,3 +322,33 @@ class Story(models.Model):
     # def __str__(self):
     #     return self.title
 
+
+class AuditAction(models.TextChoices):
+    UPDATE_PROFILE = 'update_profile', 'Updated profile'
+    UPDATE_STATUS = 'update_status', 'Updated status'
+    UPLOAD_PHOTO = 'upload_photo', 'Uploaded photo'
+    DELETE_PHOTO = 'delete_photo', 'Deleted photo'
+    ADD_STORY = 'add_story', 'Added story'
+    UPDATE_STORY = 'update_story', 'Updated story'
+    PUBLISH_PROFILE = 'publish_profile', 'Published profile'
+    REQUEST_MEETING = 'request_meeting', 'Requested meeting'
+    MANAGE_MEETING = 'manage_meeting', 'Managed meeting request'
+    CREATE_ACCOUNT = 'create_account', 'Created account'
+    CREATE_ADMIN = 'create_admin', 'Created admin'
+    TOGGLE_ADMIN = 'toggle_admin', 'Toggled admin access'
+    COMPLETE_DETAILS = 'complete_details', 'Completed profile details'
+    UPDATE_HEADER = 'update_header', 'Updated header image'
+
+
+class AuditLog(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+    )
+    action = models.CharField(max_length=50, choices=AuditAction.choices)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user} — {self.get_action_display()}'

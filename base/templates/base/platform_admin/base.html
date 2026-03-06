@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Platform Admin{% block title_suffix %}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://kit.fontawesome.com/bb0c45263e.js" crossorigin="anonymous"></script>
+    <style>
+        body { background-color: #f4f6f9; }
+        .admin-sidebar {
+            min-height: 100vh;
+            background-color: #1a1a2e;
+            width: 220px;
+            position: fixed;
+            top: 0; left: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+        .admin-sidebar .sidebar-brand {
+            padding: 1.5rem 1.25rem 1rem;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-decoration: none;
+        }
+        .admin-sidebar .nav-link {
+            color: rgba(255,255,255,0.7);
+            padding: 0.75rem 1.25rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            transition: background 0.15s, color 0.15s;
+        }
+        .admin-sidebar .nav-link:hover,
+        .admin-sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .admin-sidebar .sidebar-footer {
+            margin-top: auto;
+            padding: 1rem 1.25rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .admin-sidebar .sidebar-footer small {
+            color: rgba(255,255,255,0.5);
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.78rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .admin-main {
+            margin-left: 220px;
+            padding: 2rem;
+        }
+        .admin-topbar {
+            background: #fff;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 1rem 2rem;
+            margin-left: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .stat-card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.07);
+        }
+        .table th { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; color: #6c757d; }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+<div class="admin-sidebar">
+    <a href="{% url 'admin_dashboard' %}" class="sidebar-brand">
+        <i class="fa-solid fa-mug-hot me-2"></i>Platform Admin
+    </a>
+    <nav class="mt-2">
+        <a href="{% url 'admin_dashboard' %}" class="nav-link {% block nav_dashboard %}{% endblock %}">
+            <i class="fa-solid fa-gauge-high"></i> Dashboard
+        </a>
+        <a href="{% url 'admin_farmers' %}" class="nav-link {% block nav_farmers %}{% endblock %}">
+            <i class="fa-solid fa-seedling"></i> Farmers
+        </a>
+        <a href="{% url 'admin_roasters' %}" class="nav-link {% block nav_roasters %}{% endblock %}">
+            <i class="fa-solid fa-fire-burner"></i> Roasters
+        </a>
+        {% if request.user.is_superuser %}
+        <a href="{% url 'admin_users' %}" class="nav-link {% block nav_admins %}{% endblock %}">
+            <i class="fa-solid fa-user-shield"></i> Admins
+        </a>
+        {% endif %}
+        {% if request.user.is_superuser %}
+        <a href="{% url 'admin_audit_log' %}" class="nav-link {% block nav_audit %}{% endblock %}">
+            <i class="fa-solid fa-clock-rotate-left"></i> Audit Log
+        </a>
+        {% endif %}
+    </nav>
+    <div class="sidebar-footer">
+        <small>{{ request.user.email }}</small>
+        {% if request.user.group == 'farmer' %}
+            <a href="{% url 'farmer_dashboard' %}" class="btn btn-sm btn-outline-light w-100 mb-2">My Dashboard</a>
+        {% elif request.user.group == 'roaster' %}
+            <a href="{% url 'roaster_dashboard' %}" class="btn btn-sm btn-outline-light w-100 mb-2">My Dashboard</a>
+        {% endif %}
+        <a href="{% url 'signout' %}" class="btn btn-sm btn-outline-light w-100">Sign out</a>
+    </div>
+</div>
+
+<div class="admin-main">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'success' }} alert-dismissible fade show mb-3" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script src="{% static 'jquery-3.7.1.min.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
