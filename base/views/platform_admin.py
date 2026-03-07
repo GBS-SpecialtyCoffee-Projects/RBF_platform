@@ -196,9 +196,11 @@ def admin_create(request):
     if request.method == 'POST':
         form = AdminCreateForm(request.POST)
         if form.is_valid():
+            email = form.cleaned_data['email']
             user = User.objects.create_user(
-                email=form.cleaned_data['email'],
+                email=email,
                 password=form.cleaned_data['password'],
+                username=email,
             )
             user.is_staff = True
             user.save(update_fields=['is_staff'])
