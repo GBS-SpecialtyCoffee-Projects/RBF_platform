@@ -5,156 +5,214 @@
 {% include 'base/roaster_profile_navbar.html' %}
 
 <div class="container-fluid" style="background-color: #f8f9fa;">
-    <div class="container-fluid pe-5 py-3">
-        <div class="row g-5">
-            <!-- Left Column -->
-            <div class="col-12 col-md-4">
-                <h3 class="">
-                    Search by:
-                </h3>
-                             <!-- Filters -->
-                <form method="GET" action="{% url 'connections' %}">
-                    <!-- Annual Production Filter -->
-                    <div class="mb-3">
-                        <label for="annual_production" class="form-label">Annual Production (tons)</label>
-                        <select class="form-select" name="annual_production" id="annual_production">
-                            <option value="" {% if not selected_annual_production %}selected{% endif %}>All</option>
-                            <option value="0.1-5" {% if selected_annual_production == '0.1-5' %}selected{% endif %}>0.1 – 5 tons</option>
-                            <option value="5-20" {% if selected_annual_production == '5-20' %}selected{% endif %}>5 – 20 tons</option>
-                            <option value="20-50" {% if selected_annual_production == '20-50' %}selected{% endif %}>20 – 50 tons</option>
-                            <option value="50+" {% if selected_annual_production == '50+' %}selected{% endif %}>50+ tons</option>
-                        </select>
-                    </div>
+    <div class="container-fluid py-3" style="padding-left: 13rem; padding-right: 13rem;">
 
-                    <!-- Farm Size Filter -->
-                    <div class="mb-3">
-                        <label for="farm_size" class="form-label">Farm Size (hectares)</label>
-                        <select class="form-select" name="farm_size" id="farm_size">
-                            <option value="" {% if not selected_farm_size %}selected{% endif %}>All</option>
-                            <option value="0.1-2" {% if selected_farm_size == '0.1-2' %}selected{% endif %}>0.1 – 2 hectares</option>
-                            <option value="2-10" {% if selected_farm_size == '2-10' %}selected{% endif %}>2 – 10 hectares</option>
-                            <option value="10-50" {% if selected_farm_size == '10-50' %}selected{% endif %}>10 – 50 hectares</option>
-                            <option value="50+" {% if selected_farm_size == '50+' %}selected{% endif %}>50+ hectares</option>
-                        </select>
-                    </div>
-
+        <!-- Filters at top -->
+        <form method="GET" action="{% url 'connections' %}">
+            <div class="row g-3 mb-3">
+                <div class="col-12 col-md-4">
+                    <label for="country" class="form-label">Country</label>
+                    <select class="form-select" name="country" id="country">
+                        <option value="" {% if not selected_country %}selected{% endif %}>All</option>
+                        {% for c in available_countries %}
+                            <option value="{{ c }}" {% if selected_country == c %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="season" class="form-label">Harvest Season</label>
+                    <select class="form-select" name="season" id="season">
+                        <option value="" {% if not selected_season %}selected{% endif %}>All</option>
+                        {% for s in available_seasons %}
+                            <option value="{{ s.id }}" {% if selected_season == s.id|stringformat:"d" %}selected{% endif %}>{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="cup_score" class="form-label">Cup Score</label>
+                    <select class="form-select" name="cup_score" id="cup_score">
+                        <option value="" {% if not selected_cup_score %}selected{% endif %}>All</option>
+                        {% for cs in available_cup_scores %}
+                            <option value="{{ cs.id }}" {% if selected_cup_score == cs.id|stringformat:"d" %}selected{% endif %}>{{ cs.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-12 col-md-4">
+                    <label for="annual_production" class="form-label">Annual Production (kg)</label>
+                    <select class="form-select" name="annual_production" id="annual_production">
+                        <option value="" {% if not selected_annual_production %}selected{% endif %}>All</option>
+                        <option value="0-500" {% if selected_annual_production == '0-500' %}selected{% endif %}>0 – 500 kg</option>
+                        <option value="500-2000" {% if selected_annual_production == '500-2000' %}selected{% endif %}>500 – 2,000 kg</option>
+                        <option value="2000-5000" {% if selected_annual_production == '2000-5000' %}selected{% endif %}>2,000 – 5,000 kg</option>
+                        <option value="5000+" {% if selected_annual_production == '5000+' %}selected{% endif %}>5,000+ kg</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="farm_size" class="form-label">Farm Size (hectares)</label>
+                    <select class="form-select" name="farm_size" id="farm_size">
+                        <option value="" {% if not selected_farm_size %}selected{% endif %}>All</option>
+                        <option value="0.1-2" {% if selected_farm_size == '0.1-2' %}selected{% endif %}>0.1 – 2 hectares</option>
+                        <option value="2-10" {% if selected_farm_size == '2-10' %}selected{% endif %}>2 – 10 hectares</option>
+                        <option value="10-50" {% if selected_farm_size == '10-50' %}selected{% endif %}>10 – 50 hectares</option>
+                        <option value="50+" {% if selected_farm_size == '50+' %}selected{% endif %}>50+ hectares</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-primary">Apply Filters</button>
-                </form>
+                    <a href="{% url 'connections' %}" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </div>
+        </form>
 
+        <hr>
 
-                <div class="pt-5 mt-5">
-                    <!-- Connection Manager Card -->
-                    <div class="card shadow-sm" style="background-color: white;">
-                        <div class="card-header">
-                            <h5 class="card-title">Connection Manager</h5>
+        <!-- Producer Profiles heading + Connection Manager toggle -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Producer Profiles</h3>
+            <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#connectionManager">
+                Connection Manager ({{ meeting_requests|length }})
+            </button>
+        </div>
+
+        <!-- Collapsible Connection Manager -->
+        <div class="collapse mb-3" id="connectionManager">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    {% for meeting in meeting_requests %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded
+                            {% if meeting.status == 'accepted' %} bg-success
+                            {% elif meeting.status == 'pending' %} bg-primary
+                            {% elif meeting.status == 'rejected' %} bg-danger
+                            {% endif %}">
+                            <div>
+                                <strong>{{ meeting.requestee.username }}</strong>
+                                <div>{{ meeting.proposed_date|date:"n/j/Y" }}</div>
+                                <div>{{ meeting.proposed_date|time:"g:iA" }} est.</div>
+                            </div>
+                            <div class="d-flex">
+                                {% if meeting.status == 'pending' %}
+                                    <form method="post" action="{% url 'connections' %}{% if filter_query_string %}?{{ filter_query_string }}{% endif %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="meeting_id" value="{{ meeting.id }}">
+                                        <button type="submit" name="retrieve_meeting_request" class="btn btn-sm btn-warning">Withdraw</button>
+                                    </form>
+                                {% elif meeting.status == 'rejected' %}
+                                    <form method="post" action="{% url 'connections' %}{% if filter_query_string %}?{{ filter_query_string }}{% endif %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="meeting_id" value="{{ meeting.id }}">
+                                        <button type="submit" name="delete_meeting_request" class="btn btn-sm btn-danger">Delete</button>
+                                    </form>
+                                {% endif %}
+                            </div>
                         </div>
-                        <div class="card-body">
-                            {% for meeting in meeting_requests %}
-                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded
-                                    {% if meeting.status == 'accepted' %} bg-success
-                                    {% elif meeting.status == 'pending' %} bg-primary
-                                    {% elif meeting.status == 'rejected' %} bg-danger
-                                    {% endif %}">
-                                    <div>
-                                        <strong>{{ meeting.requestee.username }}</strong>
-                                        <div>{{ meeting.proposed_date|date:"n/j/Y" }}</div>
-                                        <div>{{ meeting.proposed_date|time:"g:iA" }} est.</div>
-                                    </div>
-                                    <div class="d-flex">
-                                        {% if meeting.status == 'pending' %}
-                                            <form method="post" action="{% url 'connections' %}">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="meeting_id" value="{{ meeting.id }}">
-                                                <button type="submit" name="retrieve_meeting_request" class="btn btn-sm btn-warning">Withdraw</button>
-                                            </form>
-                                        {% elif meeting.status == 'rejected' %}
-                                            <form method="post" action="{% url 'connections' %}">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="meeting_id" value="{{ meeting.id }}">
-                                                <button type="submit" name="delete_meeting_request" class="btn btn-sm btn-danger">Delete</button>
-                                            </form>
-                                        {% endif %}
-                                    </div>
+                    {% empty %}
+                        <p>No meeting requests available.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Display Farmers -->
+        {% for farmer in farmers %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <!-- Top Section with action buttons at top right -->
+                    <div class="row">
+                        <div class="col-auto">
+                            <img class="rounded-circle"
+                                src="{% if farmer.profile_picture %}{{ farmer.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}"
+                                alt=""
+                                width="100"
+                                height="100"
+                                style="object-fit: cover;">
+                        </div>
+                        <div class="col">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h4 class="mb-0">{{ farmer.firstname }} {{ farmer.lastname }}</h4>
+                                <div class="d-flex gap-2 flex-shrink-0">
+                                    {% if can_request_meetings %}
+                                        <a href="#" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#requestMeetingModal" data-user-id="{{ farmer.user.id }}">Connect</a>
+                                    {% else %}
+                                        <span class="text-warning small">Max requests reached</span>
+                                    {% endif %}
+                                    <a href="{% url 'farmer_profile' farmer.user.id %}" class="btn btn-outline-primary btn-sm">View Profile</a>
                                 </div>
-                            {% empty %}
-                                <p>No meeting requests available.</p>
+                            </div>
+                            <p class="mb-2">{% for role in farmer.main_roles.all %}{{ role.name }}{% if not forloop.last %}, {% endif %}{% endfor %} of {{ farmer.farm_name }} located in {{ farmer.city }}, {{ farmer.country }}</p>
+                            <p class="mb-0">
+                                {{farmer.farmer_stories.first.story_text|truncatewords:50}}
+                            </p>
+                        </div>
+                    </div>
+                    <hr>
+                    <!-- Details Section -->
+                    <div class="row">
+                        <div class="col-6 col-sm-3">
+                            <p class="mb-1 fw-semibold">Farm Size:</p>
+                            <p class="mb-1"> {{ farmer.farm_size }} hectares</p>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <p class="mb-1 fw-semibold">Annual Yield:</p>
+                            <p class="mb-1"> {{ farmer.annual_production }} kilograms </p>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <p class="mb-1 fw-semibold">Cup Scores:</p>
+                            {% for cupscore in farmer.cup_scores_received.all %}
+                            <span class="mb-2 px-2 py-1 rounded me-1" style="background-color:rgb(180, 203, 207) ; color: black; "> {{ cupscore}}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <p class="mb-1 fw-semibold">Processing:</p>
+                            {% for method in farmer.processing_method.all %}
+                            <span class="mb-2 px-2 py-1 rounded me-1" style="background-color:rgb(180, 203, 207) ; color: black; "> {{ method}} </span>
                             {% endfor %}
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Right Column -->
-            <div class="col-12 col-md-8" style="overflow-x: auto; max-height: 100vh;">
-                <h3 class="pb-3">
-                    Producer Profiles:
-                </h3>
-
-
-                <!-- Display Farmers -->
-                {% for farmer in farmers %}
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <!-- Top Section -->
-                            <div class="row">
-                                <div class="col-auto">
-                                    <img class="rounded-circle"
-                                        src="{% if farmer.profile_picture %}{{ farmer.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}"
-                                        alt=""
-                                        width="100"
-                                        height="100"
-                                        style="object-fit: cover;">
-                                </div>
-                                <div class="col">
-                                    <h4 class="mb-0"> {{ farmer.firstname }} {{ farmer.lastname }} </h4>
-                                    <p class="mb-2">{% for role in farmer.main_roles.all %}{{ role.name }}{% if not forloop.last %}, {% endif %}{% endfor %} of {{ farmer.farm_name }} located in {{ farmer.city }}, {{ farmer.country }}</p>
-                                    <p class="mb-0">
-                                        {{farmer.farmer_stories.first.story_text|truncatewords:50}}
-                                    </p>
-                                </div>
-                            </div>
-                            <hr>
-                            <!-- Details Section -->
-                            <div class="row">
-                                <div class="col-6 col-sm-3">
-                                    <p class="mb-1 fw-semibold">Farm Size:</p>
-                                    <p class="mb-1"> {{ farmer.farm_size }} hectares</p>
-                                </div>
-                                <div class="col-6 col-sm-3">
-                                    <p class="mb-1 fw-semibold">Annual Yield:</p>
-                                    <p class="mb-1"> {{ farmer.annual_production }} kilograms </p>
-                                </div>
-                                <div class="col-6 col-sm-3">
-                                    <p class="mb-1 fw-semibold">Cup Scores:</p>
-                                    {% for cupscore in farmer.cup_scores_received.all %}
-                                    <span class="mb-2 px-2 py-1 rounded me-1" style="background-color:rgb(180, 203, 207) ; color: black; "> {{ cupscore}}</span>
-                                    {% endfor %}
-                                </div>
-                                <div class="col-6 col-sm-3">
-                                    <p class="mb-1 fw-semibold">Processing:</p>
-                                    {% for method in farmer.processing_method.all %}
-                                    <span class="mb-2 px-2 py-1 rounded me-1" style="background-color:rgb(180, 203, 207) ; color: black; "> {{ method}} </span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <!-- Action Buttons -->
-                            <div class="row">
-                                <div class="col text-end">
-                                    {% if can_request_meetings %}
-                                        <a href="#" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#requestMeetingModal" data-user-id="{{ farmer.user.id }}">Connect</a>
-                                    {% else %}
-                                        <p class="text-warning">You have reached the maximum number of meeting requests.</p>
-                                    {% endif %}
-                                    <a href="{% url 'farmer_profile' farmer.user.id %}" class="btn btn-primary">View Profile</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% empty %}
-                    <p>None available.</p>
-                {% endfor %}
+        {% empty %}
+            <div class="text-center py-5">
+                <p class="text-muted mb-1">No producers found{% if selected_country or selected_season or selected_cup_score or selected_annual_production or selected_farm_size %} matching your filters.{% else %}.{% endif %}</p>
+                {% if selected_country or selected_season or selected_cup_score or selected_annual_production or selected_farm_size %}
+                    <a href="{% url 'connections' %}" class="btn btn-outline-primary btn-sm">Clear filters</a>
+                {% endif %}
             </div>
-        </div>
+        {% endfor %}
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Producer list pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if filter_query_string %}{{ filter_query_string }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if filter_query_string %}{{ filter_query_string }}&{% endif %}page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if filter_query_string %}{{ filter_query_string }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
     </div>
 </div>
 

@@ -171,7 +171,7 @@ class RoasterForm(forms.ModelForm):
     class Meta:
         model = Roaster
         fields = [
-           'firstname','lastname', 'job_title', 'company_name', 'company_website','company_socials', 'country', 'state', 'city',
+           'firstname','lastname', 'job_title', 'phone_number', 'company_name', 'company_website','company_socials', 'country', 'state', 'city',
             'company_functions','coffee_purchase_involvement','purchase_volume','company_description','company_approach','company_goals',
             'origins_interested', 'coffee_types_interested', 'profile_picture'
         ]
@@ -184,6 +184,7 @@ class RoasterForm(forms.ModelForm):
             'lastname': 'Last Name*',
             'middlename': 'Middle Name',
             'job_title': 'Job Title',
+            'phone_number': 'Phone Number',
             'company_website': 'Company Website',
             'company_socials': 'Company social media profile',
             'company_functions': 'Company Functions',
@@ -198,6 +199,7 @@ class RoasterForm(forms.ModelForm):
             'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name','required':'true','autocomplete':'off'}),
             'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name','required':'true','autocomplete':'off'}),
             'job_title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Job Title'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number', 'autocomplete': 'off'}),
             'company_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Company Name'}),
             'company_website': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'Company Website'}),
             'country': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Country'}),
@@ -381,6 +383,15 @@ class FarmerProfilePhotoForm(forms.ModelForm):
 class FarmerHeaderImageForm(forms.ModelForm):
     class Meta:
         model = Farmer
+        fields = ['header_image']
+        widgets = {
+            'header_image': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+
+class RoasterHeaderImageForm(forms.ModelForm):
+    class Meta:
+        model = Roaster
         fields = ['header_image']
         widgets = {
             'header_image': forms.FileInput(attrs={'class': 'form-control'}),

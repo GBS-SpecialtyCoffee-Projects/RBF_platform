@@ -22,11 +22,11 @@
                 Edit Header
             </button>
         </div>
-        <div>
+        <div style="overflow: visible;">
             <div class="d-flex justify-content-center py-2" >
-                <div class="">
+                <div class="position-relative z-2">
                      {% if farmer_profile.profile_picture %}
-                    <img class="rounded-circle border border-info" style="object-fit: cover;" width="90px" height="90px" src="{{farmer_profile.profile_picture.url}}" alt="" style="margin-top: -30px;">
+                    <img class="rounded-circle border border-info" style="object-fit: cover; margin-top: -45px;" width="90px" height="90px" src="{{farmer_profile.profile_picture.url}}" alt="">
                     {% endif %}
                 </div>
                 <div class="ms-4 mt-4" >

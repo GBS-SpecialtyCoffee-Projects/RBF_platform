@@ -25,10 +25,12 @@
             {% endif %}
         </div>
         <div>
-            <div class="d-flex justify-content-center py-2" >
+            <div class="position-relative d-flex justify-content-center py-2" >
                 <div class="" style="margin-top: -40px;">
                      {% if farmer_profile.profile_picture %}
-                    <img class="rounded-circle border border-info" style="object-fit: cover;" width="110px" height="110px" src="{{farmer_profile.profile_picture.url}}" alt="" style="margin-top: -30px;">
+                    <img class="rounded-circle border border-info" style="object-fit: cover;" width="110px" height="110px" src="{{farmer_profile.profile_picture.url}}" alt="">
+                    {% else %}
+                    <img class="rounded-circle border border-info" style="object-fit: cover;" width="110px" height="110px" src="{% static 'img/placeholder.png' %}" alt="">
                     {% endif %}
                 </div>
                 <div class="ms-2 mt-1" >
@@ -56,7 +58,7 @@
     <div class="container pt-2">
         <div class="row">
             <div class="col-md-8 mt-3">
-                <div class="px-4 py-2 rounded shadow-sm" style="background-color: white;height: 100%;">
+                <div class="px-4 py-2 rounded shadow-sm" style="background-color: white;">
                     <div class="d-flex justify-content-between">
                         <div class="d-flex">
                             <div>
@@ -90,12 +92,13 @@
                         
                         
                     </div> 
-                    <div id="story_div" translate="no">
-
-                    
-                    <p id="story-text">
-                       {{farmer_stories.first.story_text}}
-                    </p>
+                    <div id="story_wrapper" style="position: relative;">
+                    <div id="story_div" translate="no" style="max-height: 300px; overflow-y: auto;">
+                        <p id="story-text">
+                           {{farmer_stories.first.story_text}}
+                        </p>
+                    </div>
+                    <div id="story_fade" style="position: absolute; bottom: 0; left: 0; right: 0; height: 40px; background: linear-gradient(transparent, white); pointer-events: none;"></div>
                 </div>
     
                 </div>
@@ -113,9 +116,8 @@
                         {% if farmer_photos %}
                         {% for photo in farmer_photos %}
                             {% if photo.photo %}
-                            <div class="col-sm-4 mb-3" >
-                                <img style="width: 110px;height: 110px;object-fit: cover;"   class="rounded" src="{{photo.photo.url}}" alt="..." >
-                                <!-- <a href="{% url 'delete_farmer_photo' photo.id %}" class="btn btn-danger btn-sm mt-2">Delete</a> -->
+                            <div class="col-sm-4 mb-3">
+                                <img style="width: 110px;height: 110px;object-fit: cover; cursor: pointer;" class="rounded gallery-img" src="{{photo.photo.url}}" alt="..." data-bs-toggle="modal" data-bs-target="#imageModal" data-img-src="{{photo.photo.url}}">
                             </div>
                             {% endif %}
                         {% endfor %}
@@ -301,4 +303,59 @@
 </div>
 {% endif %}
 
+<!-- Image Expand Modal with Carousel -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="background: transparent; border: none;">
+            <div class="modal-body p-0">
+                <div id="galleryCarousel" class="carousel slide">
+                    <div class="carousel-inner" id="carouselInner">
+                        {% for photo in farmer_photos %}
+                            {% if photo.photo %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <div class="text-center">
+                                    <img src="{{ photo.photo.url }}" alt="" style="max-width: 100%; max-height: 85vh; border-radius: 8px;">
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var storyDiv = document.getElementById('story_div');
+        var fade = document.getElementById('story_fade');
+        if (storyDiv && fade) {
+            function updateFade() {
+                var atBottom = storyDiv.scrollHeight - storyDiv.scrollTop - storyDiv.clientHeight < 5;
+                var hasOverflow = storyDiv.scrollHeight > storyDiv.clientHeight;
+                fade.style.display = (hasOverflow && !atBottom) ? '' : 'none';
+            }
+            storyDiv.addEventListener('scroll', updateFade);
+            updateFade();
+        }
+
+        var carousel = document.getElementById('galleryCarousel');
+        var bsCarousel = new bootstrap.Carousel(carousel, { wrap: true });
+
+        document.querySelectorAll('.gallery-img').forEach(function(img, index) {
+            img.addEventListener('click', function() {
+                bsCarousel.to(index);
+            });
+        });
+    });
+</script>
 {% endblock %}
