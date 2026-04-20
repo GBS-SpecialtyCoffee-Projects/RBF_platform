@@ -205,6 +205,7 @@ class Roaster(models.Model):
     origins_interested = models.TextField(blank=True, null=True)
     coffee_types_interested = models.TextField(blank=True, null=True)
     profile_picture = models.ImageField(storage=ProfileStorageRoaster(),blank=True, null=True)
+    country_code = models.CharField(max_length=255, blank=True, null=True, default='US (+1)')
     phone_number = models.CharField(max_length=255, blank=True, null=True)
     header_image = models.ImageField(storage=ProfileStorageRoaster(), blank=True, null=True)
     is_details_filled = models.BooleanField(default=False)
@@ -323,6 +324,31 @@ class Story(models.Model):
 
     # def __str__(self):
     #     return self.title
+
+
+class Resource(models.Model):
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=220, unique=True)
+    summary = models.CharField(max_length=500, blank=True)
+    body = models.TextField()
+    cover_image = models.ImageField(
+        upload_to='resources/', blank=True, null=True,
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='authored_resources',
+    )
+    is_published = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
 
 
 class AuditAction(models.TextChoices):

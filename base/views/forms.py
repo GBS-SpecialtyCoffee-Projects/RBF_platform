@@ -1,7 +1,7 @@
 # forms.py
 
 from django import forms
-from base.models import FarmerPhoto,Roaster, RoasterPhoto, User, Farmer, MeetingRequest,Story
+from base.models import FarmerPhoto,Roaster, RoasterPhoto, User, Farmer, MeetingRequest,Story, Resource
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
@@ -168,10 +168,16 @@ class FarmerProfileForm(forms.ModelForm):
 
 
 class RoasterForm(forms.ModelForm):
+    country_code = forms.ChoiceField(
+        choices=COUNTRY_CODE_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control', 'placeholder': 'Country Code', 'autocomplete': 'off'})
+    )
+
     class Meta:
         model = Roaster
         fields = [
-           'firstname','lastname', 'job_title', 'phone_number', 'company_name', 'company_website','company_socials', 'country', 'state', 'city',
+           'firstname','lastname', 'job_title', 'country_code', 'phone_number', 'company_name', 'company_website','company_socials', 'country', 'state', 'city',
             'company_functions','coffee_purchase_involvement','purchase_volume','company_description','company_approach','company_goals',
             'origins_interested', 'coffee_types_interested', 'profile_picture'
         ]
@@ -184,6 +190,7 @@ class RoasterForm(forms.ModelForm):
             'lastname': 'Last Name*',
             'middlename': 'Middle Name',
             'job_title': 'Job Title',
+            'country_code': 'Code',
             'phone_number': 'Phone Number',
             'company_website': 'Company Website',
             'company_socials': 'Company social media profile',
@@ -561,6 +568,36 @@ class StoryForm(forms.ModelForm):
         labels = {
             "story_text": "Story text",
             'language': 'Story Language',}
+
+
+class ResourceForm(forms.ModelForm):
+    class Meta:
+        model = Resource
+        fields = ['title', 'slug', 'summary', 'body', 'cover_image', 'is_published']
+        labels = {
+            'title': 'Title',
+            'slug': 'URL Slug',
+            'summary': 'Summary',
+            'body': 'Body',
+            'cover_image': 'Cover Image',
+            'is_published': 'Published',
+        }
+        help_texts = {
+            'slug': 'Leave blank to auto-generate from title.',
+            'summary': 'Short description shown on the resources list.',
+        }
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Title'}),
+            'slug': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'auto-generated-if-blank'}),
+            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Short summary'}),
+            'body': forms.Textarea(attrs={'id': 'resource_body_editor', 'class': 'form-control'}),
+            'cover_image': forms.FileInput(attrs={'class': 'form-control'}),
+            'is_published': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['slug'].required = False
 
 
 class AdminCreateForm(forms.Form):

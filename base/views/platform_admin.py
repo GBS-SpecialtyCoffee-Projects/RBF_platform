@@ -7,12 +7,14 @@ from django.contrib.auth import login
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Value
 from django.db.models.functions import Concat
+from django.utils.text import slugify
+from django.views.decorators.http import require_POST
 
 from base.models import (
     User, Farmer, Roaster, MeetingRequest, FarmerPhoto, RoasterPhoto,
-    Language, Story, AuditLog, AuditAction,
+    Language, Story, AuditLog, AuditAction, Resource,
 )
-from .forms import FarmerForm, RoasterForm, SigninForm, AdminCreateForm
+from .forms import FarmerForm, RoasterForm, SigninForm, AdminCreateForm, ResourceForm
 
 
 def admin_required(view_func):
@@ -225,6 +227,85 @@ def admin_toggle(request, user_id):
             status = 'granted' if user.is_staff else 'revoked'
             messages.success(request, f'Admin access {status} for {user.email}.')
     return redirect('admin_users')
+
+
+@admin_required
+def admin_resources(request):
+    query = request.GET.get('q', '')
+    resources = Resource.objects.all()
+    if query:
+        resources = resources.filter(
+            Q(title__icontains=query) | Q(summary__icontains=query)
+        )
+    paginator = Paginator(resources, 20)
+    page = paginator.get_page(request.GET.get('page'))
+    return render(request, 'base/platform_admin/resources.html', {
+        'resources': page,
+        'query': query,
+    })
+
+
+def _unique_slug(base, exclude_pk=None):
+    slug = base or 'resource'
+    candidate = slug
+    i = 2
+    qs = Resource.objects.all()
+    if exclude_pk is not None:
+        qs = qs.exclude(pk=exclude_pk)
+    while qs.filter(slug=candidate).exists():
+        candidate = f'{slug}-{i}'
+        i += 1
+    return candidate
+
+
+@admin_required
+def admin_resource_create(request):
+    if request.method == 'POST':
+        form = ResourceForm(request.POST, request.FILES)
+        if form.is_valid():
+            resource = form.save(commit=False)
+            slug = form.cleaned_data.get('slug') or slugify(resource.title)
+            resource.slug = _unique_slug(slug)
+            resource.author = request.user
+            resource.save()
+            messages.success(request, 'Resource created.')
+            return redirect('admin_resources')
+    else:
+        form = ResourceForm()
+    return render(request, 'base/platform_admin/resource_form.html', {
+        'form': form,
+        'resource': None,
+    })
+
+
+@admin_required
+def admin_resource_edit(request, resource_id):
+    resource = get_object_or_404(Resource, id=resource_id)
+    if request.method == 'POST':
+        form = ResourceForm(request.POST, request.FILES, instance=resource)
+        if form.is_valid():
+            updated = form.save(commit=False)
+            slug = form.cleaned_data.get('slug') or slugify(updated.title)
+            if slug != resource.slug:
+                updated.slug = _unique_slug(slug, exclude_pk=resource.pk)
+            updated.save()
+            messages.success(request, 'Resource updated.')
+            return redirect('admin_resources')
+    else:
+        form = ResourceForm(instance=resource)
+    return render(request, 'base/platform_admin/resource_form.html', {
+        'form': form,
+        'resource': resource,
+    })
+
+
+@admin_required
+@require_POST
+def admin_resource_delete(request, resource_id):
+    resource = get_object_or_404(Resource, id=resource_id)
+    resource.delete()
+    messages.success(request, 'Resource deleted.')
+    return redirect('admin_resources')
 
 
 @superadmin_required

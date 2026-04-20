@@ -93,6 +93,9 @@
         <a href="{% url 'admin_roasters' %}" class="nav-link {% block nav_roasters %}{% endblock %}">
             <i class="fa-solid fa-fire-burner"></i> Roasters
         </a>
+        <a href="{% url 'admin_resources' %}" class="nav-link {% block nav_resources %}{% endblock %}">
+            <i class="fa-solid fa-book-open"></i> Resources
+        </a>
         {% if request.user.is_superuser %}
         <a href="{% url 'admin_users' %}" class="nav-link {% block nav_admins %}{% endblock %}">
             <i class="fa-solid fa-user-shield"></i> Admins

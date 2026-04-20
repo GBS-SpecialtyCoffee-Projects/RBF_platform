@@ -1,0 +1,95 @@
+{% extends "base/platform_admin/base.html" %}
+{% block title_suffix %} — {% if resource %}Edit Resource{% else %}New Resource{% endif %}{% endblock %}
+{% block nav_resources %}active{% endblock %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">
+        {% if resource %}Edit Resource{% else %}New Resource{% endif %}
+    </h4>
+    <a href="{% url 'admin_resources' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="card stat-card">
+    <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label">{{ form.title.label }}</label>
+                {{ form.title }}
+                {% if form.title.errors %}<div class="text-danger small mt-1">{{ form.title.errors|join:", " }}</div>{% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">{{ form.slug.label }}</label>
+                {{ form.slug }}
+                <div class="form-text">{{ form.slug.help_text }}</div>
+                {% if form.slug.errors %}<div class="text-danger small mt-1">{{ form.slug.errors|join:", " }}</div>{% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">{{ form.summary.label }}</label>
+                {{ form.summary }}
+                <div class="form-text">{{ form.summary.help_text }}</div>
+                {% if form.summary.errors %}<div class="text-danger small mt-1">{{ form.summary.errors|join:", " }}</div>{% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">{{ form.cover_image.label }}</label>
+                {% if resource and resource.cover_image %}
+                <div class="mb-2">
+                    <img src="{{ resource.cover_image.url }}" alt="Cover" style="max-height: 120px; border-radius: 4px;">
+                </div>
+                {% endif %}
+                {{ form.cover_image }}
+                {% if form.cover_image.errors %}<div class="text-danger small mt-1">{{ form.cover_image.errors|join:", " }}</div>{% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">{{ form.body.label }}</label>
+                {{ form.body }}
+                {% if form.body.errors %}<div class="text-danger small mt-1">{{ form.body.errors|join:", " }}</div>{% endif %}
+            </div>
+
+            <div class="form-check mb-4">
+                {{ form.is_published }}
+                <label class="form-check-label" for="{{ form.is_published.id_for_label }}">
+                    {{ form.is_published.label }}
+                </label>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'admin_resources' %}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    {% if resource %}Save Changes{% else %}Create Resource{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.js"></script>
+<script>
+    $(function() {
+        $('#resource_body_editor').summernote({
+            height: 400,
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'italic', 'underline', 'clear']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['insert', ['link', 'picture', 'video', 'hr']],
+                ['view', ['fullscreen', 'codeview', 'help']],
+            ],
+        });
+    });
+</script>
+{% endblock %}
