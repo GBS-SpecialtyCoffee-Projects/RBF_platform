@@ -10,31 +10,21 @@
             <i class="fas fa-arrow-left me-1"></i> Back to Resources
         </a>
 
-        <h1 class="mt-4 mb-5" style="color: #303C50; font-weight: bold;">
+        <h1 class="mt-4 mb-3" style="color: #303C50; font-weight: bold;">
             {{ resource.title }}
         </h1>
 
-        {% for section in resource.sections %}
-        <div class="mb-4">
-            {% if section.heading %}
-            <h3 class="mb-3" style="color: #9DAD6F; font-weight: bold;">
-                {{ section.heading }}
-            </h3>
-            {% endif %}
+        <p class="text-muted mb-4">
+            {{ resource.updated_at|date:"F j, Y" }}
+        </p>
 
-            <p style="color: #333; font-size: 16px; line-height: 1.8; text-align: justify;">
-                {{ section.content|linebreaksbr }}
-            </p>
+        {% if resource.cover_image %}
+        <img src="{{ resource.cover_image.url }}" alt="{{ resource.title }}" class="img-fluid mb-4" style="max-height: 400px; width: 100%; object-fit: cover; border-radius: 8px;">
+        {% endif %}
 
-            {% if section.formulas %}
-            {% for formula in section.formulas %}
-            <div class="p-3 mb-3" style="background-color: #e9ecef; border-left: 4px solid #9DAD6F; border-radius: 4px;">
-                <code style="color: #303C50; font-size: 14px;">{{ formula }}</code>
-            </div>
-            {% endfor %}
-            {% endif %}
+        <div class="resource-body" style="color: #333; font-size: 16px; line-height: 1.8;">
+            {{ resource.body|safe }}
         </div>
-        {% endfor %}
     </div>
 </div>
 {% endblock %}

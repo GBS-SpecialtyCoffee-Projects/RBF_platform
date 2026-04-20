@@ -22,11 +22,16 @@
     </div>
 </div>
 <div class="container-fluid pb-2">
-    <nav class="navbar navbar-expand-lg navbar-dark ">
-        <div class="ms-4 d-flex">
+    <nav class="navbar navbar-dark d-flex justify-content-between align-items-center px-4">
+        <div class="d-flex align-items-center">
             <img src="{% static 'image/LogoDarkText.png' %}" width="150px" alt="">
-            <div class="me-4" id="google_translate_element"></div>
+            <div class="ms-4" id="google_translate_element"></div>
         </div>
+        <a href="{% url 'signout' %}"
+           class="btn btn-outline-dark fw-semibold"
+           onclick="return confirm('Sign out? Any unsaved changes on this page will be lost. You can come back later to finish.');">
+            <i class="fa-solid fa-right-from-bracket me-2"></i>Finish later — Sign out
+        </a>
     </nav>
     <hr>
 
@@ -92,10 +97,22 @@
                                     {{ form.job_title }}
                                     <label for="{{ form.job_title.id_for_label }}">{{ form.job_title.label }}</label>
                                 </div>
-                                <div class="form-floating form-group">
-                                    {{ form.phone_number }}
-                                    <label for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
-                                </div>  
+                                <div class="form-group">
+                                    <label for="country_code_search">Search Country Code</label>
+                                    <input type="text" id="country_code_search" class="form-control mb-2" placeholder="Type a country or code...">
+
+                                    <label for="country_code">Country Code</label>
+                                    <select id="country_code" name="country_code" class="form-select" size="6">
+                                        {% include 'partials/country_code_options.html' %}
+                                    </select>
+                                </div>
+
+                                <div class="form-group mt-2">
+                                    <label for="phone_number">Phone Number</label>
+                                    <input id="phone_number" name="phone_number" type="text" class="form-control" placeholder="e.g. 12345678" value="{{ form.phone_number.value|default_if_none:'' }}">
+                                </div>
+
+                                <input type="hidden" id="full_phone_number" name="full_phone_number">
                             <div class="row mt-3">
                                 <div class="col-12 d-flex align-items-center upload-btn" onclick="document.getElementById('id_profile_picture').click();">
                                     <div class="upload-btn-icon">
@@ -252,6 +269,48 @@
             label.textContent = 'Upload Profile Photo';
         }
     }
+
+    document.querySelector("form").addEventListener("submit", function(e) {
+        const code = document.getElementById("country_code").value;
+        const number = document.getElementById("phone_number").value;
+        document.getElementById("full_phone_number").value = code + number;
+    });
+
+    const searchInput = document.getElementById('country_code_search');
+    const selectBox = document.getElementById('country_code');
+
+    searchInput.addEventListener('focus', () => {
+        selectBox.style.display = 'block';
+        selectBox.size = 6;
+    });
+
+    searchInput.addEventListener('input', () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        let foundMatch = false;
+
+        Array.from(selectBox.options).forEach(option => {
+            const text = option.text.toLowerCase();
+            const visible = text.includes(searchTerm);
+            option.style.display = visible ? '' : 'none';
+            if (visible) foundMatch = true;
+        });
+
+        selectBox.size = foundMatch ? 6 : 0;
+    });
+
+    selectBox.addEventListener('change', () => {
+        const selectedOption = selectBox.options[selectBox.selectedIndex];
+        searchInput.value = selectedOption.text;
+        selectBox.style.display = 'none';
+        selectBox.size = 0;
+    });
+
+    document.addEventListener('click', e => {
+        if (!searchInput.contains(e.target) && !selectBox.contains(e.target)) {
+            selectBox.style.display = 'none';
+            selectBox.size = 0;
+        }
+    });
 
     // Display Django messages as toasts
     document.addEventListener('DOMContentLoaded', function() {
