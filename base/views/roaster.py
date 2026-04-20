@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm
+from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm, RoasterHeaderImageForm
 from base.models import Farmer, Language, MeetingRequest, RoasterPhoto,Roaster, FarmerPhoto, BuyerFunctions,Story,Season,ProcessingMethod,CupScore
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -10,6 +10,7 @@ import os
 logger = logging.getLogger(__name__)
 from django.urls import reverse
 from django.http import HttpResponseRedirect, JsonResponse
+from django.core.paginator import Paginator
 from django.db.models import Prefetch
 
 
@@ -116,6 +117,14 @@ def roaster_dashboard(request):
     })
 
 
+def update_roaster_header_image(request):
+    if request.method == 'POST':
+        roaster_profile = Roaster.objects.filter(user=request.user).first()
+        form = RoasterHeaderImageForm(request.POST, request.FILES, instance=roaster_profile)
+        if form.is_valid():
+            form.save()
+    return redirect('roaster_dashboard')
+
 
 def add_roaster(request):
     if request.method == 'POST':
@@ -209,8 +218,12 @@ def delete_roaster_photo(request, photo_id):
         return redirect('roaster_dashboard')
 
 def connections(request):
+    if request.user.group != 'roaster':
+        return redirect('farmer_dashboard')
+
     farmers = Farmer.objects.prefetch_related(
-        'cup_scores_received', 'processing_method', 'farmer_stories'
+        'cup_scores_received', 'processing_method', 'farmer_stories',
+        'main_roles',
     ).filter(farmer_stories__isnull=False).distinct()
     form = MeetingRequestForm()
     show_modal = False  # Initially, the modal should not be shown
@@ -218,18 +231,21 @@ def connections(request):
     # Get filter parameters from GET request
     annual_production = request.GET.get('annual_production')
     farm_size = request.GET.get('farm_size')
+    country = request.GET.get('country')
+    season = request.GET.get('season')
+    cup_score = request.GET.get('cup_score')
 
     # Filter the farmers queryset accordingly
     if annual_production:
         farmers = farmers.filter(annual_production__isnull=False)
-        if annual_production == '0.1-5':
-            farmers = farmers.filter(annual_production__gte=0.1, annual_production__lte=5)
-        elif annual_production == '5-20':
-            farmers = farmers.filter(annual_production__gte=5, annual_production__lte=20)
-        elif annual_production == '20-50':
-            farmers = farmers.filter(annual_production__gte=20, annual_production__lte=50)
-        elif annual_production == '50+':
-            farmers = farmers.filter(annual_production__gte=50)
+        if annual_production == '0-500':
+            farmers = farmers.filter(annual_production__gte=0, annual_production__lte=500)
+        elif annual_production == '500-2000':
+            farmers = farmers.filter(annual_production__gte=500, annual_production__lte=2000)
+        elif annual_production == '2000-5000':
+            farmers = farmers.filter(annual_production__gte=2000, annual_production__lte=5000)
+        elif annual_production == '5000+':
+            farmers = farmers.filter(annual_production__gte=5000)
 
     if farm_size:
         farmers = farmers.filter(farm_size__isnull=False)
@@ -241,6 +257,15 @@ def connections(request):
             farmers = farmers.filter(farm_size__gte=10, farm_size__lte=50)
         elif farm_size == '50+':
             farmers = farmers.filter(farm_size__gte=50)
+
+    if country:
+        farmers = farmers.filter(country=country)
+
+    if season:
+        farmers = farmers.filter(harvest_season__id=season)
+
+    if cup_score:
+        farmers = farmers.filter(cup_scores_received__id=cup_score)
 
     if request.method == 'POST':
         # Handle retrieval or deletion of meeting requests
@@ -299,8 +324,27 @@ def connections(request):
     active_meetings_count = meeting_requests.filter(status__in=['pending', 'accepted']).count()
     can_request_meetings = active_meetings_count < 5
 
+    # Available countries for filter dropdown
+    available_countries = (
+        Farmer.objects.filter(farmer_stories__isnull=False)
+        .values_list('country', flat=True)
+        .distinct()
+        .order_by('country')
+    )
+
+    # Pagination
+    paginator = Paginator(farmers, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Build filter query string (without 'page') for template links
+    filter_params = request.GET.copy()
+    filter_params.pop('page', None)
+    filter_query_string = filter_params.urlencode()
+
     return render(request, 'base/connections.html', {
-        'farmers': farmers,
+        'farmers': page_obj,
+        'page_obj': page_obj,
         'form': form,
         'show_modal': show_modal,
         'can_request_meetings': can_request_meetings,
@@ -308,6 +352,13 @@ def connections(request):
         'total_meetings_used': active_meetings_count,
         'selected_annual_production': annual_production,
         'selected_farm_size': farm_size,
+        'selected_country': country,
+        'selected_season': season,
+        'available_seasons': Season.objects.all(),
+        'selected_cup_score': cup_score,
+        'available_cup_scores': CupScore.objects.all(),
+        'available_countries': available_countries,
+        'filter_query_string': filter_query_string,
     })
 
 def farmer_view(request, user_id):

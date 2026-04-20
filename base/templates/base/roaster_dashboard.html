@@ -5,126 +5,129 @@
 {% include 'base/roaster_profile_navbar.html' %}
 
 <div class="container-fluid profile-bg pb-5">
+
+    <div class="container">
     <!-- First Container: Profile Header -->
-    <div class="d-flex justify-content-center pt-3">
-        <div class="shadow-sm rounded" style="background-color: white; width:95%">
-            <div>
-                <img
-                    width="100%"
-                    height="150px"
-                    src="{% static 'image/roaster_dashboard_bg.jpeg' %}"
-                    alt=""
-                    style="object-fit: cover; object-position: 50% 80%;">
+    <div class="d-flex justify-content-center pt-5">
+        <div class="shadow-sm rounded" style="background-color: white; width:100%">
+            <div class="position-relative">
+                {% if roaster_profile.header_image %}
+                    <img width="100%" height="150px" style="object-fit: cover;" src="{{ roaster_profile.header_image.url }}" alt="">
+                {% else %}
+                    <img width="100%" height="150px" style="object-fit: cover; object-position: 50% 80%;" src="{% static 'image/roaster_dashboard_bg.jpeg' %}" alt="">
+                {% endif %}
+                <button class="btn btn-sm btn-light position-absolute" style="top: 10px; right: 10px;" data-bs-toggle="modal" data-bs-target="#headerModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                        <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                    </svg>
+                    Edit Header
+                </button>
             </div>
-            <div>
+            <div style="overflow: visible;">
                 <div class="d-flex justify-content-center py-2">
-                    <div>
+                    <div class="position-relative z-2">
                          {% if roaster_profile.profile_picture %}
-                        <img class="rounded-circle border border-info" width="90px" height="90px" src="{{roaster_profile.profile_picture.url}}" alt="" style="margin-top: -30px;">
+                        <img class="rounded-circle border border-info" width="90px" height="90px" src="{{roaster_profile.profile_picture.url}}" alt="" style="margin-top: -45px; object-fit: cover;">
+                         {% else %}
+                        <img class="rounded-circle border border-info" width="90px" height="90px" src="{% static 'img/placeholder.png' %}" alt="" style="margin-top: -45px; object-fit: cover;">
                          {% endif %}
                     </div>
-                    <div class="ms-4 mt-2">
+                    <div class="ms-4 mt-4">
                         <div class="d-flex">
-                            <h3>{{roaster_profile.firstname}} {{roaster_profile.lastname}}</h3>
+                            <h3 class="mb-0">{{roaster_profile.firstname}} {{roaster_profile.lastname}}</h3>
                             <a href="#editProfileModal" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                                 <svg class="ms-2 mt-1" xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="green" class="bi bi-pencil-fill" viewBox="0 0 16 16">
                                     <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
                                 </svg>
                             </a>
                         </div>
-                        <span> {{roaster_profile.job_title}} </span>
-                       
+                        <span class="badge rounded-pill bg-info text-dark">Buyer</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    </div>
 
-    <!-- Second Container: About Section, Photos, and Placeholder -->
-    <div class="container-fluid pt-4 px-4">
+    <div class="container pt-2">
         <div class="row">
             <!-- About Section and Photos -->
             <div class="col-md-6 mt-3">
                 <div class="px-4 py-2 rounded shadow-sm" style="background-color: white; height: 100%;">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
                         <h2>{{roaster_profile.company_name}}</h2>
-                        <button class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#editdetailsModal" style="background-color: Blue; color: white;">Edit Profile</button>
+                        <button class="btn btn-sm btn-primary ms-2 mb-3" data-bs-toggle="modal" data-bs-target="#editdetailsModal">Edit Profile</button>
                     </div>
+                    <div class="gap-3">
+                        <span class="fw-light">Job Title: </span>
+                        <span>{{roaster_profile.job_title}}</span>
+                    </div>
+                     <hr>
                     <div class="gap-3">
                         <span class="fw-light">Location:  <span>{{roaster_profile.city}}, </span>
                         <span>{{roaster_profile.state}}, </span>
                         <span>{{roaster_profile.country}}</span> </span>
                     </div>
-                    <div class="mt-3  gap-3">
+                     <hr>
+                    <div class="mt-3 gap-3">
                         <span class="fw-light">Functions: </span>
                         {% for function in functions %}
                         <span>{{ function }},</span>
                         {% endfor %}
                     </div>
+                     <hr>
                     <div class="mt-3 gap-3">
                         <span class="fw-light">Average green coffee purchase volume:</span>
-                        <span>{{roaster_profile.purchase_volume}} </span>
+                        <span>{{roaster_profile.purchase_volume}} kg </span>
 
                     </div>
+                     <hr>
                     <div class="mt-3 gap-3">
-                        <span class="fw-light">Company Description:</span>
+                        <span class="fw-light">Company Description:</span><br>
                         <span>{{roaster_profile.company_description}}</span>
                     </div>
+                     <hr>
                     <div class="mt-3 gap-3">
-                        <span class="fw-light">Company approach:</span>
+                        <span class="fw-light">Company approach:</span><br>
                         <span>{{roaster_profile.company_approach}}</span>
 
                     </div>
+                     <hr>
                     <div class="mt-3 gap-3">
-                        <span class="fw-light">Goals with Coffee Circuit:</span>
-                        <span>{{roaster_profile.company_goals}}</span>
+                        <span class="fw-light">Goals with Coffee Circuit:</span><br>
+                        <span class="fw-semibold">{{roaster_profile.company_goals}}</span>
 
                     </div>
-                    <!-- <p>{{roaster_profile.bio}}</p> -->
-
-                    <div style="margin-top: 3rem; margin-bottom: 3rem;"></div> <!-- Adding more empty space -->
-
-
-                     <!-- Roaster Photos -->
                 </div>
             </div>
-<!-- Placeholder Container -->
+            <div class="col-md-6 mt-3">
 
-    <div class="col-md-6 mt-3">
-    <div class="px-4 py-2 rounded shadow-sm" style="background-color: white; height: 100%;">
-        <div class="d-flex justify-content-between align-items-center">
-            <h2>Connections</h2>
-<!--            <button class="btn btn-sm" style="background-color: blue; color: white;">Action</button>-->
-        <style>
-            .meeting-accepted {
-                background-color: #8A9A5B; /* Green */
-                color: black;
-            }
-            .meeting-pending {
-                background-color: #5078C5; /* Blue */
-                color: black;
-            }
-            .meeting-rejected {
-                background-color: #FCD6DB; /* Red */
-                color: black;
-            }
-            .meeting-container {
-                padding: 10px;
-                border-radius: 8px;
-                margin-bottom: 10px;
+                <div class="px-4 py-2 rounded shadow-sm" style="background-color: white; height: 100%;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2>Connections</h2>
+                    <style>
+                        .meeting-accepted {
+                            background-color: #8A9A5B; /* Green */
+                            color: black;
+                        }
+                        .meeting-pending {
+                            background-color: #5078C5; /* Blue */
+                            color: black;
+                        }
+                        .meeting-rejected {
+                            background-color: #FCD6DB; /* Red */
+                            color: black;
+                        }
+                        .meeting-container {
+                            padding: 10px;
+                            border-radius: 8px;
+                            margin-bottom: 10px;
+                        }
+                    </style>
+                    </div>
 
-            }
-
-            .custom-spacing {
-             margin-right: 100px;
-}
-
-        </style>
-        </div>
-        <ul class="list-unstyled">
-            {% for meeting_request in meeting_requests_as_requester %}
-                <li class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center p-2 rounded
+                    {% for meeting_request in meeting_requests_as_requester %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded
                         {% if meeting_request.status == 'accepted' %} meeting-accepted
                         {% elif meeting_request.status == 'pending' %} meeting-pending
                         {% elif meeting_request.status == 'rejected' %} meeting-rejected
@@ -138,20 +141,20 @@
                             <span>{{ meeting_request.proposed_time|time:"g:iA" }} est.</span>
                         </div>
                     </div>
-                </li>
-            {% endfor %}
-        </ul>
-        <!-- Display the number of meeting requests used -->
-        <div class="mt-3">
-            <p class="text-end">{{ total_meetings_used }}/5 Meeting Requests Used</p>
-        </div>
-    </div>
-</div>
+                    {% empty %}
+                        <p>No meeting requests available.</p>
+                    {% endfor %}
 
-
+                    <!-- Display the number of meeting requests used -->
+                    <div class="mt-3">
+                        <p class="text-end">{{ total_meetings_used }}/5 Meeting Requests Used</p>
+                    </div>
                 </div>
 
             </div>
+
+        </div>
+    </div>
 
 
 
@@ -251,48 +254,6 @@
         </div>
     </div>
 </div>
-    <!-- Edit Sourcing Modal -->
-<!-- <div class="modal fade" id="editSourcingModal" tabindex="-1" aria-labelledby="editSourcingModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editSourcingModalLabel">Edit Sourcing</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="post" action="{% url 'roaster_dashboard' %}">
-                {% csrf_token %}
-                <input type="hidden" name="roaster_sourcing_form" value="1">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="min_lot_size" class="form-label">Minimum Lot Size</label>
-                        {{ roaster_sourcing_form.min_lot_size.errors }}
-                        {{ roaster_sourcing_form.min_lot_size }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="annual_throughput" class="form-label">Annual Throughput</label>
-                        {{ roaster_sourcing_form.annual_throughput.errors }}
-                        {{ roaster_sourcing_form.annual_throughput }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="coffee_types_interested" class="form-label">Coffee Types Interested</label>
-                        {{ roaster_sourcing_form.coffee_types_interested.errors }}
-                        {{ roaster_sourcing_form.coffee_types_interested }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="origins_interested" class="form-label">Origins Interested</label>
-                        {{ roaster_sourcing_form.origins_interested.errors }}
-                        {{ roaster_sourcing_form.origins_interested }}
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div> -->
-
 <div class="modal fade" id="editdetailsModal" tabindex="-1" aria-labelledby="editDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -366,6 +327,30 @@
     </div>
 </div>
 
-
+<!-- Header Edit Modal -->
+<div class="modal fade" id="headerModal" tabindex="-1" aria-labelledby="headerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="headerModalLabel">Edit Profile Header</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'update_roaster_header_image' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="headerImageInput" class="form-label">Upload Header Image</label>
+                        <input type="file" class="form-control" id="headerImageInput" name="header_image" accept="image/*" required>
+                        <small class="text-muted">Recommended size: 1200x300px</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload Header</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

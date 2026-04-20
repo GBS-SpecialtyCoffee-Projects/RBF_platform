@@ -92,17 +92,10 @@
                                     {{ form.job_title }}
                                     <label for="{{ form.job_title.id_for_label }}">{{ form.job_title.label }}</label>
                                 </div>
-                                <!-- <div class="d-flex gap-3">
-                                    <div class="form-floating form-group">
-                                        {{ farmer_form.country_code }}
-                                        <label for="{{ farmer_form.country_code.id_for_label }}">{{ farmer_form.country_code.label }}</label>
-
-                                    </div>
-                                    <div class="form-floating form-group">
-                                        {{ farmer_form.phone_number }}
-                                        <label for="{{ farmer_form.phone_number.id_for_label }}">{{ farmer_form.phone_number.label }}</label>
-                                    </div>
-                                </div> -->  
+                                <div class="form-floating form-group">
+                                    {{ form.phone_number }}
+                                    <label for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
+                                </div>  
                             <div class="row mt-3">
                                 <div class="col-12 d-flex align-items-center upload-btn" onclick="document.getElementById('id_profile_picture').click();">
                                     <div class="upload-btn-icon">
@@ -164,28 +157,41 @@
                                 </div>
                                 {% endfor %}
                             </fieldset>
-                            <div>
-                                <label for="{{ form.coffee_purchase_involvement.id_for_label }}">{{ form.coffee_purchase_involvement.label }}</label>
+                            <div>  
+                                <label class="fw-bold" for="{{ form.coffee_purchase_involvement.id_for_label }}">{{ form.coffee_purchase_involvement.label }}</label>
                             </div>
                             <div class="form-floating form-group">
                                 {{form.coffee_purchase_involvement }}
                             </div>
-                            <div class="form-floating form-group">
-                                {{form.purchase_volume }}
-                                <label for="{{ form.purchase_volume.id_for_label }}">{{ form.purchase_volume.label }}</label>
+                            <div>
+                                <label class="fw-bold" for="{{ form.purchase_volume.id_for_label }}">{{ form.purchase_volume.label }}</label>
+                                <small class="form-text text-muted d-block mb-1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-info-circle me-1" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/></svg>Total annual volume in kilograms(kg). Numbers only.</small>
+                            </div>
 
+                            <div class="input-group">
+                                {{form.purchase_volume }}
+                                <span class="input-group-text fw-bold">kg</span>
+                            </div>
+                            <div>
+                                <label class="fw-bold" for="{{ form.company_description.id_for_label }}">{{ form.company_description.label }}</label>
                             </div>
                             <div class="form-floating form-group">
-                                {{ form.company_description }}
-                                <label for="{{ form.company_description.id_for_label }}">{{ form.company_description.label }}</label>
+                                 <small class="form-text text-muted d-block mb-1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-info-circle me-1" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/></svg>Share a brief profile including location, years in the market, and your overall mission.</small>
+                                {{ form.company_description }} 
+                            </div>
+                            <div>
+                                <label class="fw-bold" for="{{ form.company_approach.id_for_label }}">{{ form.company_approach.label }}</label>
                             </div>
                             <div class="form-floating form-group">
+                                <small class="form-text text-muted d-block mb-1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-info-circle me-1" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/></svg>Describe your purchasing philosophy(e.g., direct trade) and the type of the coffee/producers you seek.</small>
                                 {{ form.company_approach }}
-                                <label for="{{ form.company_approach.id_for_label }}">{{ form.company_approach.label }}</label>
+                                
+                            </div>
+                            <div>
+                                <label class="fw-bold" for="{{ form.company_goals.id_for_label }}">{{ form.company_goals.label }}</label>
                             </div>
                             <div class="form-floating form-group">
                                 {{ form.company_goals }}
-                                <label for="{{ form.company_goals.id_for_label }}">{{ form.company_goals.label }}</label>
                             </div>
                             <!-- <div class="form-floating form-group">
                                 {{ farmer_form.preferred_communication_method }}

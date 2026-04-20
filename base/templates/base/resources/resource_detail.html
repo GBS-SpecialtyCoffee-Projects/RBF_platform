@@ -1,0 +1,40 @@
+{% extends 'base/main.html' %}
+{% load static %}
+
+{% block content %}
+{% include "base/navbar_light.html" %}
+
+<div style="background-color: #f8f9fa; min-height: 100vh;">
+    <div class="container" style="padding-top: 120px; padding-bottom: 60px; padding-left: 80px; padding-right: 80px;">
+        <a href="{% url 'resource_list' %}" style="color: #9DAD6F; text-decoration: none;">
+            <i class="fas fa-arrow-left me-1"></i> Back to Resources
+        </a>
+
+        <h1 class="mt-4 mb-5" style="color: #303C50; font-weight: bold;">
+            {{ resource.title }}
+        </h1>
+
+        {% for section in resource.sections %}
+        <div class="mb-4">
+            {% if section.heading %}
+            <h3 class="mb-3" style="color: #9DAD6F; font-weight: bold;">
+                {{ section.heading }}
+            </h3>
+            {% endif %}
+
+            <p style="color: #333; font-size: 16px; line-height: 1.8; text-align: justify;">
+                {{ section.content|linebreaksbr }}
+            </p>
+
+            {% if section.formulas %}
+            {% for formula in section.formulas %}
+            <div class="p-3 mb-3" style="background-color: #e9ecef; border-left: 4px solid #9DAD6F; border-radius: 4px;">
+                <code style="color: #303C50; font-size: 14px;">{{ formula }}</code>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
