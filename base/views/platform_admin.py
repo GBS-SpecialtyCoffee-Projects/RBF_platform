@@ -114,7 +114,7 @@ def admin_roasters(request):
 @admin_required
 def admin_farmer_detail(request, user_id):
     farmer = get_object_or_404(Farmer, user__id=user_id)
-    photos = FarmerPhoto.objects.filter(user=farmer.user)
+    photos = FarmerPhoto.objects.filter(user=farmer.user).exclude(photo='').exclude(photo__isnull=True)
 
     if request.method == 'POST':
         if request.POST.get('form_type') == 'status':
