@@ -34,12 +34,14 @@ HARVEST_CHOICES = (
 
 
 class FarmerPhotoForm(forms.ModelForm):
+    photo = forms.ImageField(
+        required=True,
+        widget=forms.FileInput(attrs={'class': 'form-control'}),
+    )
+
     class Meta:
         model = FarmerPhoto
         fields = ['photo']
-        widgets = {
-            'photo': forms.FileInput(attrs={'class': 'form-control'}),
-        }
 
 
 class FarmerForm(forms.ModelForm):
