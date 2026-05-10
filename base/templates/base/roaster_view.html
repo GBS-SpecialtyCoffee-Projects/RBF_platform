@@ -1,0 +1,156 @@
+{% extends 'base/main.html' %}
+{% load static %}
+
+{% block content %}
+
+{% include 'base/profile_navbar.html' %}
+<div class="container-fluid profile-bg pb-5">
+
+    <div class="container">
+        <div class="d-flex justify-content-center pt-5">
+            <div class="shadow-sm rounded" style="background-color: white; width:100%">
+                <div class="position-relative">
+                    {% if roaster_profile.header_image %}
+                        <img width="100%" height="150px" style="object-fit: cover;" src="{{ roaster_profile.header_image.url }}" alt="">
+                    {% else %}
+                        <img width="100%" height="150px" style="object-fit: cover; object-position: 50% 80%;" src="{% static 'image/roaster_dashboard_bg.jpeg' %}" alt="">
+                    {% endif %}
+                </div>
+                <div>
+                    <div class="position-relative d-flex justify-content-center py-2">
+                        <div style="margin-top: -40px;">
+                            {% if roaster_profile.profile_picture %}
+                                <img class="rounded-circle border border-info" style="object-fit: cover;" width="110px" height="110px" src="{{ roaster_profile.profile_picture.url }}" alt="">
+                            {% else %}
+                                <img class="rounded-circle border border-info" style="object-fit: cover;" width="110px" height="110px" src="{% static 'img/placeholder.png' %}" alt="">
+                            {% endif %}
+                        </div>
+                        <div class="ms-2 mt-1">
+                            <div class="d-flex align-items-center">
+                                <h3 class="mb-0">{{ roaster_profile.firstname }} {{ roaster_profile.lastname }}</h3>
+                                <span class="badge rounded-pill bg-info text-dark ms-2">Buyer</span>
+                            </div>
+                            {% if not is_own_profile %}
+                            <a href="#requestMeetingModal" data-bs-toggle="modal" data-bs-target="#requestMeetingModal" class="btn btn-success mt-2">Connect</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container pt-2">
+        <div class="row">
+            <div class="col-md-8 mt-3">
+                <div class="px-4 py-2 rounded shadow-sm" style="background-color: white; height: 100%;">
+                    <div class="d-flex align-items-center">
+                        <h2>{{ roaster_profile.company_name }}</h2>
+                    </div>
+                    <div class="gap-3">
+                        <span class="fw-light">Job Title: </span>
+                        <span>{{ roaster_profile.job_title }}</span>
+                    </div>
+                    <hr>
+                    <div class="gap-3">
+                        <span class="fw-light">Location: </span>
+                        <span>{{ roaster_profile.city }}, {{ roaster_profile.state }}, {{ roaster_profile.country }}</span>
+                    </div>
+                    <hr>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Functions: </span>
+                        {% for function in functions %}
+                        <span>{{ function }}{% if not forloop.last %},{% endif %}</span>
+                        {% endfor %}
+                    </div>
+                    <hr>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Average green coffee purchase volume: </span>
+                        <span>{{ roaster_profile.purchase_volume }} kg</span>
+                    </div>
+                    <hr>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Company Description:</span><br>
+                        <span>{{ roaster_profile.company_description }}</span>
+                    </div>
+                    <hr>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Company Approach:</span><br>
+                        <span>{{ roaster_profile.company_approach }}</span>
+                    </div>
+                    <hr>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Goals with Coffee Circuit:</span><br>
+                        <span class="fw-semibold">{{ roaster_profile.company_goals }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mt-3">
+                <div class="px-4 py-2 rounded shadow-sm" style="background-color: white; height: 100%;">
+                    <h2>Gallery</h2>
+                    <div class="row">
+                        {% if roaster_photos %}
+                            {% for photo in roaster_photos %}
+                                {% if photo.photo %}
+                                <div class="col-sm-4 mb-3">
+                                    <img style="width: 110px; height: 110px; object-fit: cover; cursor: pointer;" class="rounded gallery-img" src="{{ photo.photo.url }}" alt="" data-bs-toggle="modal" data-bs-target="#imageModal" data-img-src="{{ photo.photo.url }}">
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">No photos yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-1 px-3 py-3 shadow-sm rounded" style="background-color: white;">
+            <div class="col-md-6 pt-2 mt-3">
+                <h2>Sourcing Preferences</h2>
+                <div class="py-2 rounded">
+                    <div class="gap-3">
+                        <p class="fw-bold mb-1">Minimum Lot Size</p>
+                        <span>{{ roaster_profile.min_lot_size }} kg</span>
+                    </div>
+                    <div class="mt-3 gap-3">
+                        <p class="fw-bold mb-1">Annual Throughput</p>
+                        <span>{{ roaster_profile.annual_throughput }} kg</span>
+                    </div>
+                    <div class="mt-3 gap-3">
+                        <p class="fw-bold mb-1">Origins of Interest</p>
+                        <span>{{ roaster_profile.origins_interested|default:"—" }}</span>
+                    </div>
+                    <div class="mt-3 gap-3">
+                        <p class="fw-bold mb-1">Coffee Types of Interest</p>
+                        <span>{{ roaster_profile.coffee_types_interested|default:"—" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 pt-2 mt-3">
+                <h2>Company Links</h2>
+                <div class="py-2 rounded">
+                    <div class="gap-3">
+                        <p class="fw-bold mb-1">Website</p>
+                        {% if roaster_profile.company_website %}
+                            <a href="{{ roaster_profile.company_website }}" target="_blank" rel="noopener">{{ roaster_profile.company_website }}</a>
+                        {% else %}
+                            <span>—</span>
+                        {% endif %}
+                    </div>
+                    <div class="mt-3 gap-3">
+                        <p class="fw-bold mb-1">Socials</p>
+                        {% if roaster_profile.company_socials %}
+                            <a href="{{ roaster_profile.company_socials }}" target="_blank" rel="noopener">{{ roaster_profile.company_socials }}</a>
+                        {% else %}
+                            <span>—</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm, RoasterHeaderImageForm
 from base.models import Farmer, Language, MeetingRequest, RoasterPhoto,Roaster, FarmerPhoto, BuyerFunctions,Story,Season,ProcessingMethod,CupScore
+from base.notifications import notify_meeting_event
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib import messages
@@ -172,6 +173,12 @@ def request_meeting(request, user_id):
     if active_meetings_count >= 5:
         return redirect('farmer_dashboard' if request.user.group == 'farmer' else 'roaster_dashboard')
 
+    if MeetingRequest.objects.filter(
+        requester=request.user, requestee_id=user_id, status__in=['pending', 'accepted']
+    ).exists():
+        messages.error(request, "You already have an active request with this user.")
+        return redirect('farmer_dashboard' if request.user.group == 'farmer' else 'roaster_dashboard')
+
     if request.method == 'POST':
         form = MeetingRequestForm(request.POST)
         if form.is_valid():
@@ -183,15 +190,16 @@ def request_meeting(request, user_id):
                 form.add_error(None, ValidationError('Meeting requests must be between a farmer and a roaster.'))
             else:
                 meeting_request.save()
+                notify_meeting_event(meeting_request, 'created')
                 messages.success(request, "Meeting request sent successfully!")
                 return redirect('farmer_dashboard' if request.user.group == 'farmer' else 'roaster_dashboard')
         else:
             messages.error(request, "Form is not valid. Please correct the errors.")
-            return render(request, 'base/connections.html', {'form': form, 'show_modal': True})
+            return render(request, 'base/connection_farmers.html', {'form': form, 'show_modal': True})
     else:
         form = MeetingRequestForm()
 
-    return render(request, 'base/connections.html', {'form': form, 'show_modal': False})
+    return render(request, 'base/connection_farmers.html', {'form': form, 'show_modal': False})
 
 
 def manage_meeting_request(request, meeting_id, action):
@@ -203,6 +211,7 @@ def manage_meeting_request(request, meeting_id, action):
         meeting_request.status = 'rejected'
 
     meeting_request.save()
+    notify_meeting_event(meeting_request, meeting_request.status)
     return redirect('farmer_dashboard' if request.user.group == 'farmer' else 'roaster_dashboard')
 
 def delete_roaster_photo(request, photo_id):
@@ -217,7 +226,7 @@ def delete_roaster_photo(request, photo_id):
 
         return redirect('roaster_dashboard')
 
-def connections(request):
+def connection_farmers(request):
     if request.user.group != 'roaster':
         return redirect('farmer_dashboard')
 
@@ -268,27 +277,6 @@ def connections(request):
         farmers = farmers.filter(cup_scores_received__id=cup_score)
 
     if request.method == 'POST':
-        # Handle retrieval or deletion of meeting requests
-        if 'retrieve_meeting_request' in request.POST:
-            meeting_request = get_object_or_404(MeetingRequest, id=request.POST.get('meeting_id'))
-            if meeting_request.status == 'pending':
-                meeting_request.delete()
-            # Redirect back to the same page with GET parameters
-            query_params = request.GET.urlencode()
-            redirect_url = reverse('connections')
-            if query_params:
-                redirect_url += '?' + query_params
-            return HttpResponseRedirect(redirect_url)
-        elif 'delete_meeting_request' in request.POST:
-            meeting_request = get_object_or_404(MeetingRequest, id=request.POST.get('meeting_id'))
-            if meeting_request.status == 'rejected':
-                meeting_request.delete()
-            query_params = request.GET.urlencode()
-            redirect_url = reverse('connections')
-            if query_params:
-                redirect_url += '?' + query_params
-            return HttpResponseRedirect(redirect_url)
-
         # Handle meeting request form submission
         form = MeetingRequestForm(request.POST)
         if form.is_valid():
@@ -300,17 +288,29 @@ def connections(request):
             if active_meetings_count >= 5:
                 messages.error(request, "You cannot have more than 5 pending or accepted meetings.")
                 query_params = request.GET.urlencode()
-                redirect_url = reverse('connections')
+                redirect_url = reverse('connection_farmers')
+                if query_params:
+                    redirect_url += '?' + query_params
+                return HttpResponseRedirect(redirect_url)
+
+            requestee_id = request.POST.get('user_id')
+            if MeetingRequest.objects.filter(
+                requester=request.user, requestee_id=requestee_id, status__in=['pending', 'accepted']
+            ).exists():
+                messages.error(request, "You already have an active request with this farmer.")
+                query_params = request.GET.urlencode()
+                redirect_url = reverse('connection_farmers')
                 if query_params:
                     redirect_url += '?' + query_params
                 return HttpResponseRedirect(redirect_url)
 
             meeting_request = form.save(commit=False)
             meeting_request.requester = request.user
-            meeting_request.requestee = get_object_or_404(User, id=request.POST.get('user_id'))
+            meeting_request.requestee = get_object_or_404(User, id=requestee_id)
             meeting_request.save()
+            notify_meeting_event(meeting_request, 'created')
             query_params = request.GET.urlencode()
-            redirect_url = reverse('connections')
+            redirect_url = reverse('connection_farmers')
             if query_params:
                 redirect_url += '?' + query_params
             return HttpResponseRedirect(redirect_url)
@@ -321,8 +321,10 @@ def connections(request):
     meeting_requests = MeetingRequest.objects.filter(requester=request.user)
 
     # Check the number of pending or accepted meetings
-    active_meetings_count = meeting_requests.filter(status__in=['pending', 'accepted']).count()
+    active_meeting_requests = meeting_requests.filter(status__in=['pending', 'accepted'])
+    active_meetings_count = active_meeting_requests.count()
     can_request_meetings = active_meetings_count < 5
+    active_request_user_ids = set(active_meeting_requests.values_list('requestee_id', flat=True))
 
     # Available countries for filter dropdown
     available_countries = (
@@ -342,12 +344,13 @@ def connections(request):
     filter_params.pop('page', None)
     filter_query_string = filter_params.urlencode()
 
-    return render(request, 'base/connections.html', {
+    return render(request, 'base/connection_farmers.html', {
         'farmers': page_obj,
         'page_obj': page_obj,
         'form': form,
         'show_modal': show_modal,
         'can_request_meetings': can_request_meetings,
+        'active_request_user_ids': active_request_user_ids,
         'meeting_requests': meeting_requests,
         'total_meetings_used': active_meetings_count,
         'selected_annual_production': annual_production,
@@ -361,7 +364,34 @@ def connections(request):
         'filter_query_string': filter_query_string,
     })
 
+
+def connections(request):
+    if request.method == 'POST':
+        if 'retrieve_meeting_request' in request.POST:
+            meeting_request = get_object_or_404(MeetingRequest, id=request.POST.get('meeting_id'))
+            if meeting_request.status == 'pending':
+                meeting_request.delete()
+        elif 'delete_meeting_request' in request.POST:
+            meeting_request = get_object_or_404(MeetingRequest, id=request.POST.get('meeting_id'))
+            if meeting_request.status == 'rejected':
+                meeting_request.delete()
+        if request.user.group == 'farmer':
+            return redirect('farmer_dashboard')
+        return redirect('connections')
+
+    if request.user.group != 'roaster':
+        return redirect('farmer_dashboard')
+
+    meeting_requests = MeetingRequest.objects.filter(requester=request.user).select_related('requestee')
+    return render(request, 'base/connections.html', {
+        'meeting_requests': meeting_requests,
+    })
+
+
 def farmer_view(request, user_id):
+    if request.user.group != 'roaster' and request.user.id != user_id:
+        return redirect('farmer_dashboard')
+
     farmer_profile = get_object_or_404(Farmer, user__id=user_id)
 
     try:

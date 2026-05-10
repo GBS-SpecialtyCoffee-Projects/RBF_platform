@@ -156,7 +156,47 @@
         </div>
     </div>
 
-
+    <div class="container pt-2">
+        <div class="row">
+            <div class="col-md-6 mt-3">
+                <div class="px-4 py-3 rounded shadow-sm" style="background-color: white;">
+                    <h2>Photos</h2>
+                    <div class="row mt-2">
+                        {% if roaster_photos %}
+                            {% for photo in roaster_photos %}
+                                {% if photo.photo %}
+                                <div class="col-sm-4 mb-3">
+                                    <img style="width: 150px; height: 150px; object-fit: cover;" class="rounded" src="{{ photo.photo.url }}" alt="">
+                                    <a href="{% url 'delete_roaster_photo' photo.id %}" class="btn btn-danger btn-sm mt-2">Delete</a>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% if roaster_photos.count < 6 %}
+                            <div class="col-sm-4 mb-3">
+                                <a href="#editPhotoModal" data-bs-toggle="modal" data-bs-target="#editPhotoModal">
+                                    <svg style="fill: green;" xmlns="http://www.w3.org/2000/svg" width="70" height="70" fill="currentColor" class="bi bi-plus-circle-fill mt-4" viewBox="0 0 16 16">
+                                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+                                    </svg>
+                                </a>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="col-sm-4 mb-3" style="height: 150px; width: 150px;">
+                                <img style="width: 100%;" class="rounded" src="{% static 'img/128px-Placeholder_view_vector.svg.png' %}" alt="">
+                            </div>
+                            <div class="col-sm-4 mb-3">
+                                <a href="#editPhotoModal" data-bs-toggle="modal" data-bs-target="#editPhotoModal">
+                                    <svg style="fill: green;" xmlns="http://www.w3.org/2000/svg" width="70" height="70" fill="currentColor" class="bi bi-plus-circle-fill mt-4" viewBox="0 0 16 16">
+                                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
 <!-- Edit Profile Modal -->

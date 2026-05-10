@@ -121,18 +121,10 @@
 
     $(document).ready(function () {
         setTimeout(function () {
-            let selectElement = $(".goog-te-combo");
-
-            // Restore language selection from localStorage
-            let storedLang = localStorage.getItem("selectedLanguage");
-            if (storedLang) {
-                selectElement.val(storedLang).trigger("change");
-            }
-
-            // Listen for language selection change
-            selectElement.on("change", function () {
-                let selectedLang = $(this).val();
-                localStorage.setItem("selectedLanguage", selectedLang);
+            // Session cookie (no expires/max-age): Google Translate reads `googtrans`
+            // on init and translates pre-paint, but the cookie dies on browser close.
+            $(".goog-te-combo").on("change", function () {
+                document.cookie = "googtrans=/en/" + $(this).val() + "; path=/";
             });
         }, 2000); // Delay to allow Google Translate to load
     });
