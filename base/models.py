@@ -261,7 +261,7 @@ class FarmerPhoto(models.Model):
 class RoasterPhoto(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='roaster_photos')
-    photo = models.ImageField(upload_to='roaster_photos/')
+    photo = models.ImageField(storage=PhotoStorage(), blank=True, null=True)
 
     def __str__(self):
         return f"Photo {self.id} for {self.user.username}"
@@ -281,7 +281,7 @@ class MeetingRequest(models.Model):
     id = models.AutoField(primary_key=True)
     requester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='meeting_requests_made')
     requestee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='meeting_requests_received')
-    proposed_date = models.DateTimeField()
+    proposed_date = models.DateTimeField(blank=True, null=True)
     message = models.TextField(blank=True, null=True)  # Add this line to include the message field
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)

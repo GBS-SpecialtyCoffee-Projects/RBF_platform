@@ -1,0 +1,16 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; color: #333;">
+    <p>Hi {{ requester_name }},</p>
+    {% if event == 'accepted' %}
+    <p><strong>{{ requestee_name }}</strong> accepted your meeting request.</p>
+    <p><strong>Proposed time:</strong> {{ meeting_request.proposed_date|date:"l, F j, Y \a\t g:i A" }} EST</p>
+    <p>Sign in to your dashboard to view the details and follow up.</p>
+    {% else %}
+    <p><strong>{{ requestee_name }}</strong> declined your meeting request.</p>
+    <p>Don't worry — you can still browse other connections from your dashboard.</p>
+    {% endif %}
+    <p>— Coffee Circuit</p>
+</body>
+</html>

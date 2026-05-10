@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck, FarmerHeaderImageForm
-from base.models import Roaster, MeetingRequest, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore
+from base.models import Roaster, RoasterPhoto, MeetingRequest, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore
 from django.contrib import messages
 from django.http import JsonResponse
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 def farmer_dashboard(request):
     if request.user.group != 'farmer':
@@ -153,6 +156,29 @@ def delete_farmer_photo(request, photo_id):
         photo.delete()
 
         return redirect('farmer_dashboard')
+
+def roaster_view(request, user_id):
+    if request.user.group != 'farmer' and request.user.id != user_id:
+        return redirect('roaster_dashboard')
+
+    roaster_profile = get_object_or_404(Roaster, user__id=user_id)
+
+    try:
+        roaster_photos = RoasterPhoto.objects.filter(user=roaster_profile.user)
+        roaster_functions = roaster_profile.company_functions.all()
+        is_own_profile = request.user == roaster_profile.user
+    except Exception:
+        logger.exception("Error loading roaster profile data for user_id=%s", user_id)
+        messages.error(request, "Something went wrong loading this profile. Please try again later.")
+        return redirect('farmer_dashboard')
+
+    return render(request, 'base/roaster_view.html', {
+        'roaster_profile': roaster_profile,
+        'roaster_photos': roaster_photos,
+        'functions': roaster_functions,
+        'is_own_profile': is_own_profile,
+    })
+
 
 def upload_success(request):
     return render(request, 'base/upload_success.html')
