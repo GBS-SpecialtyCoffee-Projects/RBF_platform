@@ -83,6 +83,19 @@ def farmer_dashboard(request):
         'languages': languages
     })
 
+def connections(request):
+    if request.user.group != 'farmer':
+        return redirect('roaster_dashboard')
+
+    meeting_requests = MeetingRequest.objects.filter(
+        requestee=request.user
+    ).select_related('requester')
+
+    return render(request, 'base/farmer_connections.html', {
+        'meeting_requests': meeting_requests,
+    })
+
+
 def edit_farmer_details(request):
     if request.user.group != 'farmer':
         return redirect('roaster_dashboard')
@@ -167,6 +180,13 @@ def roaster_view(request, user_id):
         roaster_photos = RoasterPhoto.objects.filter(user=roaster_profile.user)
         roaster_functions = roaster_profile.company_functions.all()
         is_own_profile = request.user == roaster_profile.user
+        pending_request = None
+        if not is_own_profile and request.user.group == 'farmer':
+            pending_request = MeetingRequest.objects.filter(
+                requester=roaster_profile.user,
+                requestee=request.user,
+                status='pending',
+            ).first()
     except Exception:
         logger.exception("Error loading roaster profile data for user_id=%s", user_id)
         messages.error(request, "Something went wrong loading this profile. Please try again later.")
@@ -177,6 +197,7 @@ def roaster_view(request, user_id):
         'roaster_photos': roaster_photos,
         'functions': roaster_functions,
         'is_own_profile': is_own_profile,
+        'pending_request': pending_request,
     })
 
 

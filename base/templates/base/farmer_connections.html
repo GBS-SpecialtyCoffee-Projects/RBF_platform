@@ -1,0 +1,48 @@
+{% extends 'base/main.html' %}
+{% load static %}
+
+{% block content %}
+{% include 'base/profile_navbar.html' %}
+
+<div class="container-fluid" style="background-color: #f8f9fa;">
+    <div class="container-fluid py-3" style="padding-left: 13rem; padding-right: 13rem;">
+
+        <h3 class="mb-3">My Connections</h3>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                {% for meeting in meeting_requests %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded
+                        {% if meeting.status == 'accepted' %} bg-success
+                        {% elif meeting.status == 'pending' %} bg-primary
+                        {% elif meeting.status == 'rejected' %} bg-danger
+                        {% endif %}">
+                        <div class="text-white">
+                            <a href="{% url 'roaster_profile' meeting.requester.id %}" class="text-white"><strong>{{ meeting.requester.roaster_profile.firstname|default:meeting.requester.email }}</strong></a>
+                            <span class="badge bg-light text-dark ms-2">{{ meeting.get_status_display }}</span>
+                            {% if meeting.proposed_date %}
+                                <div>{{ meeting.proposed_date|date:"n/j/Y" }}</div>
+                                <div>{{ meeting.proposed_date|time:"g:iA" }} est.</div>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex">
+                            {% if meeting.status == 'pending' %}
+                                <form method="post" action="{% url 'manage_meeting_request' meeting.id 'accept' %}" class="me-2">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                                </form>
+                                <form method="post" action="{% url 'manage_meeting_request' meeting.id 'reject' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted mb-0">You haven't received any connection requests yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

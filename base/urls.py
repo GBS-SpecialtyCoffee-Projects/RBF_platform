@@ -52,6 +52,7 @@ urlpatterns = [
     path('delete_roaster_photo/<int:photo_id>/', roaster.delete_roaster_photo, name='delete_roaster_photo'),
     path('connection_farmers/', roaster.connection_farmers, name='connection_farmers'),
     path('connections/', roaster.connections, name='connections'),
+    path('farmer_connections/', farmer.connections, name='farmer_connections'),
     path('farmer/<int:user_id>/', roaster.farmer_view, name='farmer_profile'),
     path('roaster/<int:user_id>/', farmer.roaster_view, name='roaster_profile'),
     path('delete_farmer_photo/<int:photo_id>/', farmer.delete_farmer_photo, name='delete_farmer_photo'),
