@@ -31,7 +31,20 @@
                                 <span class="badge rounded-pill bg-info text-dark ms-2">Buyer</span>
                             </div>
                             {% if not is_own_profile %}
-                            <a href="#requestMeetingModal" data-bs-toggle="modal" data-bs-target="#requestMeetingModal" class="btn btn-success mt-2">Connect</a>
+                                {% if pending_request %}
+                                    <div class="d-flex mt-2">
+                                        <form method="post" action="{% url 'manage_meeting_request' pending_request.id 'accept' %}" class="me-2">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-success">Accept</button>
+                                        </form>
+                                        <form method="post" action="{% url 'manage_meeting_request' pending_request.id 'reject' %}" onsubmit="return confirm('Reject this connection request?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Reject</button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <a href="#requestMeetingModal" data-bs-toggle="modal" data-bs-target="#requestMeetingModal" class="btn btn-success mt-2">Connect</a>
+                                {% endif %}
                             {% endif %}
                         </div>
                     </div>

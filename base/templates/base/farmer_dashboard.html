@@ -134,7 +134,7 @@
                     {% for meeting in pending_requests %}
                     <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded"  style="background-color: #fafafa;" >
                         <div>
-                            <strong>{{ meeting.requester.roaster_profile.firstname|default:meeting.requester.email }}</strong>
+                            <a href="{% url 'roaster_profile' meeting.requester.id %}"><strong>{{ meeting.requester.roaster_profile.firstname|default:meeting.requester.email }}</strong></a>
                             <div class="d-flex">
                                 <div>{{ meeting.proposed_date|date:"n/j/Y" }}</div>
                                 <div class="ms-2">{{ meeting.proposed_date|time:"g:iA" }} est.</div>

@@ -14,20 +14,21 @@ class StaticStorage(S3Boto3Storage):
     default_acl = 'public-read'
     file_overwrite = True
 
-class ProfileStorage(S3Boto3Storage,):
+class _MediaStorage(S3Boto3Storage):
+    default_acl = 'public-read'
+    file_overwrite = False
+
+class ProfileStorage(_MediaStorage):
     location = 'media/farmer_profiles'
-    default_acl = 'public-read'
-    file_overwrite = False
 
-class ProfileStorageRoaster(S3Boto3Storage,):
+class ProfileStorageRoaster(_MediaStorage):
     location = 'media/roaster_profiles'
-    default_acl = 'public-read'
-    file_overwrite = False
 
-class PhotoStorage(S3Boto3Storage,):
+class PhotoStorage(_MediaStorage):
     location = 'media/farmer_photos'
-    default_acl = 'public-read'
-    file_overwrite = False
+
+class PhotoStorageRoaster(_MediaStorage):
+    location = 'media/roaster_photos'
 
 
 
