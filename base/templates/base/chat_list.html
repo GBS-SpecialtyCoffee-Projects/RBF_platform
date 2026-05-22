@@ -1,0 +1,49 @@
+{% extends 'base/main.html' %}
+{% load static %}
+
+{% block content %}
+{% if request.user.group == 'farmer' %}
+    {% include 'base/profile_navbar.html' %}
+{% else %}
+    {% include 'base/roaster_profile_navbar.html' %}
+{% endif %}
+
+<div class="container-fluid" style="background-color: #f8f9fa;">
+    <div class="container-fluid py-3" style="padding-left: 13rem; padding-right: 13rem;">
+
+        <h3 class="mb-3">Messages</h3>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for item in items %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="{% url 'chat_thread' item.other.id %}" class="text-decoration-none text-dark flex-grow-1">
+                                <strong>
+                                    {% if item.other.group == 'farmer' %}
+                                        {{ item.other.farmer_profile.farm_name|default:item.other.email }}
+                                    {% else %}
+                                        {{ item.other.roaster_profile.firstname|default:item.other.email }}
+                                    {% endif %}
+                                </strong>
+                                {% if item.last_message %}
+                                    <div class="text-muted small text-truncate" style="max-width: 600px;">
+                                        {{ item.last_message.body }}
+                                    </div>
+                                {% else %}
+                                    <div class="text-muted small fst-italic">No messages yet</div>
+                                {% endif %}
+                            </a>
+                            {% if item.unread_count %}
+                                <span class="badge bg-primary rounded-pill ms-2">{{ item.unread_count }}</span>
+                            {% endif %}
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-muted">No conversations yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

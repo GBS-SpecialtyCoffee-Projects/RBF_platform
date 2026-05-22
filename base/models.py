@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django_countries import countries
-from rbf_platform.storage_backends import ProfileStorage,PhotoStorage, ProfileStorageRoaster,get_profile_storage
+from rbf_platform.storage_backends import ProfileStorage,PhotoStorage, ProfileStorageRoaster,get_profile_storage, get_roaster_profile_storage, get_photo_storage
 from PIL import Image
 from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
 
@@ -204,10 +204,10 @@ class Roaster(models.Model):
     annual_throughput = models.PositiveIntegerField(blank=False, null=True)
     origins_interested = models.TextField(blank=True, null=True)
     coffee_types_interested = models.TextField(blank=True, null=True)
-    profile_picture = models.ImageField(storage=ProfileStorageRoaster(),blank=True, null=True)
+    profile_picture = models.ImageField(storage=get_roaster_profile_storage,blank=True, null=True)
     country_code = models.CharField(max_length=255, blank=True, null=True, default='US (+1)')
     phone_number = models.CharField(max_length=255, blank=True, null=True)
-    header_image = models.ImageField(storage=ProfileStorageRoaster(), blank=True, null=True)
+    header_image = models.ImageField(storage=get_roaster_profile_storage, blank=True, null=True)
     is_details_filled = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
@@ -231,7 +231,7 @@ class Roaster(models.Model):
 class FarmerPhoto(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farmer_photos')
-    photo = models.ImageField(storage=PhotoStorage(), blank=True, null=True)
+    photo = models.ImageField(storage=get_photo_storage, blank=True, null=True)
     #order = models.PositiveIntegerField(null=True, blank=True)
 
     # def __str__(self):
@@ -261,7 +261,7 @@ class FarmerPhoto(models.Model):
 class RoasterPhoto(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='roaster_photos')
-    photo = models.ImageField(storage=PhotoStorage(), blank=True, null=True)
+    photo = models.ImageField(storage=get_photo_storage, blank=True, null=True)
 
     def __str__(self):
         return f"Photo {self.id} for {self.user.username}"
@@ -297,6 +297,40 @@ class MeetingRequest(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+
+class Conversation(models.Model):
+    roaster = models.ForeignKey(User, on_delete=models.CASCADE, related_name='conversations_as_roaster')
+    farmer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='conversations_as_farmer')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('roaster', 'farmer')
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"Conversation: {self.roaster.email} <-> {self.farmer.email}"
+
+    def other_participant(self, user):
+        return self.farmer if user == self.roaster else self.roaster
+
+    def has_participant(self, user):
+        return user == self.roaster or user == self.farmer
+
+
+class Message(models.Model):
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_messages_sent')
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Msg {self.id} from {self.sender.email} in conv {self.conversation_id}"
 
 
 class Language (models.Model):

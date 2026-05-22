@@ -42,18 +42,17 @@ if RENDER_EXTERNAL_HOSTNAME:
 # Application definition
 
 INSTALLED_APPS = [
-    
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "channels",
     "base.apps.BaseConfig",
     "storages",
     "phonenumber_field",
-    
-    
 ]
 
 MIDDLEWARE = [
@@ -89,6 +88,20 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "rbf_platform.wsgi.application"
+ASGI_APPLICATION = "rbf_platform.asgi.application"
+
+REDIS_URL = os.environ.get("REDIS_URL")
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {"hosts": [REDIS_URL]},
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"},
+    }
 
 #Storages 
 # DEFAULT_FILE_STORAGE = "storages.backends.s3.S3Storage"
@@ -170,9 +183,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-# USE_S3  = os.getenv('USE_S3') == 'TRUE'
+USE_S3  = os.getenv('USE_S3') == 'TRUE'
 
-USE_S3 = True
+# USE_S3 = False
 
 if USE_S3:
     # aws settings
@@ -200,6 +213,11 @@ if USE_S3:
     # STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles") 
 else:
     STATIC_URL = "/static/"
+    STATICFILES_DIRS = (
+        os.path.join(BASE_DIR, "static/"),
+    )
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # This production code might break development mode, so we check whether we're in DEBUG mode
 # if not DEBUG:

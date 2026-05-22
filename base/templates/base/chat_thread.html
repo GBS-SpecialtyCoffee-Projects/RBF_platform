@@ -1,0 +1,59 @@
+{% extends 'base/main.html' %}
+{% load static %}
+
+{% block content %}
+{% if request.user.group == 'farmer' %}
+    {% include 'base/profile_navbar.html' %}
+{% else %}
+    {% include 'base/roaster_profile_navbar.html' %}
+{% endif %}
+
+<div class="container-fluid" style="background-color: #f8f9fa;">
+    <div class="container py-3" style="max-width: 800px;">
+        <div class="d-flex align-items-center mb-3">
+            <a href="{% url 'chat_list' %}" class="btn btn-sm btn-outline-secondary me-3">&larr; Back</a>
+            <h4 class="mb-0">
+                {% if other.group == 'farmer' %}
+                    {{ other.farmer_profile.farm_name|default:other.email }}
+                {% else %}
+                    {{ other.roaster_profile.firstname|default:other.email }}
+                {% endif %}
+            </h4>
+        </div>
+
+        <div id="chat-messages" class="card shadow-sm p-3 mb-3"
+             style="height: 60vh; overflow-y: auto; background-color: #fff;"
+             data-current-user-id="{{ request.user.id }}">
+            {% for msg in messages_list %}
+                <div class="d-flex mb-2 {% if msg.sender_id == request.user.id %}justify-content-end{% else %}justify-content-start{% endif %}">
+                    <div class="px-3 py-2 rounded
+                        {% if msg.sender_id == request.user.id %}bg-primary text-white{% else %}bg-light text-dark{% endif %}"
+                         style="max-width: 75%; word-wrap: break-word;">
+                        {{ msg.body|linebreaksbr }}
+                        <div class="small {% if msg.sender_id == request.user.id %}text-white-50{% else %}text-muted{% endif %}"
+                             style="font-size: 0.7rem;">
+                            {{ msg.created_at|date:"M j, g:i A" }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <form id="chat-form" class="d-flex" autocomplete="off">
+            <input type="text" id="chat-input" class="form-control me-2" placeholder="Type a message..." maxlength="5000" required>
+            <button type="submit" class="btn btn-primary">Send</button>
+        </form>
+        <div id="chat-status" class="small text-muted mt-1"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.CHAT_CONFIG = {
+        conversationId: {{ conversation.id }},
+        currentUserId: {{ request.user.id }}
+    };
+</script>
+<script src="{% static 'js/chat.js' %}"></script>
+{% endblock %}

@@ -108,7 +108,7 @@
                     </div> -->
                     <div class="d-flex justify-content-between align-items-center">
                         <h2>Connections</h2>
-                        <a href="">View all</a>
+                        <a href="{% url 'farmer_connections' %}">View all</a>
             <!--            <button class="btn btn-sm" style="background-color: blue; color: white;">Action</button>-->
                     <style>
                         .meeting-accepted {
@@ -146,11 +146,13 @@
                         </div>
                         <div class="d-flex">
                             {% if meeting.status == 'pending' %}
-                                <form method="post" action="{% url 'connections' %}">
+                                <form method="post" action="{% url 'manage_connection_request' meeting.id 'accept' %}" class="me-2">
                                     {% csrf_token %}
-                                    <input type="hidden" name="meeting_id" value="{{ meeting.id }}">
-                                    <button type="submit" name="retrieve_meeting_request" class="btn btn-sm btn-success">Accept</button>
-                                    <button type="submit" name="retrieve_meeting_request" class="btn btn-sm btn-danger">Reject</button>
+                                    <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                                </form>
+                                <form method="post" action="{% url 'manage_connection_request' meeting.id 'reject' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger">Reject</button>
                                 </form>
                             {% elif meeting.status == 'rejected' %}
                                 <form method="post" action="{% url 'connections' %}">

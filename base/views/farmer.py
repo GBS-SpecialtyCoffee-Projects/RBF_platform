@@ -1,8 +1,11 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck, FarmerHeaderImageForm
 from base.models import Roaster, RoasterPhoto, MeetingRequest, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore
+from base.notifications import notify_meeting_event
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import HttpResponseBadRequest, HttpResponseNotAllowed, JsonResponse
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 import logging
 import os
 
@@ -94,6 +97,31 @@ def connections(request):
     return render(request, 'base/farmer_connections.html', {
         'meeting_requests': meeting_requests,
     })
+
+
+def manage_connection_request(request, meeting_id, action):
+    if request.user.group != 'farmer':
+        return redirect('roaster_dashboard')
+
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    if action not in ('accept', 'reject'):
+        return HttpResponseBadRequest('Invalid action')
+
+    meeting_request = get_object_or_404(
+        MeetingRequest, id=meeting_id, requestee=request.user
+    )
+    meeting_request.status = 'accepted' if action == 'accept' else 'rejected'
+    meeting_request.save()
+    notify_meeting_event(meeting_request, meeting_request.status)
+
+    referer = request.META.get('HTTP_REFERER', '')
+    if referer and url_has_allowed_host_and_scheme(
+        referer, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return redirect(referer)
+    return redirect('farmer_connections')
 
 
 def edit_farmer_details(request):
