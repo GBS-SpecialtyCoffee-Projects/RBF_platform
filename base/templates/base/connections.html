@@ -38,6 +38,8 @@
                                     <input type="hidden" name="meeting_id" value="{{ meeting.id }}">
                                     <button type="submit" name="delete_meeting_request" class="btn btn-sm btn-danger">Delete</button>
                                 </form>
+                            {% elif meeting.status == 'accepted' %}
+                                <a href="{% url 'chat_thread' meeting.requestee.id %}" class="btn btn-sm btn-light">Message</a>
                             {% endif %}
                         </div>
                     </div>

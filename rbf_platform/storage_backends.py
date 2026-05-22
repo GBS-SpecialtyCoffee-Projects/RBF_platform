@@ -9,6 +9,18 @@ def get_profile_storage():
         return ProfileStorage()
 
 
+def get_roaster_profile_storage():
+    if settings.DEBUG:
+        return FileSystemStorage()
+    return ProfileStorageRoaster()
+
+
+def get_photo_storage():
+    if settings.DEBUG:
+        return FileSystemStorage()
+    return PhotoStorage()
+
+
 class StaticStorage(S3Boto3Storage):
     location = 'static'
     default_acl = 'public-read'

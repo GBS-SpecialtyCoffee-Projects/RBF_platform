@@ -1,6 +1,6 @@
 # user_management/urls.py
 from django.urls import path
-from .views import account, farmer, roaster, platform_admin, resources
+from .views import account, farmer, roaster, platform_admin, resources, chat
 from django.conf import settings
 from django.conf.urls.static import static
 urlpatterns = [
@@ -53,6 +53,7 @@ urlpatterns = [
     path('connection_farmers/', roaster.connection_farmers, name='connection_farmers'),
     path('connections/', roaster.connections, name='connections'),
     path('farmer_connections/', farmer.connections, name='farmer_connections'),
+    path('farmer/manage_connection/<int:meeting_id>/<str:action>/', farmer.manage_connection_request, name='manage_connection_request'),
     path('farmer/<int:user_id>/', roaster.farmer_view, name='farmer_profile'),
     path('roaster/<int:user_id>/', farmer.roaster_view, name='roaster_profile'),
     path('delete_farmer_photo/<int:photo_id>/', farmer.delete_farmer_photo, name='delete_farmer_photo'),
@@ -64,6 +65,8 @@ urlpatterns = [
     path('roaster/switch_story/<int:language_id>/<int:user_id>/', roaster.switch_story, name='switch_story2'),
     path('resources/', resources.resource_list, name='resource_list'),
     path('resources/<slug:slug>/', resources.resource_detail, name='resource_detail'),
+    path('chat/', chat.chat_list, name='chat_list'),
+    path('chat/<int:user_id>/', chat.chat_thread, name='chat_thread'),
 
 ]
 
