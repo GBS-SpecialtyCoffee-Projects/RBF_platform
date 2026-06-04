@@ -14,9 +14,9 @@
             <a href="{% url 'chat_list' %}" class="btn btn-sm btn-outline-secondary me-3">&larr; Back</a>
             <h4 class="mb-0">
                 {% if other.group == 'farmer' %}
-                    {{ other.farmer_profile.farm_name|default:other.email }}
+                    {{ other.farmer_profile.firstname|default:other.email }} {{ other.farmer_profile.lastname }}
                 {% else %}
-                    {{ other.roaster_profile.firstname|default:other.email }}
+                    {{ other.roaster_profile.firstname|default:other.email }} {{ other.roaster_profile.lastname }}
                 {% endif %}
             </h4>
         </div>

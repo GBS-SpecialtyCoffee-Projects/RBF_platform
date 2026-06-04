@@ -458,6 +458,22 @@ class RoasterSourcingForm(forms.ModelForm):
             # 'origins_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Origins Interested'}),
         }
 
+class RoasterSourcingPrefsForm(forms.ModelForm):
+    class Meta:
+        model = Roaster
+        fields = [
+            'min_lot_size',
+            'annual_throughput',
+            'origins_interested',
+            'coffee_types_interested',
+        ]
+        widgets = {
+            'min_lot_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Minimum lot size (kg)'}),
+            'annual_throughput': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Annual throughput (kg)'}),
+            'origins_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Ethiopia, Colombia'}),
+            'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Washed, Natural'}),
+        }
+
 class FarmerStoryForm(forms.ModelForm):
     class Meta:
         model = Story

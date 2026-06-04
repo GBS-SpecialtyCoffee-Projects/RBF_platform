@@ -8,7 +8,8 @@ from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMultiAlternatives
+from django.utils.html import strip_tags
 from django.contrib.sites.shortcuts import get_current_site
 from .tokens import account_activation_token
 from base.models import User, Farmer, Roaster, Language
@@ -218,7 +219,10 @@ def verify_email(request):
                 'token': default_token_generator.make_token(user),
                 'protocol': 'https' if request.is_secure() else 'http'
             })
-            email_message = EmailMessage(mail_subject, message, to=[user.email])
+            email_message = EmailMultiAlternatives(
+                mail_subject, strip_tags(message), to=[user.email]
+            )
+            email_message.attach_alternative(message, "text/html")
             if email_message.send():
                 messages.success(request, 'Please check your email to reset your password.')
             else:

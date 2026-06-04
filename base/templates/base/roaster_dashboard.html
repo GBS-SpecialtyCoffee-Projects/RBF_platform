@@ -168,6 +168,33 @@
         <div class="row">
             <div class="col-md-6 mt-3">
                 <div class="px-4 py-3 rounded shadow-sm" style="background-color: white;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0">Sourcing Preferences</h2>
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#sourcingPrefsModal">Edit</button>
+                    </div>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Minimum lot size: </span>
+                        <span>{{ roaster_profile.min_lot_size|default:"—" }} kg</span>
+                    </div>
+                    <hr>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Annual throughput: </span>
+                        <span>{{ roaster_profile.annual_throughput|default:"—" }} kg</span>
+                    </div>
+                    <hr>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Origins of interest: </span>
+                        <span>{{ roaster_profile.origins_interested|default:"—" }}</span>
+                    </div>
+                    <hr>
+                    <div class="mt-3 gap-3">
+                        <span class="fw-light">Coffee types of interest: </span>
+                        <span>{{ roaster_profile.coffee_types_interested|default:"—" }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-3">
+                <div class="px-4 py-3 rounded shadow-sm" style="background-color: white;">
                     <h2>Photos</h2>
                     <div class="row mt-2">
                         {% if roaster_photos %}
@@ -219,6 +246,10 @@
                 {% csrf_token %}
                 <input type="hidden" name="roaster_info_form" value="1">  <!-- Hidden input to distinguish form submissions -->
                 <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" value="{{ roaster_profile.user.email }}" disabled>
+                    </div>
                     <div class="mb-3">
                         <label for="firstname" class="form-label">First Name</label>
                         {{ roaster_info_form.firstname.errors }}
@@ -401,4 +432,52 @@
     </div>
 </div>
 
+<!-- Sourcing Preferences Modal -->
+<div class="modal fade" id="sourcingPrefsModal" tabindex="-1" aria-labelledby="sourcingPrefsModalLabel" aria-hidden="true"
+     data-show-on-load="{{ show_sourcing_prefs_modal|yesno:'true,false' }}">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sourcingPrefsModalLabel">Tell us about your sourcing preferences</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'roaster_dashboard' %}">
+                {% csrf_token %}
+                <input type="hidden" name="roaster_sourcing_prefs_form" value="1">
+                <div class="modal-body">
+                    <p class="text-muted">Help producers find you by sharing what you source.</p>
+                    <div class="mb-3">
+                        <label for="min_lot_size" class="form-label">Minimum lot size (kg)</label>
+                        {{ roaster_sourcing_prefs_form.min_lot_size.errors }}
+                        {{ roaster_sourcing_prefs_form.min_lot_size }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="annual_throughput" class="form-label">Annual throughput (kg)</label>
+                        {{ roaster_sourcing_prefs_form.annual_throughput.errors }}
+                        {{ roaster_sourcing_prefs_form.annual_throughput }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="origins_interested" class="form-label">Origins of interest</label>
+                        {{ roaster_sourcing_prefs_form.origins_interested.errors }}
+                        {{ roaster_sourcing_prefs_form.origins_interested }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="coffee_types_interested" class="form-label">Coffee types of interest</label>
+                        {{ roaster_sourcing_prefs_form.coffee_types_interested.errors }}
+                        {{ roaster_sourcing_prefs_form.coffee_types_interested }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Maybe later</button>
+                    <button type="submit" class="btn btn-primary">Save preferences</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/roaster_dashboard.js' %}"></script>
 {% endblock %}

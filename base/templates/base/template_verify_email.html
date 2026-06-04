@@ -1,7 +1,15 @@
-{% autoescape off %}
-Hi {{ user.username }},
-
-Please click on the link below to confirm your registration:
-
-{{ protocol }}://{{ domain }}{% url 'activate' uidb64=uid token=token %}
-{% endautoescape %}
+{% extends 'base/emails/_base_email.html' %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hi {{ user.username }},</p>
+<p style="margin:0 0 24px 0;">Please click the button below to confirm your registration:</p>
+<p style="margin:0 0 24px 0;">
+    <a href="{{ protocol }}://{{ domain }}{% url 'activate' uidb64=uid token=token %}"
+       style="display:inline-block; background-color:#5C87B2; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:bold;">
+        Confirm registration
+    </a>
+</p>
+<p style="margin:0; font-size:13px; color:#8a9099;">
+    If the button doesn't work, copy and paste this link into your browser:<br>
+    {{ protocol }}://{{ domain }}{% url 'activate' uidb64=uid token=token %}
+</p>
+{% endblock %}
