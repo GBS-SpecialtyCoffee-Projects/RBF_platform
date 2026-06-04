@@ -29,7 +29,7 @@ def _send(user, subject, template, context):
         message = EmailMultiAlternatives(
             subject=subject,
             body=text_body,
-            from_email=settings.EMAIL_FROM,
+            from_email=settings.DEFAULT_FROM_EMAIL,
             to=[user.email],
         )
         message.attach_alternative(html_body, "text/html")

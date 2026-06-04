@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 import dj_database_url
 from dotenv import load_dotenv
+from email.utils import formataddr, parseaddr
 
 load_dotenv()
 
@@ -153,6 +154,14 @@ AUTH_PASSWORD_VALIDATORS = [
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_FROM = os.environ.get('EMAIL_FROM')
+EMAIL_FROM_NAME = os.environ.get('EMAIL_FROM_NAME', 'Coffee Circuit')
+# From header with a display name, e.g. "Coffee Circuit <hello@coffeecircuit.com>".
+# parseaddr strips any existing name in EMAIL_FROM so we never double-wrap it.
+if EMAIL_FROM:
+    _from_name, _from_addr = parseaddr(EMAIL_FROM)
+    DEFAULT_FROM_EMAIL = formataddr((EMAIL_FROM_NAME or _from_name, _from_addr))
+else:
+    DEFAULT_FROM_EMAIL = EMAIL_FROM
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))

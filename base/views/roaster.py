@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm, RoasterHeaderImageForm
+from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm, RoasterSourcingPrefsForm, RoasterHeaderImageForm
 from base.models import Farmer, Language, MeetingRequest, RoasterPhoto,Roaster, FarmerPhoto, BuyerFunctions,Story,Season,ProcessingMethod,CupScore
 from base.notifications import notify_meeting_event
 from django.contrib.auth import get_user_model
@@ -100,6 +100,17 @@ def roaster_dashboard(request):
     else:
         roaster_sourcing_form = RoasterSourcingForm(instance=roaster_profile)
 
+    # Handle the sourcing preferences form (lot size, throughput, origins, types)
+    if request.method == 'POST' and 'roaster_sourcing_prefs_form' in request.POST:
+        roaster_sourcing_prefs_form = RoasterSourcingPrefsForm(request.POST, instance=roaster_profile)
+        if roaster_sourcing_prefs_form.is_valid():
+            roaster_sourcing_prefs_form.save()
+            roaster_profile.sourcing_prefs_filled = True
+            roaster_profile.save(update_fields=['sourcing_prefs_filled'])
+            return redirect('roaster_dashboard')
+    else:
+        roaster_sourcing_prefs_form = RoasterSourcingPrefsForm(instance=roaster_profile)
+
     return render(request, 'base/roaster_dashboard.html', {
         'farmers': farmers,
         'meeting_requests_as_requestee': meeting_requests_as_requestee,
@@ -113,6 +124,8 @@ def roaster_dashboard(request):
         'roaster_bio_form': roaster_bio_form,
         'roaster_photo_form': roaster_photo_form,
         'roaster_sourcing_form': roaster_sourcing_form,
+        'roaster_sourcing_prefs_form': roaster_sourcing_prefs_form,
+        'show_sourcing_prefs_modal': bool(roaster_profile and not roaster_profile.sourcing_prefs_filled),
         'functions': roaster_functions
 
     })

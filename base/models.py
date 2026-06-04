@@ -209,6 +209,7 @@ class Roaster(models.Model):
     phone_number = models.CharField(max_length=255, blank=True, null=True)
     header_image = models.ImageField(storage=get_roaster_profile_storage, blank=True, null=True)
     is_details_filled = models.BooleanField(default=False)
+    sourcing_prefs_filled = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         try:

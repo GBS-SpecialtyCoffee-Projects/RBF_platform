@@ -1,14 +1,10 @@
-{% load static %}
-<!DOCTYPE html>
-<html>
-<body style="font-family: Arial, sans-serif; color: #333;">
-    <p>Hi {{ requestee_name }},</p>
-    <p><strong>{{ requester_name }}</strong> sent you a meeting request on Coffee Circuit.</p>
-    <p><strong>Proposed time:</strong> {{ meeting_request.proposed_date|date:"l, F j, Y \a\t g:i A" }} EST</p>
-    {% if meeting_request.message %}
-    <p><strong>Message:</strong><br>{{ meeting_request.message|linebreaksbr }}</p>
-    {% endif %}
-    <p>Sign in to your dashboard to accept or decline the request.</p>
-    <p>— Coffee Circuit</p>
-</body>
-</html>
+{% extends 'base/emails/_base_email.html' %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hi {{ requestee_name }},</p>
+<p style="margin:0 0 16px 0;"><strong>{{ requester_name }}</strong> sent you a meeting request on Coffee Circuit.</p>
+<p style="margin:0 0 16px 0;"><strong>Proposed time:</strong> {{ meeting_request.proposed_date|date:"l, F j, Y \a\t g:i A" }} EST</p>
+{% if meeting_request.message %}
+<p style="margin:0 0 16px 0;"><strong>Message:</strong><br>{{ meeting_request.message|linebreaksbr }}</p>
+{% endif %}
+<p style="margin:0;">Sign in to your dashboard to accept or decline the request.</p>
+{% endblock %}
