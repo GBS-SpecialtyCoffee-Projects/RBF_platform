@@ -8,7 +8,7 @@
     <div class="container-fluid py-3" style="padding-left: 13rem; padding-right: 13rem;">
 
         <!-- Filters at top -->
-        <form method="GET" action="{% url 'connection_farmers' %}">
+        <form method="GET" action="{% url 'connection_roasters' %}">
             <div class="row g-3 mb-3">
                 <div class="col-12 col-md-4">
                     <label for="country" class="form-label">Country</label>
@@ -20,65 +20,35 @@
                     </select>
                 </div>
                 <div class="col-12 col-md-4">
-                    <label for="season" class="form-label">Harvest Season</label>
-                    <select class="form-select" name="season" id="season">
-                        <option value="" {% if not selected_season %}selected{% endif %}>All</option>
-                        {% for s in available_seasons %}
-                            <option value="{{ s.id }}" {% if selected_season == s.id|stringformat:"d" %}selected{% endif %}>{{ s.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-12 col-md-4">
-                    <label for="cup_score" class="form-label">Cup Score</label>
-                    <select class="form-select" name="cup_score" id="cup_score">
-                        <option value="" {% if not selected_cup_score %}selected{% endif %}>All</option>
-                        {% for cs in available_cup_scores %}
-                            <option value="{{ cs.id }}" {% if selected_cup_score == cs.id|stringformat:"d" %}selected{% endif %}>{{ cs.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            <div class="row g-3 mb-3">
-                <div class="col-12 col-md-4">
-                    <label for="annual_production" class="form-label">Annual Production (kg)</label>
-                    <select class="form-select" name="annual_production" id="annual_production">
-                        <option value="" {% if not selected_annual_production %}selected{% endif %}>All</option>
-                        <option value="0-500" {% if selected_annual_production == '0-500' %}selected{% endif %}>0 – 500 kg</option>
-                        <option value="500-2000" {% if selected_annual_production == '500-2000' %}selected{% endif %}>500 – 2,000 kg</option>
-                        <option value="2000-5000" {% if selected_annual_production == '2000-5000' %}selected{% endif %}>2,000 – 5,000 kg</option>
-                        <option value="5000+" {% if selected_annual_production == '5000+' %}selected{% endif %}>5,000+ kg</option>
-                    </select>
-                </div>
-                <div class="col-12 col-md-4">
-                    <label for="farm_size" class="form-label">Farm Size (hectares)</label>
-                    <select class="form-select" name="farm_size" id="farm_size">
-                        <option value="" {% if not selected_farm_size %}selected{% endif %}>All</option>
-                        <option value="0.1-2" {% if selected_farm_size == '0.1-2' %}selected{% endif %}>0.1 – 2 hectares</option>
-                        <option value="2-10" {% if selected_farm_size == '2-10' %}selected{% endif %}>2 – 10 hectares</option>
-                        <option value="10-50" {% if selected_farm_size == '10-50' %}selected{% endif %}>10 – 50 hectares</option>
-                        <option value="50+" {% if selected_farm_size == '50+' %}selected{% endif %}>50+ hectares</option>
+                    <label for="purchase_volume" class="form-label">Purchase Volume (kg)</label>
+                    <select class="form-select" name="purchase_volume" id="purchase_volume">
+                        <option value="" {% if not selected_purchase_volume %}selected{% endif %}>All</option>
+                        <option value="0-500" {% if selected_purchase_volume == '0-500' %}selected{% endif %}>0 – 500 kg</option>
+                        <option value="500-2000" {% if selected_purchase_volume == '500-2000' %}selected{% endif %}>500 – 2,000 kg</option>
+                        <option value="2000-5000" {% if selected_purchase_volume == '2000-5000' %}selected{% endif %}>2,000 – 5,000 kg</option>
+                        <option value="5000+" {% if selected_purchase_volume == '5000+' %}selected{% endif %}>5,000+ kg</option>
                     </select>
                 </div>
                 <div class="col-12 col-md-4 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-primary">Apply Filters</button>
-                    <a href="{% url 'connection_farmers' %}" class="btn btn-outline-secondary">Clear</a>
+                    <a href="{% url 'connection_roasters' %}" class="btn btn-outline-secondary">Clear</a>
                 </div>
             </div>
         </form>
 
         <hr>
 
-        <h3 class="mb-3">Producer Profiles</h3>
+        <h3 class="mb-3">Roaster Profiles</h3>
 
-        <!-- Display Farmers -->
-        {% for farmer in farmers %}
+        <!-- Display Roasters -->
+        {% for roaster in roasters %}
             <div class="card mb-3">
                 <div class="card-body">
                     <!-- Top Section with action buttons at top right -->
                     <div class="row">
                         <div class="col-auto">
                             <img class="rounded-circle"
-                                src="{% if farmer.profile_picture %}{{ farmer.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}"
+                                src="{% if roaster.profile_picture %}{{ roaster.profile_picture.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}"
                                 alt=""
                                 width="100"
                                 height="100"
@@ -86,25 +56,25 @@
                         </div>
                         <div class="col">
                             <div class="d-flex justify-content-between align-items-start">
-                                <h4 class="mb-0">{{ farmer.firstname }} {{ farmer.lastname }}</h4>
+                                <h4 class="mb-0">{{ roaster.company_name }}</h4>
                                 <div class="d-flex gap-2 flex-shrink-0">
-                                    {% if farmer.user.id in connected_user_ids %}
+                                    {% if roaster.user.id in connected_user_ids %}
                                         <span class="badge bg-success align-self-center">Connected</span>
-                                    {% elif farmer.user.id in sent_user_ids %}
+                                    {% elif roaster.user.id in sent_user_ids %}
                                         <span class="badge bg-secondary align-self-center">Request sent</span>
-                                    {% elif farmer.user.id in incoming_user_ids %}
-                                        <a href="{% url 'connections' %}" class="btn btn-success btn-sm">Respond</a>
+                                    {% elif roaster.user.id in incoming_user_ids %}
+                                        <a href="{% url 'farmer_connections' %}" class="btn btn-success btn-sm">Respond</a>
                                     {% elif can_request_meetings %}
-                                        <a href="#" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#requestMeetingModal" data-user-id="{{ farmer.user.id }}">Connect</a>
+                                        <a href="#" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#requestMeetingModal" data-user-id="{{ roaster.user.id }}">Connect</a>
                                     {% else %}
                                         <span class="text-warning small">Max requests reached</span>
                                     {% endif %}
-                                    <a href="{% url 'farmer_profile' farmer.user.id %}" class="btn btn-outline-primary btn-sm">View Profile</a>
+                                    <a href="{% url 'roaster_profile' roaster.user.id %}" class="btn btn-outline-primary btn-sm">View Profile</a>
                                 </div>
                             </div>
-                            <p class="mb-2">{% for role in farmer.main_roles.all %}{{ role.name }}{% if not forloop.last %}, {% endif %}{% endfor %} of {{ farmer.farm_name }} located in {{ farmer.city }}, {{ farmer.country }}</p>
+                            <p class="mb-2">{{ roaster.firstname }} {{ roaster.lastname }}{% if roaster.job_title %}, {{ roaster.job_title }}{% endif %} located in {{ roaster.city }}, {{ roaster.country }}</p>
                             <p class="mb-0 notranslate" translate="no">
-                                {{farmer.farmer_stories.first.story_text|truncatewords:50}}
+                                {{ roaster.company_description|truncatewords:50 }}
                             </p>
                         </div>
                     </div>
@@ -112,40 +82,36 @@
                     <!-- Details Section -->
                     <div class="row">
                         <div class="col-6 col-sm-3">
-                            <p class="mb-1 fw-semibold">Farm Size:</p>
-                            <p class="mb-1"> {{ farmer.farm_size }} hectares</p>
+                            <p class="mb-1 fw-semibold">Purchase Volume:</p>
+                            <p class="mb-1">{% if roaster.purchase_volume %}{{ roaster.purchase_volume|floatformat:"-2" }} kilograms{% else %}<span class="text-muted">—</span>{% endif %}</p>
                         </div>
                         <div class="col-6 col-sm-3">
-                            <p class="mb-1 fw-semibold">Annual Yield:</p>
-                            <p class="mb-1"> {{ farmer.annual_production }} kilograms </p>
+                            <p class="mb-1 fw-semibold">Min Lot Size:</p>
+                            <p class="mb-1">{% if roaster.min_lot_size %}{{ roaster.min_lot_size }} kilograms{% else %}<span class="text-muted">—</span>{% endif %}</p>
                         </div>
                         <div class="col-6 col-sm-3">
-                            <p class="mb-1 fw-semibold">Cup Scores:</p>
-                            {% for cupscore in farmer.cup_scores_received.all %}
-                            <span class="mb-2 px-2 py-1 rounded me-1" style="background-color:rgb(180, 203, 207) ; color: black; "> {{ cupscore}}</span>
-                            {% endfor %}
+                            <p class="mb-1 fw-semibold">Annual Throughput:</p>
+                            <p class="mb-1">{% if roaster.annual_throughput %}{{ roaster.annual_throughput }} kilograms{% else %}<span class="text-muted">—</span>{% endif %}</p>
                         </div>
                         <div class="col-6 col-sm-3">
-                            <p class="mb-1 fw-semibold">Processing:</p>
-                            {% for method in farmer.processing_method.all %}
-                            <span class="mb-2 px-2 py-1 rounded me-1" style="background-color:rgb(180, 203, 207) ; color: black; "> {{ method}} </span>
-                            {% endfor %}
+                            <p class="mb-1 fw-semibold">Origins Interested:</p>
+                            <p class="mb-1">{% if roaster.origins_interested %}{{ roaster.origins_interested }}{% else %}<span class="text-muted">—</span>{% endif %}</p>
                         </div>
                     </div>
                 </div>
             </div>
         {% empty %}
             <div class="text-center py-5">
-                <p class="text-muted mb-1">No producers found{% if selected_country or selected_season or selected_cup_score or selected_annual_production or selected_farm_size %} matching your filters.{% else %}.{% endif %}</p>
-                {% if selected_country or selected_season or selected_cup_score or selected_annual_production or selected_farm_size %}
-                    <a href="{% url 'connection_farmers' %}" class="btn btn-outline-primary btn-sm">Clear filters</a>
+                <p class="text-muted mb-1">No roasters found{% if selected_country or selected_purchase_volume %} matching your filters.{% else %}.{% endif %}</p>
+                {% if selected_country or selected_purchase_volume %}
+                    <a href="{% url 'connection_roasters' %}" class="btn btn-outline-primary btn-sm">Clear filters</a>
                 {% endif %}
             </div>
         {% endfor %}
 
         <!-- Pagination -->
         {% if page_obj.has_other_pages %}
-        <nav aria-label="Producer list pagination" class="mt-4">
+        <nav aria-label="Roaster list pagination" class="mt-4">
             <ul class="pagination justify-content-center">
                 {% if page_obj.has_previous %}
                     <li class="page-item">
@@ -190,11 +156,6 @@
                 {% csrf_token %}
                 <input type="hidden" name="user_id" id="user_id_input">
                 <div class="modal-body">
-                    <!-- <div class="mb-3">
-                        <label for="proposed_date" class="form-label">Select Date and Time</label>
-                        {{ form.proposed_date.errors }}
-                        {{ form.proposed_date }}
-                    </div> -->
                     <div class="mb-3">
                         <label for="message" class="form-label">Message/Notes</label>
                         {{ form.message.errors }}

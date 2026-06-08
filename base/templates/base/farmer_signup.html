@@ -22,18 +22,7 @@
     </div>
 </div>
 <div class="container-fluid pb-2">
-    <nav class="navbar navbar-dark d-flex justify-content-between align-items-center px-4">
-        <div class="d-flex align-items-center">
-            <img src="{% static 'image/LogoDarkText.png' %}" width="150px" alt="">
-            <div class="ms-4" id="google_translate_element"></div>
-        </div>
-        <a href="{% url 'signout' %}"
-           class="btn btn-outline-dark fw-semibold"
-           onclick="return confirm('Sign out? Any unsaved changes on this page will be lost. You can come back later to finish.');">
-            <i class="fa-solid fa-right-from-bracket me-2"></i>Finish later — Sign out
-        </a>
-    </nav>
-    <hr>
+    {% include 'base/partials/navbar_signup.html' %}
 
     <div class="container mt-5 whole-cont">
 

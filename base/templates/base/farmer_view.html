@@ -3,7 +3,7 @@
 
 {% block content %}
 
-{% include 'base/roaster_profile_navbar.html' %}
+{% include 'base/partials/navbar_app.html' %}
 <div class="container-fluid profile-bg pb-5">
 
     <div class="container">
@@ -38,7 +38,26 @@
                         <h3 class="mb-0">{{farmer_profile.firstname}} {{farmer_profile.lastname}}</h3>
                         <span class="badge rounded-pill bg-success text-white ms-2">Producer</span>
                     </div>
-                    <button class="btn btn-success mt-2">Connect</button>
+                    {% if not is_own_profile %}
+                        {% if connection_status == 'connected' %}
+                            <span class="badge bg-success mt-2">Connected</span>
+                        {% elif connection_status == 'sent' %}
+                            <span class="badge bg-secondary mt-2">Request sent</span>
+                        {% elif connection_status == 'incoming' %}
+                            <div class="d-flex mt-2">
+                                <form method="post" action="{% url 'manage_meeting_request' active_request.id 'accept' %}" class="me-2">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success">Accept</button>
+                                </form>
+                                <form method="post" action="{% url 'manage_meeting_request' active_request.id 'reject' %}">
+                                    {% csrf_token %}
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Reject</button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <a href="#requestMeetingModal" data-bs-toggle="modal" data-bs-target="#requestMeetingModal" class="btn btn-success mt-2">Connect</a>
+                        {% endif %}
+                    {% endif %}
                 </div>
             
             
@@ -352,4 +371,8 @@
         });
     });
 </script>
+{% if not is_own_profile %}
+    {% include 'base/partials/request_meeting_modal.html' with target_user_id=farmer_profile.user.id %}
+    {% include 'base/partials/reject_confirm_modal.html' %}
+{% endif %}
 {% endblock %}
