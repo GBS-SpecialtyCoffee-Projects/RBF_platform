@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-{% include 'base/profile_navbar.html' %}
+{% include 'base/partials/navbar_app.html' %}
 
 <div class="container-fluid" style="background-color: #f8f9fa;">
     <div class="container-fluid py-3" style="padding-left: 13rem; padding-right: 13rem;">
@@ -33,7 +33,7 @@
                                 </form>
                                 <form method="post" action="{% url 'manage_connection_request' meeting.id 'reject' %}">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Reject</button>
                                 </form>
                             {% elif meeting.status == 'accepted' %}
                                 <a href="{% url 'chat_thread' meeting.requester.id %}" class="btn btn-sm btn-light">Message</a>
@@ -47,4 +47,6 @@
         </div>
     </div>
 </div>
+
+{% include 'base/partials/reject_confirm_modal.html' %}
 {% endblock %}

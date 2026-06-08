@@ -3,7 +3,7 @@
 
 {% block content %}
 
-{% include 'base/profile_navbar.html' %}
+{% include 'base/partials/navbar_app.html' %}
 <div class="container-fluid profile-bg pb-5">
 
     <div class="container">
@@ -152,7 +152,7 @@
                                 </form>
                                 <form method="post" action="{% url 'manage_connection_request' meeting.id 'reject' %}">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Reject</button>
                                 </form>
                             {% elif meeting.status == 'rejected' %}
                                 <form method="post" action="{% url 'connections' %}">
@@ -576,6 +576,8 @@
     </div>
   </div>
 </div>
+
+{% include 'base/partials/reject_confirm_modal.html' %}
 
 {% endblock %}
 

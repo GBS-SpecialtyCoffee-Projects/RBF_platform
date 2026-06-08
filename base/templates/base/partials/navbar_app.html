@@ -1,0 +1,64 @@
+{% load static %}
+{% comment %}
+Authenticated app navbar. Renders farmer or roaster links based on the
+logged-in user's group. Active link is derived from the resolved url name.
+{% endcomment %}
+{% with active=request.resolver_match.url_name %}
+<nav class="navbar navbar-expand-lg navbar-light" style="background-color: ghostwhite;">
+  <div class="container-fluid">
+    <div class="ms-5 d-flex">
+      <img src="{% static 'image/LogoDarkText.png' %}" width="100px" alt="Coffee Circuit">
+    </div>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#appNav" aria-controls="appNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end me-5" id="appNav">
+      <ul class="navbar-nav align-items-lg-center">
+        {% if request.user.group == 'roaster' %}
+          <li class="nav-item">
+            <a class="nav-link me-5 {% if active == 'roaster_dashboard' %}active fw-bold{% endif %}" href="{% url 'roaster_dashboard' %}">DASHBOARD</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link me-5 {% if active == 'connection_farmers' %}active fw-bold{% endif %}" href="{% url 'connection_farmers' %}">FARMERS</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link me-5 {% if active == 'connections' %}active fw-bold{% endif %}" href="{% url 'connections' %}">CONNECTIONS</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link me-5 {% if active == 'chat_list' or active == 'chat_thread' %}active fw-bold{% endif %}" href="{% url 'chat_list' %}">MESSAGES</a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link me-5 {% if active == 'farmer_dashboard' %}active fw-bold{% endif %}" href="{% url 'farmer_dashboard' %}">DASHBOARD</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link me-5 {% if active == 'farmer_orientation' %}active fw-bold{% endif %}" href="{% url 'farmer_orientation' %}">ONBOARDING
+              <span class="badge bg-danger">2+</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link me-5 {% if active == 'connection_roasters' %}active fw-bold{% endif %}" href="{% url 'connection_roasters' %}">ROASTERS</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link me-5 {% if active == 'farmer_connections' %}active fw-bold{% endif %}" href="{% url 'farmer_connections' %}">CONNECTIONS</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link me-5 {% if active == 'chat_list' or active == 'chat_thread' %}active fw-bold{% endif %}" href="{% url 'chat_list' %}">MESSAGES</a>
+          </li>
+        {% endif %}
+        <li class="nav-item me-5">
+          <div id="google_translate_element"></div>
+        </li>
+        <li class="nav-item">
+          <form method="post" action="{% url 'signout' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Sign Out</button>
+          </form>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<hr class="mt-0 mb-0">
+{% endwith %}

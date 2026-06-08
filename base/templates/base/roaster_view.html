@@ -3,7 +3,7 @@
 
 {% block content %}
 
-{% include 'base/profile_navbar.html' %}
+{% include 'base/partials/navbar_app.html' %}
 <div class="container-fluid profile-bg pb-5">
 
     <div class="container">
@@ -31,15 +31,19 @@
                                 <span class="badge rounded-pill bg-info text-dark ms-2">Buyer</span>
                             </div>
                             {% if not is_own_profile %}
-                                {% if pending_request %}
+                                {% if connection_status == 'connected' %}
+                                    <span class="badge bg-success mt-2">Connected</span>
+                                {% elif connection_status == 'sent' %}
+                                    <span class="badge bg-secondary mt-2">Request sent</span>
+                                {% elif connection_status == 'incoming' %}
                                     <div class="d-flex mt-2">
-                                        <form method="post" action="{% url 'manage_meeting_request' pending_request.id 'accept' %}" class="me-2">
+                                        <form method="post" action="{% url 'manage_meeting_request' active_request.id 'accept' %}" class="me-2">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-success">Accept</button>
                                         </form>
-                                        <form method="post" action="{% url 'manage_meeting_request' pending_request.id 'reject' %}" onsubmit="return confirm('Reject this connection request?');">
+                                        <form method="post" action="{% url 'manage_meeting_request' active_request.id 'reject' %}">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger">Reject</button>
+                                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Reject</button>
                                         </form>
                                     </div>
                                 {% else %}
@@ -79,7 +83,7 @@
                     <hr>
                     <div class="mt-3 gap-3">
                         <span class="fw-light">Average green coffee purchase volume: </span>
-                        <span>{{ roaster_profile.purchase_volume }} kg</span>
+                        <span>{% if roaster_profile.purchase_volume %}{{ roaster_profile.purchase_volume|floatformat:"-2" }} kg{% else %}<span class="text-muted">—</span>{% endif %}</span>
                     </div>
                     <hr>
                     <div class="mt-3 gap-3">
@@ -126,19 +130,19 @@
                 <div class="py-2 rounded">
                     <div class="gap-3">
                         <p class="fw-bold mb-1">Minimum Lot Size</p>
-                        <span>{{ roaster_profile.min_lot_size }} kg</span>
+                        <span>{% if roaster_profile.min_lot_size %}{{ roaster_profile.min_lot_size }} kg{% else %}<span class="text-muted">—</span>{% endif %}</span>
                     </div>
                     <div class="mt-3 gap-3">
                         <p class="fw-bold mb-1">Annual Throughput</p>
-                        <span>{{ roaster_profile.annual_throughput }} kg</span>
+                        <span>{% if roaster_profile.annual_throughput %}{{ roaster_profile.annual_throughput }} kg{% else %}<span class="text-muted">—</span>{% endif %}</span>
                     </div>
                     <div class="mt-3 gap-3">
                         <p class="fw-bold mb-1">Origins of Interest</p>
-                        <span>{{ roaster_profile.origins_interested|default:"—" }}</span>
+                        <span>{% if roaster_profile.origins_interested %}{{ roaster_profile.origins_interested }}{% else %}<span class="text-muted">—</span>{% endif %}</span>
                     </div>
                     <div class="mt-3 gap-3">
                         <p class="fw-bold mb-1">Coffee Types of Interest</p>
-                        <span>{{ roaster_profile.coffee_types_interested|default:"—" }}</span>
+                        <span>{% if roaster_profile.coffee_types_interested %}{{ roaster_profile.coffee_types_interested }}{% else %}<span class="text-muted">—</span>{% endif %}</span>
                     </div>
                 </div>
             </div>
@@ -168,4 +172,9 @@
         </div>
     </div>
 </div>
+
+{% include 'base/partials/reject_confirm_modal.html' %}
+{% if not is_own_profile %}
+    {% include 'base/partials/request_meeting_modal.html' with target_user_id=roaster_profile.user.id %}
+{% endif %}
 {% endblock %}

@@ -53,6 +53,7 @@ urlpatterns = [
     path('connection_farmers/', roaster.connection_farmers, name='connection_farmers'),
     path('connections/', roaster.connections, name='connections'),
     path('farmer_connections/', farmer.connections, name='farmer_connections'),
+    path('roasters/', farmer.connection_roasters, name='connection_roasters'),
     path('farmer/manage_connection/<int:meeting_id>/<str:action>/', farmer.manage_connection_request, name='manage_connection_request'),
     path('farmer/<int:user_id>/', roaster.farmer_view, name='farmer_profile'),
     path('roaster/<int:user_id>/', farmer.roaster_view, name='roaster_profile'),

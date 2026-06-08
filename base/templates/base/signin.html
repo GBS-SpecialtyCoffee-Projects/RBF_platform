@@ -45,6 +45,25 @@
 </div>
 </div>
 
+<!-- First-visit language prompt (custom overlay; avoids signin.css .modal collision) -->
+<div id="languagePromptModal" class="notranslate" translate="no"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:20000; background:rgba(0,0,0,0.5);">
+    <div style="background:#fff; color:#333; width:90%; max-width:360px; margin:12vh auto 0; border-radius:12px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin:0 0 8px;">
+            <h5 style="margin:0;">Choose your language</h5>
+            <button type="button" class="lang-close" aria-label="Close" style="background:none; border:none; font-size:24px; line-height:1; color:#888; cursor:pointer; padding:0;">&times;</button>
+        </div>
+        <p style="color:#6c757d; font-size:14px; margin:0 0 16px;">Select a language to translate the site. You can change it anytime from the menu.</p>
+        <div class="d-grid gap-2">
+            <button type="button" class="btn btn-outline-secondary lang-choice" data-lang="en">English</button>
+            <button type="button" class="btn btn-outline-secondary lang-choice" data-lang="es">Español</button>
+            <button type="button" class="btn btn-outline-secondary lang-choice" data-lang="fr">Français</button>
+            <button type="button" class="btn btn-outline-secondary lang-choice" data-lang="de">Deutsch</button>
+            <button type="button" class="btn btn-outline-secondary lang-choice" data-lang="it">Italiano</button>
+        </div>
+    </div>
+</div>
+
 
 
 <script>
@@ -112,4 +131,5 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script src="{% static 'js/signin.js' %}"></script>
+<script src="{% static 'js/language_prompt.js' %}"></script>
 {% endblock %}

@@ -10,9 +10,10 @@ import os
 
 logger = logging.getLogger(__name__)
 from django.urls import reverse
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseNotAllowed, HttpResponseRedirect, JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Prefetch
+from django.utils.http import url_has_allowed_host_and_scheme
 
 
 def roaster_dashboard(request):
@@ -178,41 +179,50 @@ User = get_user_model()
 
 
 def request_meeting(request, user_id):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
     # Check the number of pending or accepted meetings the user has requested
     active_meetings_count = MeetingRequest.objects.filter(
         requester=request.user, status__in=['pending', 'accepted']
     ).count()
 
     if active_meetings_count >= 5:
-        return redirect('farmer_dashboard' if request.user.group == 'farmer' else 'roaster_dashboard')
+        messages.error(request, "You cannot have more than 5 pending or accepted meetings.")
+        return _redirect_back(request)
 
     if MeetingRequest.objects.filter(
         requester=request.user, requestee_id=user_id, status__in=['pending', 'accepted']
     ).exists():
         messages.error(request, "You already have an active request with this user.")
-        return redirect('farmer_dashboard' if request.user.group == 'farmer' else 'roaster_dashboard')
+        return _redirect_back(request)
 
-    if request.method == 'POST':
-        form = MeetingRequestForm(request.POST)
-        if form.is_valid():
-            meeting_request = form.save(commit=False)
-            meeting_request.requester = request.user
-            meeting_request.requestee = get_object_or_404(User, id=user_id)
+    form = MeetingRequestForm(request.POST)
+    if form.is_valid():
+        meeting_request = form.save(commit=False)
+        meeting_request.requester = request.user
+        meeting_request.requestee = get_object_or_404(User, id=user_id)
 
-            if meeting_request.requester.group == meeting_request.requestee.group:
-                form.add_error(None, ValidationError('Meeting requests must be between a farmer and a roaster.'))
-            else:
-                meeting_request.save()
-                notify_meeting_event(meeting_request, 'created')
-                messages.success(request, "Meeting request sent successfully!")
-                return redirect('farmer_dashboard' if request.user.group == 'farmer' else 'roaster_dashboard')
+        if meeting_request.requester.group == meeting_request.requestee.group:
+            messages.error(request, "Meeting requests must be between a farmer and a roaster.")
         else:
-            messages.error(request, "Form is not valid. Please correct the errors.")
-            return render(request, 'base/connection_farmers.html', {'form': form, 'show_modal': True})
+            meeting_request.save()
+            notify_meeting_event(meeting_request, 'created')
+            messages.success(request, "Meeting request sent successfully!")
     else:
-        form = MeetingRequestForm()
+        messages.error(request, "Form is not valid. Please correct the errors.")
 
-    return render(request, 'base/connection_farmers.html', {'form': form, 'show_modal': False})
+    return _redirect_back(request)
+
+
+def _redirect_back(request):
+    """Redirect to the referring page if it is safe, else the dashboard."""
+    referer = request.META.get('HTTP_REFERER', '')
+    if referer and url_has_allowed_host_and_scheme(
+        referer, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return redirect(referer)
+    return redirect('farmer_dashboard' if request.user.group == 'farmer' else 'roaster_dashboard')
 
 
 def manage_meeting_request(request, meeting_id, action):
@@ -337,7 +347,7 @@ def connection_farmers(request):
     active_meeting_requests = meeting_requests.filter(status__in=['pending', 'accepted'])
     active_meetings_count = active_meeting_requests.count()
     can_request_meetings = active_meetings_count < 5
-    active_request_user_ids = set(active_meeting_requests.values_list('requestee_id', flat=True))
+    connected_user_ids, sent_user_ids, incoming_user_ids = MeetingRequest.status_sets_for(request.user)
 
     # Available countries for filter dropdown
     available_countries = (
@@ -363,7 +373,9 @@ def connection_farmers(request):
         'form': form,
         'show_modal': show_modal,
         'can_request_meetings': can_request_meetings,
-        'active_request_user_ids': active_request_user_ids,
+        'connected_user_ids': connected_user_ids,
+        'sent_user_ids': sent_user_ids,
+        'incoming_user_ids': incoming_user_ids,
         'meeting_requests': meeting_requests,
         'total_meetings_used': active_meetings_count,
         'selected_annual_production': annual_production,
@@ -415,6 +427,12 @@ def farmer_view(request, user_id):
         farmer_cup_scores = CupScore.objects.filter(farmer=farmer_profile)
         variety = farmer_profile.cultivars.split(',') if farmer_profile.cultivars else []
         is_own_profile = request.user == farmer_profile.user
+        active_request = None
+        connection_status = 'none'
+        if not is_own_profile:
+            active_request = MeetingRequest.active_between(request.user, farmer_profile.user)
+            if active_request:
+                connection_status = active_request.status_for(request.user)
     except Exception:
         logger.exception("Error loading farmer profile data for user_id=%s", user_id)
         messages.error(request, "Something went wrong loading this profile. Please try again later.")
@@ -429,6 +447,8 @@ def farmer_view(request, user_id):
         'cup_scores': farmer_cup_scores,
         'variety': variety,
         'is_own_profile': is_own_profile,
+        'connection_status': connection_status,
+        'active_request': active_request,
     })
 
 def switch_story(request,language_id,user_id):

@@ -299,6 +299,45 @@ class MeetingRequest(models.Model):
         self.clean()
         super().save(*args, **kwargs)
 
+    def status_for(self, viewer):
+        """Connection state of this request from `viewer`'s perspective."""
+        if self.status == 'accepted':
+            return 'connected'
+        if self.requester_id == viewer.id:
+            return 'sent'
+        return 'incoming'
+
+    @staticmethod
+    def active_between(user_a, user_b):
+        """Return the active (pending/accepted) request between two users, or None."""
+        return MeetingRequest.objects.filter(
+            models.Q(requester=user_a, requestee=user_b)
+            | models.Q(requester=user_b, requestee=user_a),
+            status__in=['pending', 'accepted'],
+        ).first()
+
+    @staticmethod
+    def status_sets_for(user):
+        """Return (connected, sent, incoming) sets of the other user's id for `user`."""
+        connected, sent, incoming = set(), set(), set()
+        rows = MeetingRequest.objects.filter(
+            models.Q(requester=user) | models.Q(requestee=user),
+            status__in=['pending', 'accepted'],
+        ).values('requester_id', 'requestee_id', 'status')
+        for row in rows:
+            other = (
+                row['requestee_id']
+                if row['requester_id'] == user.id
+                else row['requester_id']
+            )
+            if row['status'] == 'accepted':
+                connected.add(other)
+            elif row['requester_id'] == user.id:
+                sent.add(other)
+            else:
+                incoming.add(other)
+        return connected, sent, incoming
+
 
 class Conversation(models.Model):
     roaster = models.ForeignKey(User, on_delete=models.CASCADE, related_name='conversations_as_roaster')

@@ -1,15 +1,19 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck, FarmerHeaderImageForm
+from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck, FarmerHeaderImageForm, MeetingRequestForm
 from base.models import Roaster, RoasterPhoto, MeetingRequest, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore
 from base.notifications import notify_meeting_event
+from django.contrib.auth import get_user_model
 from django.contrib import messages
-from django.http import HttpResponseBadRequest, HttpResponseNotAllowed, JsonResponse
+from django.core.paginator import Paginator
+from django.http import HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 import logging
 import os
 
 logger = logging.getLogger(__name__)
+
+User = get_user_model()
 
 def farmer_dashboard(request):
     if request.user.group != 'farmer':
@@ -97,6 +101,113 @@ def connections(request):
     return render(request, 'base/farmer_connections.html', {
         'meeting_requests': meeting_requests,
     })
+
+
+def connection_roasters(request):
+    if request.user.group != 'farmer':
+        return redirect('roaster_dashboard')
+
+    roasters = Roaster.objects.filter(is_details_filled=True)
+    form = MeetingRequestForm()
+    show_modal = False
+
+    # Get filter parameters from GET request
+    country = request.GET.get('country')
+    purchase_volume = request.GET.get('purchase_volume')
+
+    # Filter the roasters queryset accordingly
+    if country:
+        roasters = roasters.filter(country=country)
+
+    if purchase_volume:
+        roasters = roasters.filter(purchase_volume__isnull=False)
+        if purchase_volume == '0-500':
+            roasters = roasters.filter(purchase_volume__gte=0, purchase_volume__lte=500)
+        elif purchase_volume == '500-2000':
+            roasters = roasters.filter(purchase_volume__gte=500, purchase_volume__lte=2000)
+        elif purchase_volume == '2000-5000':
+            roasters = roasters.filter(purchase_volume__gte=2000, purchase_volume__lte=5000)
+        elif purchase_volume == '5000+':
+            roasters = roasters.filter(purchase_volume__gte=5000)
+
+    if request.method == 'POST':
+        # Handle meeting request form submission
+        form = MeetingRequestForm(request.POST)
+        if form.is_valid():
+            active_meetings_count = MeetingRequest.objects.filter(
+                requester=request.user, status__in=['pending', 'accepted']
+            ).count()
+
+            if active_meetings_count >= 5:
+                messages.error(request, "You cannot have more than 5 pending or accepted meetings.")
+                return _redirect_with_filters(request)
+
+            requestee_id = request.POST.get('user_id')
+            if MeetingRequest.objects.filter(
+                requester=request.user, requestee_id=requestee_id, status__in=['pending', 'accepted']
+            ).exists():
+                messages.error(request, "You already have an active request with this roaster.")
+                return _redirect_with_filters(request)
+
+            meeting_request = form.save(commit=False)
+            meeting_request.requester = request.user
+            meeting_request.requestee = get_object_or_404(User, id=requestee_id)
+            meeting_request.save()
+            notify_meeting_event(meeting_request, 'created')
+            return _redirect_with_filters(request)
+        else:
+            show_modal = True  # Show modal if the form is invalid
+
+    # Fetch the user's meeting requests
+    meeting_requests = MeetingRequest.objects.filter(requester=request.user)
+    active_meeting_requests = meeting_requests.filter(status__in=['pending', 'accepted'])
+    active_meetings_count = active_meeting_requests.count()
+    can_request_meetings = active_meetings_count < 5
+    connected_user_ids, sent_user_ids, incoming_user_ids = MeetingRequest.status_sets_for(request.user)
+
+    # Available countries for filter dropdown
+    available_countries = (
+        Roaster.objects.filter(is_details_filled=True)
+        .values_list('country', flat=True)
+        .distinct()
+        .order_by('country')
+    )
+
+    # Pagination
+    paginator = Paginator(roasters, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Build filter query string (without 'page') for template links
+    filter_params = request.GET.copy()
+    filter_params.pop('page', None)
+    filter_query_string = filter_params.urlencode()
+
+    return render(request, 'base/connection_roasters.html', {
+        'roasters': page_obj,
+        'page_obj': page_obj,
+        'form': form,
+        'show_modal': show_modal,
+        'can_request_meetings': can_request_meetings,
+        'connected_user_ids': connected_user_ids,
+        'sent_user_ids': sent_user_ids,
+        'incoming_user_ids': incoming_user_ids,
+        'meeting_requests': meeting_requests,
+        'total_meetings_used': active_meetings_count,
+        'selected_country': country,
+        'selected_purchase_volume': purchase_volume,
+        'available_countries': available_countries,
+        'filter_query_string': filter_query_string,
+    })
+
+
+def _redirect_with_filters(request):
+    """Redirect back to the roaster search page preserving GET filters."""
+    redirect_url = reverse('connection_roasters')
+    query_params = request.GET.urlencode()
+    if query_params:
+        redirect_url += '?' + query_params
+    return HttpResponseRedirect(redirect_url)
 
 
 def manage_connection_request(request, meeting_id, action):
@@ -208,13 +319,12 @@ def roaster_view(request, user_id):
         roaster_photos = RoasterPhoto.objects.filter(user=roaster_profile.user)
         roaster_functions = roaster_profile.company_functions.all()
         is_own_profile = request.user == roaster_profile.user
-        pending_request = None
-        if not is_own_profile and request.user.group == 'farmer':
-            pending_request = MeetingRequest.objects.filter(
-                requester=roaster_profile.user,
-                requestee=request.user,
-                status='pending',
-            ).first()
+        active_request = None
+        connection_status = 'none'
+        if not is_own_profile:
+            active_request = MeetingRequest.active_between(request.user, roaster_profile.user)
+            if active_request:
+                connection_status = active_request.status_for(request.user)
     except Exception:
         logger.exception("Error loading roaster profile data for user_id=%s", user_id)
         messages.error(request, "Something went wrong loading this profile. Please try again later.")
@@ -225,7 +335,8 @@ def roaster_view(request, user_id):
         'roaster_photos': roaster_photos,
         'functions': roaster_functions,
         'is_own_profile': is_own_profile,
-        'pending_request': pending_request,
+        'connection_status': connection_status,
+        'active_request': active_request,
     })
 
 

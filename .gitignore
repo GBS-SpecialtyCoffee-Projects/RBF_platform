@@ -94,9 +94,8 @@ db.sqlite3
 .anima/workspace.json
 base/migrations/0001_initial.py
 rbf_platform/settings.py
-media/farmer_photos/
+media/
 img/
-static/image/
 CLAUDE.md
 figma/
 docs/
