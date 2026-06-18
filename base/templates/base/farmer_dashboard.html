@@ -131,40 +131,25 @@
                     </style>
                     </div>
 
-                    {% for meeting in pending_requests %}
+                    {% for conn in pending_requests %}
                     <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded"  style="background-color: #fafafa;" >
                         <div>
-                            <a href="{% url 'roaster_profile' meeting.requester.id %}"><strong>{{ meeting.requester.roaster_profile.firstname|default:meeting.requester.email }}</strong></a>
-                            <div class="d-flex">
-                                <div>{{ meeting.proposed_date|date:"n/j/Y" }}</div>
-                                <div class="ms-2">{{ meeting.proposed_date|time:"g:iA" }} est.</div>
-
-                            </div>
-                            <p class="con_msg">{{ meeting.message|truncatechars:50 }}</p>
-
-                            
+                            <a href="{% url 'roaster_profile' conn.other_user.id %}"><strong>{{ conn.other_user.roaster_profile.company_name|default:conn.other_user.email }}</strong></a>
+                            {% if conn.message %}<p class="con_msg">{{ conn.message|truncatechars:50 }}</p>{% endif %}
                         </div>
                         <div class="d-flex">
-                            {% if meeting.status == 'pending' %}
-                                <form method="post" action="{% url 'manage_connection_request' meeting.id 'accept' %}" class="me-2">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-success">Accept</button>
-                                </form>
-                                <form method="post" action="{% url 'manage_connection_request' meeting.id 'reject' %}">
-                                    {% csrf_token %}
-                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Reject</button>
-                                </form>
-                            {% elif meeting.status == 'rejected' %}
-                                <form method="post" action="{% url 'connections' %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="meeting_id" value="{{ meeting.id }}">
-                                    <button type="submit" name="delete_meeting_request" class="btn btn-sm btn-danger">Delete</button>
-                                </form>
-                            {% endif %}
+                            <form method="post" action="{% url 'manage_connection_request' conn.id 'accept' %}" class="me-2">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                            </form>
+                            <form method="post" action="{% url 'manage_connection_request' conn.id 'reject' %}">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Reject</button>
+                            </form>
                         </div>
                     </div>
                 {% empty %}
-                    <p>No meeting requests available.</p>
+                    <p>No pending requests.</p>
                 {% endfor %}
                 
                      

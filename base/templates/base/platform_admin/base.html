@@ -96,6 +96,12 @@
         <a href="{% url 'admin_resources' %}" class="nav-link {% block nav_resources %}{% endblock %}">
             <i class="fa-solid fa-book-open"></i> Resources
         </a>
+        <a href="{% url 'admin_forums' %}" class="nav-link {% block nav_forums %}{% endblock %}">
+            <i class="fa-solid fa-calendar-days"></i> Forums
+        </a>
+        <a href="{% url 'admin_meetings' %}" class="nav-link {% block nav_meetings %}{% endblock %}">
+            <i class="fa-solid fa-video"></i> Meetings
+        </a>
         {% if request.user.is_superuser %}
         <a href="{% url 'admin_users' %}" class="nav-link {% block nav_admins %}{% endblock %}">
             <i class="fa-solid fa-user-shield"></i> Admins

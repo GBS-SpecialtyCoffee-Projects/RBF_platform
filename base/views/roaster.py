@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm, RoasterSourcingPrefsForm, RoasterHeaderImageForm
-from base.models import Farmer, Language, MeetingRequest, RoasterPhoto,Roaster, FarmerPhoto, BuyerFunctions,Story,Season,ProcessingMethod,CupScore
-from base.notifications import notify_meeting_event
+from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm, RoasterHeaderImageForm
+from base.models import Farmer, Language, MeetingRequest, Connection, RoasterPhoto,Roaster, FarmerPhoto, BuyerFunctions,Story,Season,ProcessingMethod,CupScore,Forum
+from base.notifications import notify_meeting_event, notify_connection_event
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib import messages
@@ -10,9 +10,9 @@ import os
 
 logger = logging.getLogger(__name__)
 from django.urls import reverse
-from django.http import HttpResponseNotAllowed, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseNotAllowed, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.core.paginator import Paginator
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.utils.http import url_has_allowed_host_and_scheme
 
 
@@ -25,39 +25,13 @@ def roaster_dashboard(request):
         return redirect('roaster_details')
 
     farmers = Farmer.objects.all()
-    meeting_requests_as_requestee = MeetingRequest.objects.filter(requestee=request.user)
-    meeting_requests_as_requester = MeetingRequest.objects.filter(requester=request.user)
-    roaster_profile = Roaster.objects.filter(user=request.user).first()
     roaster_photos = RoasterPhoto.objects.filter(user=request.user)
     roaster_functions = BuyerFunctions.objects.filter(roaster=roaster_profile)
-    pending_meetings = MeetingRequest.objects.filter(
-        requester=request.user, status='accepted'
-    ) | MeetingRequest.objects.filter(
-        requestee=request.user, status='accepted'
-    )
-    total_meetings_used = 0
 
-    # Check the number of pending or accepted meetings
-    active_meetings_count = MeetingRequest.objects.filter(
-        requester=request.user, status__in=['pending', 'accepted']
-    ).count()
-
-    can_request_meetings = active_meetings_count < 5
-
-    for meeting_request in meeting_requests_as_requester:
-        # Example of extracting time if necessary
-        meeting_request.proposed_time = meeting_request.proposed_date.time() if hasattr(meeting_request.proposed_date,
-                                                                                                    'time') else None
-        # Calculate the number of used meeting requests
-        pending_meetings_count = MeetingRequest.objects.filter(
-            requester=request.user, status='pending'
-        ).count()
-
-        accepted_meetings_count = MeetingRequest.objects.filter(
-            requester=request.user, status='accepted'
-        ).count()
-
-        total_meetings_used = pending_meetings_count + accepted_meetings_count
+    # Connections (new model): split into incoming / sent / active.
+    incoming_connections, sent_connections, active_connections = connection_buckets(request.user)
+    can_request_meetings = Connection.pending_sent_count(request.user) < Connection.MAX_PENDING_SENT
+    total_meetings_used = len(sent_connections)
 
     if request.method == 'POST' and 'roaster_info_form' in request.POST:
         roaster_info_form = RoasterInfoForm(request.POST, request.FILES, instance=roaster_profile)
@@ -101,32 +75,19 @@ def roaster_dashboard(request):
     else:
         roaster_sourcing_form = RoasterSourcingForm(instance=roaster_profile)
 
-    # Handle the sourcing preferences form (lot size, throughput, origins, types)
-    if request.method == 'POST' and 'roaster_sourcing_prefs_form' in request.POST:
-        roaster_sourcing_prefs_form = RoasterSourcingPrefsForm(request.POST, instance=roaster_profile)
-        if roaster_sourcing_prefs_form.is_valid():
-            roaster_sourcing_prefs_form.save()
-            roaster_profile.sourcing_prefs_filled = True
-            roaster_profile.save(update_fields=['sourcing_prefs_filled'])
-            return redirect('roaster_dashboard')
-    else:
-        roaster_sourcing_prefs_form = RoasterSourcingPrefsForm(instance=roaster_profile)
-
     return render(request, 'base/roaster_dashboard.html', {
         'farmers': farmers,
-        'meeting_requests_as_requestee': meeting_requests_as_requestee,
-        'meeting_requests_as_requester': meeting_requests_as_requester,
+        'incoming_connections': incoming_connections,
+        'sent_connections': sent_connections,
+        'active_connections': active_connections,
         'roaster_profile': roaster_profile,
         'roaster_photos': roaster_photos,
-        'pending_meetings': pending_meetings,
         'can_request_meetings': can_request_meetings,
         'total_meetings_used': total_meetings_used,
         'roaster_info_form': roaster_info_form,
         'roaster_bio_form': roaster_bio_form,
         'roaster_photo_form': roaster_photo_form,
         'roaster_sourcing_form': roaster_sourcing_form,
-        'roaster_sourcing_prefs_form': roaster_sourcing_prefs_form,
-        'show_sourcing_prefs_modal': bool(roaster_profile and not roaster_profile.sourcing_prefs_filled),
         'functions': roaster_functions
 
     })
@@ -182,36 +143,8 @@ def request_meeting(request, user_id):
     if request.method != 'POST':
         return HttpResponseNotAllowed(['POST'])
 
-    # Check the number of pending or accepted meetings the user has requested
-    active_meetings_count = MeetingRequest.objects.filter(
-        requester=request.user, status__in=['pending', 'accepted']
-    ).count()
-
-    if active_meetings_count >= 5:
-        messages.error(request, "You cannot have more than 5 pending or accepted meetings.")
-        return _redirect_back(request)
-
-    if MeetingRequest.objects.filter(
-        requester=request.user, requestee_id=user_id, status__in=['pending', 'accepted']
-    ).exists():
-        messages.error(request, "You already have an active request with this user.")
-        return _redirect_back(request)
-
-    form = MeetingRequestForm(request.POST)
-    if form.is_valid():
-        meeting_request = form.save(commit=False)
-        meeting_request.requester = request.user
-        meeting_request.requestee = get_object_or_404(User, id=user_id)
-
-        if meeting_request.requester.group == meeting_request.requestee.group:
-            messages.error(request, "Meeting requests must be between a farmer and a roaster.")
-        else:
-            meeting_request.save()
-            notify_meeting_event(meeting_request, 'created')
-            messages.success(request, "Meeting request sent successfully!")
-    else:
-        messages.error(request, "Form is not valid. Please correct the errors.")
-
+    recipient = get_object_or_404(User, id=user_id)
+    create_connection_request(request, recipient)
     return _redirect_back(request)
 
 
@@ -225,17 +158,68 @@ def _redirect_back(request):
     return redirect('farmer_dashboard' if request.user.group == 'farmer' else 'roaster_dashboard')
 
 
+def create_connection_request(request, recipient):
+    """Shared validation + creation of an outgoing Connection request.
+
+    Sets a user-facing message and returns the Connection (or None on failure).
+    Used by both profile pages and the discovery listings.
+    """
+    if recipient.group == request.user.group:
+        messages.error(request, "Connections must be between a farmer and a roaster.")
+        return None
+
+    existing = Connection.between(request.user, recipient)
+    if existing and existing.status in Connection.LIVE_STATUSES:
+        messages.error(request, "You already have a pending request or connection with this user.")
+        return None
+
+    if Connection.pending_sent_count(request.user) >= Connection.MAX_PENDING_SENT:
+        messages.error(
+            request,
+            f"You have too many pending requests (max {Connection.MAX_PENDING_SENT}). "
+            "Wait for some to be answered before sending more.",
+        )
+        return None
+
+    conn = Connection.request(request.user, recipient, message=request.POST.get('message', ''))
+    notify_connection_event(conn, 'created')
+    messages.success(request, "Connection request sent!")
+    return conn
+
+
+def apply_connection_action(request, connection, action):
+    """Shared accept / reject / withdraw / disconnect handling with guards."""
+    user = request.user
+    is_recipient = connection.recipient.id == user.id
+    is_initiator = connection.initiator_id == user.id
+
+    if action == 'accept' and connection.status == Connection.PENDING and is_recipient:
+        connection.accept()
+        notify_connection_event(connection, 'accepted')
+        messages.success(request, "Connection accepted.")
+    elif action == 'reject' and connection.status == Connection.PENDING and is_recipient:
+        connection.decline()
+        notify_connection_event(connection, 'declined')
+        messages.info(request, "Request declined.")
+    elif action == 'withdraw' and connection.status == Connection.PENDING and is_initiator:
+        connection.withdraw()
+        messages.info(request, "Request withdrawn.")
+    elif action == 'disconnect' and connection.status == Connection.ACTIVE:
+        connection.disconnect()
+        messages.info(request, "Disconnected.")
+    else:
+        messages.error(request, "That action isn't available for this connection.")
+    return _redirect_back(request)
+
+
 def manage_meeting_request(request, meeting_id, action):
-    meeting_request = get_object_or_404(MeetingRequest, id=meeting_id, requestee=request.user)
-
-    if action == 'accept':
-        meeting_request.status = 'accepted'
-    elif action == 'reject':
-        meeting_request.status = 'rejected'
-
-    meeting_request.save()
-    notify_meeting_event(meeting_request, meeting_request.status)
-    return redirect('farmer_dashboard' if request.user.group == 'farmer' else 'roaster_dashboard')
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+    connection = get_object_or_404(
+        Connection,
+        Q(pk=meeting_id) & (Q(user_a=request.user) | Q(user_b=request.user)),
+    )
+    return apply_connection_action(request, connection, action)
 
 def delete_roaster_photo(request, photo_id):
     photo = get_object_or_404(RoasterPhoto, id=photo_id, user=request.user)
@@ -300,54 +284,19 @@ def connection_farmers(request):
         farmers = farmers.filter(cup_scores_received__id=cup_score)
 
     if request.method == 'POST':
-        # Handle meeting request form submission
-        form = MeetingRequestForm(request.POST)
-        if form.is_valid():
-            # Check the number of pending or accepted meetings before saving the new request
-            active_meetings_count = MeetingRequest.objects.filter(
-                requester=request.user, status__in=['pending', 'accepted']
-            ).count()
+        # Handle connection request submission
+        recipient = get_object_or_404(User, id=request.POST.get('user_id'))
+        create_connection_request(request, recipient)
+        query_params = request.GET.urlencode()
+        redirect_url = reverse('connection_farmers')
+        if query_params:
+            redirect_url += '?' + query_params
+        return HttpResponseRedirect(redirect_url)
 
-            if active_meetings_count >= 5:
-                messages.error(request, "You cannot have more than 5 pending or accepted meetings.")
-                query_params = request.GET.urlencode()
-                redirect_url = reverse('connection_farmers')
-                if query_params:
-                    redirect_url += '?' + query_params
-                return HttpResponseRedirect(redirect_url)
-
-            requestee_id = request.POST.get('user_id')
-            if MeetingRequest.objects.filter(
-                requester=request.user, requestee_id=requestee_id, status__in=['pending', 'accepted']
-            ).exists():
-                messages.error(request, "You already have an active request with this farmer.")
-                query_params = request.GET.urlencode()
-                redirect_url = reverse('connection_farmers')
-                if query_params:
-                    redirect_url += '?' + query_params
-                return HttpResponseRedirect(redirect_url)
-
-            meeting_request = form.save(commit=False)
-            meeting_request.requester = request.user
-            meeting_request.requestee = get_object_or_404(User, id=requestee_id)
-            meeting_request.save()
-            notify_meeting_event(meeting_request, 'created')
-            query_params = request.GET.urlencode()
-            redirect_url = reverse('connection_farmers')
-            if query_params:
-                redirect_url += '?' + query_params
-            return HttpResponseRedirect(redirect_url)
-        else:
-            show_modal = True  # Show modal if the form is invalid
-
-    # Fetch the user's meeting requests
-    meeting_requests = MeetingRequest.objects.filter(requester=request.user)
-
-    # Check the number of pending or accepted meetings
-    active_meeting_requests = meeting_requests.filter(status__in=['pending', 'accepted'])
-    active_meetings_count = active_meeting_requests.count()
-    can_request_meetings = active_meetings_count < 5
-    connected_user_ids, sent_user_ids, incoming_user_ids = MeetingRequest.status_sets_for(request.user)
+    # Connection state for the current user
+    can_request_meetings = Connection.pending_sent_count(request.user) < Connection.MAX_PENDING_SENT
+    connected_user_ids, sent_user_ids, incoming_user_ids = Connection.status_sets_for(request.user)
+    active_meetings_count = len(sent_user_ids)
 
     # Available countries for filter dropdown
     available_countries = (
@@ -376,7 +325,6 @@ def connection_farmers(request):
         'connected_user_ids': connected_user_ids,
         'sent_user_ids': sent_user_ids,
         'incoming_user_ids': incoming_user_ids,
-        'meeting_requests': meeting_requests,
         'total_meetings_used': active_meetings_count,
         'selected_annual_production': annual_production,
         'selected_farm_size': farm_size,
@@ -390,26 +338,39 @@ def connection_farmers(request):
     })
 
 
-def connections(request):
-    if request.method == 'POST':
-        if 'retrieve_meeting_request' in request.POST:
-            meeting_request = get_object_or_404(MeetingRequest, id=request.POST.get('meeting_id'))
-            if meeting_request.status == 'pending':
-                meeting_request.delete()
-        elif 'delete_meeting_request' in request.POST:
-            meeting_request = get_object_or_404(MeetingRequest, id=request.POST.get('meeting_id'))
-            if meeting_request.status == 'rejected':
-                meeting_request.delete()
-        if request.user.group == 'farmer':
-            return redirect('farmer_dashboard')
-        return redirect('connections')
+def connection_buckets(user):
+    """Split a user's connections into (incoming, sent, active) lists.
 
+    Each connection is annotated with ``other_user`` for convenient templating.
+    """
+    qs = (
+        Connection.objects
+        .filter(Q(user_a=user) | Q(user_b=user))
+        .select_related('user_a', 'user_b', 'initiator')
+    )
+    incoming, sent, active = [], [], []
+    for conn in qs:
+        conn.other_user = conn.other(user)
+        if conn.status == Connection.ACTIVE:
+            active.append(conn)
+        elif conn.status == Connection.PENDING:
+            if conn.initiator_id == user.id:
+                sent.append(conn)
+            else:
+                incoming.append(conn)
+    return incoming, sent, active
+
+
+def connections(request):
     if request.user.group != 'roaster':
         return redirect('farmer_dashboard')
 
-    meeting_requests = MeetingRequest.objects.filter(requester=request.user).select_related('requestee')
+    incoming, sent, active = connection_buckets(request.user)
     return render(request, 'base/connections.html', {
-        'meeting_requests': meeting_requests,
+        'incoming_connections': incoming,
+        'sent_connections': sent,
+        'active_connections': active,
+        'upcoming_forum': Forum.next_upcoming(),
     })
 
 
@@ -430,7 +391,7 @@ def farmer_view(request, user_id):
         active_request = None
         connection_status = 'none'
         if not is_own_profile:
-            active_request = MeetingRequest.active_between(request.user, farmer_profile.user)
+            active_request = Connection.between(request.user, farmer_profile.user)
             if active_request:
                 connection_status = active_request.status_for(request.user)
     except Exception:

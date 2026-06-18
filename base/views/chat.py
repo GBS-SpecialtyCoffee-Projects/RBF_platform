@@ -3,13 +3,12 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
-from base.models import Conversation, MeetingRequest, User
+from base.models import Conversation, Connection, Forum, ForumMeeting, User
 
 
 def _accepted_connection_exists(roaster, farmer):
-    return MeetingRequest.objects.filter(
-        requester=roaster, requestee=farmer, status='accepted'
-    ).exists()
+    conn = Connection.between(roaster, farmer)
+    return conn is not None and conn.status == Connection.ACTIVE
 
 
 def _resolve_pair(current_user, other_user):
@@ -61,8 +60,16 @@ def chat_thread(request, user_id):
     )
 
     messages_qs = conversation.messages.select_related('sender').all()
+    meetings = ForumMeeting.for_display(conversation)
+    proposable_windows = ForumMeeting.proposable_windows(conversation)
+    forum_to_join = None
+    if not proposable_windows:
+        forum_to_join = Forum.soonest_to_join(request.user, other)
     return render(request, 'base/chat_thread.html', {
         'conversation': conversation,
         'other': other,
         'messages_list': messages_qs,
+        'meetings': meetings,
+        'proposable_windows': proposable_windows,
+        'forum_to_join': forum_to_join,
     })

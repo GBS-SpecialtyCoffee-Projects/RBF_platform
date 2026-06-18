@@ -1,0 +1,11 @@
+{% extends 'base/emails/_base_email.html' %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hi {{ initiator_name }},</p>
+{% if event == 'accepted' %}
+<p style="margin:0 0 16px 0;"><strong>{{ recipient_name }}</strong> accepted your connection request. You're now connected.</p>
+<p style="margin:0;">Sign in to your dashboard to message them and follow up.</p>
+{% else %}
+<p style="margin:0 0 16px 0;"><strong>{{ recipient_name }}</strong> declined your connection request.</p>
+<p style="margin:0;">Don't worry — you can still browse and connect with others from your dashboard.</p>
+{% endif %}
+{% endblock %}

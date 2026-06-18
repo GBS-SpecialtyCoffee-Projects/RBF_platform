@@ -7,41 +7,88 @@
 <div class="container-fluid" style="background-color: #f8f9fa;">
     <div class="container-fluid py-3" style="padding-left: 13rem; padding-right: 13rem;">
 
+        {% if upcoming_forum %}
+        <a href="{% url 'forum_detail' upcoming_forum.id %}" class="text-decoration-none">
+            <div class="alert alert-primary d-flex justify-content-between align-items-center" role="alert">
+                <div>
+                    <i class="fa-regular fa-calendar-check me-2"></i>
+                    <strong>{{ upcoming_forum.title }}</strong> is coming up{% if upcoming_forum.next_window_start %} on {{ upcoming_forum.next_window_start|date:"M d, Y" }}{% endif %}.
+                </div>
+                <span class="btn btn-sm btn-primary flex-shrink-0">View forum</span>
+            </div>
+        </a>
+        {% endif %}
+
         <h3 class="mb-3">My Connections</h3>
 
-        <div class="card shadow-sm">
+        <!-- Incoming requests -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-semibold">Requests to you ({{ incoming_connections|length }})</div>
             <div class="card-body">
-                {% for meeting in meeting_requests %}
-                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded
-                        {% if meeting.status == 'accepted' %} bg-success
-                        {% elif meeting.status == 'pending' %} bg-primary
-                        {% elif meeting.status == 'rejected' %} bg-danger
-                        {% endif %}">
-                        <div class="text-white">
-                            <a href="{% url 'roaster_profile' meeting.requester.id %}" class="text-white"><strong>{{ meeting.requester.roaster_profile.firstname|default:meeting.requester.email }}</strong></a>
-                            <span class="badge bg-light text-dark ms-2">{{ meeting.get_status_display }}</span>
-                            {% if meeting.proposed_date %}
-                                <div>{{ meeting.proposed_date|date:"n/j/Y" }}</div>
-                                <div>{{ meeting.proposed_date|time:"g:iA" }} est.</div>
-                            {% endif %}
+                {% for conn in incoming_connections %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded border">
+                        <div>
+                            <a href="{% url 'roaster_profile' conn.other_user.id %}"><strong>{{ conn.other_user.roaster_profile.company_name|default:conn.other_user.email }}</strong></a>
+                            {% if conn.message %}<div class="text-muted small">{{ conn.message|truncatewords:30 }}</div>{% endif %}
                         </div>
                         <div class="d-flex">
-                            {% if meeting.status == 'pending' %}
-                                <form method="post" action="{% url 'manage_connection_request' meeting.id 'accept' %}" class="me-2">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-success">Accept</button>
-                                </form>
-                                <form method="post" action="{% url 'manage_connection_request' meeting.id 'reject' %}">
-                                    {% csrf_token %}
-                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Reject</button>
-                                </form>
-                            {% elif meeting.status == 'accepted' %}
-                                <a href="{% url 'chat_thread' meeting.requester.id %}" class="btn btn-sm btn-light">Message</a>
-                            {% endif %}
+                            <form method="post" action="{% url 'manage_connection_request' conn.id 'accept' %}" class="me-2">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                            </form>
+                            <form method="post" action="{% url 'manage_connection_request' conn.id 'reject' %}">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Reject</button>
+                            </form>
                         </div>
                     </div>
                 {% empty %}
-                    <p class="text-muted mb-0">You haven't received any connection requests yet.</p>
+                    <p class="text-muted mb-0">No incoming requests.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sent requests -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-semibold">Requests you sent ({{ sent_connections|length }})</div>
+            <div class="card-body">
+                {% for conn in sent_connections %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded border">
+                        <div>
+                            <a href="{% url 'roaster_profile' conn.other_user.id %}"><strong>{{ conn.other_user.roaster_profile.company_name|default:conn.other_user.email }}</strong></a>
+                            <span class="badge bg-secondary ms-2">Pending</span>
+                        </div>
+                        <form method="post" action="{% url 'manage_connection_request' conn.id 'withdraw' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Withdraw</button>
+                        </form>
+                    </div>
+                {% empty %}
+                    <p class="text-muted mb-0">You haven't sent any requests.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Active connections -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-semibold">Connected ({{ active_connections|length }})</div>
+            <div class="card-body">
+                {% for conn in active_connections %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded border">
+                        <div>
+                            <a href="{% url 'roaster_profile' conn.other_user.id %}"><strong>{{ conn.other_user.roaster_profile.company_name|default:conn.other_user.email }}</strong></a>
+                            <span class="badge bg-success ms-2">Connected</span>
+                        </div>
+                        <div class="d-flex">
+                            <a href="{% url 'chat_thread' conn.other_user.id %}" class="btn btn-sm btn-primary me-2">Message</a>
+                            <form method="post" action="{% url 'manage_connection_request' conn.id 'disconnect' %}">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Disconnect</button>
+                            </form>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted mb-0">No active connections yet.</p>
                 {% endfor %}
             </div>
         </div>

@@ -1,7 +1,7 @@
 # forms.py
 
 from django import forms
-from base.models import FarmerPhoto,Roaster, RoasterPhoto, User, Farmer, MeetingRequest,Story, Resource
+from base.models import FarmerPhoto,Roaster, RoasterPhoto, User, Farmer, MeetingRequest,Story, Resource, Forum, ForumWindow
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
@@ -181,7 +181,7 @@ class RoasterForm(forms.ModelForm):
         fields = [
            'firstname','lastname', 'job_title', 'country_code', 'phone_number', 'company_name', 'company_website','company_socials', 'country', 'state', 'city',
             'company_functions','coffee_purchase_involvement','purchase_volume','company_description','company_approach','company_goals',
-            'origins_interested', 'coffee_types_interested', 'profile_picture'
+            'origins_interested', 'coffee_types_interested', 'min_lot_size', 'cup_scores_interested', 'profile_picture'
         ]
         labels = {
             "Company_name": "Company Name*",
@@ -202,6 +202,8 @@ class RoasterForm(forms.ModelForm):
             'company_description': 'Describe your company',
             'company_approach': 'Describe your approach to coffee sourcing',
             'company_goals': 'Describe what you hope to accomplish with Coffee Circuit',
+            'min_lot_size': 'Minimum lot size (kg)',
+            'cup_scores_interested': 'Cup scores of interest',
             'profile_picture': 'Profile Picture',
         }
         widgets = {
@@ -225,8 +227,15 @@ class RoasterForm(forms.ModelForm):
             # 'annual_throughput': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Annual Throughput'}),
             # 'origins_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Origins Interested'}),
             'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Coffee Types Interested'}),
+            'min_lot_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Minimum lot size (kg)'}),
+            'cup_scores_interested': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline'}),
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Sourcing preference: optional so onboarding never requires it.
+        self.fields['min_lot_size'].required = False
 
 class RoasterPhotoForm(forms.ModelForm):
     class Meta:
@@ -440,6 +449,8 @@ class RoasterSourcingForm(forms.ModelForm):
             'company_description',
             'company_approach',
             'company_goals',
+            'min_lot_size',
+            'cup_scores_interested',
         ]
         widgets = {
 
@@ -452,27 +463,14 @@ class RoasterSourcingForm(forms.ModelForm):
             'company_description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Company Description'}),
             'company_approach': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Company Approach'}),
             'company_goals': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Company Goals'}),
-            # 'min_lot_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Minimum Lot Size'}),
-            # 'annual_throughput': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Annual Throughput'}),
-            # 'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Coffee Types Interested'}),
-            # 'origins_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Origins Interested'}),
+            'min_lot_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Minimum lot size (kg)'}),
+            'cup_scores_interested': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline'}),
         }
 
-class RoasterSourcingPrefsForm(forms.ModelForm):
-    class Meta:
-        model = Roaster
-        fields = [
-            'min_lot_size',
-            'annual_throughput',
-            'origins_interested',
-            'coffee_types_interested',
-        ]
-        widgets = {
-            'min_lot_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Minimum lot size (kg)'}),
-            'annual_throughput': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Annual throughput (kg)'}),
-            'origins_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Ethiopia, Colombia'}),
-            'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Washed, Natural'}),
-        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Sourcing preference: optional so editing the profile never requires it.
+        self.fields['min_lot_size'].required = False
 
 class FarmerStoryForm(forms.ModelForm):
     class Meta:
@@ -616,6 +614,64 @@ class ResourceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['slug'].required = False
+
+
+class ForumForm(forms.ModelForm):
+    class Meta:
+        model = Forum
+        fields = ['title', 'description', 'format', 'location', 'link', 'status']
+        labels = {
+            'title': 'Title',
+            'description': 'Description',
+            'format': 'Format',
+            'location': 'Location',
+            'link': 'Event Link',
+            'status': 'Status',
+        }
+        help_texts = {
+            'location': 'Venue for in-person / hybrid forums.',
+            'link': 'Video link for virtual / hybrid forums.',
+        }
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Title'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Description'}),
+            'format': forms.Select(attrs={'class': 'form-select'}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Venue'}),
+            'link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://…'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ('description', 'location', 'link'):
+            self.fields[name].required = False
+
+
+class ForumWindowForm(forms.ModelForm):
+    class Meta:
+        model = ForumWindow
+        fields = ['label', 'starts_at', 'ends_at']
+        widgets = {
+            'label': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Saturday Morning'}),
+            'starts_at': forms.DateTimeInput(
+                attrs={'class': 'form-control', 'type': 'datetime-local'},
+                format='%Y-%m-%dT%H:%M',
+            ),
+            'ends_at': forms.DateTimeInput(
+                attrs={'class': 'form-control', 'type': 'datetime-local'},
+                format='%Y-%m-%dT%H:%M',
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ('starts_at', 'ends_at'):
+            self.fields[name].input_formats = ['%Y-%m-%dT%H:%M']
+
+
+ForumWindowFormSet = forms.inlineformset_factory(
+    Forum, ForumWindow, form=ForumWindowForm, extra=3, can_delete=True,
+)
 
 
 class AdminCreateForm(forms.Form):
