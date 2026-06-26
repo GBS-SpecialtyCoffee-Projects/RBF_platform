@@ -95,7 +95,6 @@ db.sqlite3
 base/migrations/0001_initial.py
 rbf_platform/settings.py
 media/
-img/
 CLAUDE.md
 figma/
 docs/
