@@ -10,11 +10,17 @@ from django.db.models.functions import Concat
 from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
+from django.utils import timezone
+
 from base.models import (
     User, Farmer, Roaster, MeetingRequest, FarmerPhoto, RoasterPhoto,
-    Language, Story, AuditLog, AuditAction, Resource,
+    Language, Story, AuditLog, AuditAction, Resource, Forum, ForumMeeting,
 )
-from .forms import FarmerForm, RoasterForm, SigninForm, AdminCreateForm, ResourceForm
+from base.notifications import notify_meeting_calendar_invite
+from .forms import (
+    FarmerForm, RoasterForm, SigninForm, AdminCreateForm, ResourceForm,
+    ForumForm, ForumWindowFormSet,
+)
 
 
 def admin_required(view_func):
@@ -306,6 +312,95 @@ def admin_resource_delete(request, resource_id):
     resource.delete()
     messages.success(request, 'Resource deleted.')
     return redirect('admin_resources')
+
+
+@admin_required
+def admin_forums(request):
+    query = request.GET.get('q', '')
+    forums = Forum.objects.all()
+    if query:
+        forums = forums.filter(Q(title__icontains=query))
+    paginator = Paginator(forums, 20)
+    page = paginator.get_page(request.GET.get('page'))
+    return render(request, 'base/platform_admin/forums.html', {
+        'forums': page,
+        'query': query,
+    })
+
+
+@admin_required
+def admin_forum_create(request):
+    if request.method == 'POST':
+        form = ForumForm(request.POST)
+        formset = ForumWindowFormSet(request.POST, prefix='windows')
+        if form.is_valid() and formset.is_valid():
+            forum = form.save(commit=False)
+            forum.created_by = request.user
+            forum.save()
+            formset.instance = forum
+            formset.save()
+            messages.success(request, 'Forum created.')
+            return redirect('admin_forums')
+    else:
+        form = ForumForm()
+        formset = ForumWindowFormSet(prefix='windows')
+    return render(request, 'base/platform_admin/forum_form.html', {
+        'form': form,
+        'formset': formset,
+        'forum': None,
+    })
+
+
+@admin_required
+def admin_forum_edit(request, forum_id):
+    forum = get_object_or_404(Forum, id=forum_id)
+    if request.method == 'POST':
+        form = ForumForm(request.POST, instance=forum)
+        formset = ForumWindowFormSet(request.POST, instance=forum, prefix='windows')
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            messages.success(request, 'Forum updated.')
+            return redirect('admin_forums')
+    else:
+        form = ForumForm(instance=forum)
+        formset = ForumWindowFormSet(instance=forum, prefix='windows')
+    return render(request, 'base/platform_admin/forum_form.html', {
+        'form': form,
+        'formset': formset,
+        'forum': forum,
+    })
+
+
+@admin_required
+@require_POST
+def admin_forum_delete(request, forum_id):
+    forum = get_object_or_404(Forum, id=forum_id)
+    forum.delete()
+    messages.success(request, 'Forum deleted.')
+    return redirect('admin_forums')
+
+
+@admin_required
+def admin_meetings(request):
+    meetings = ForumMeeting.confirmed_upcoming()
+    paginator = Paginator(meetings, 20)
+    page = paginator.get_page(request.GET.get('page'))
+    return render(request, 'base/platform_admin/meetings.html', {
+        'meetings': page,
+    })
+
+
+@admin_required
+@require_POST
+def admin_meeting_send_invite(request, meeting_id):
+    meeting = get_object_or_404(ForumMeeting, id=meeting_id)
+    meeting.meeting_link = request.POST.get('meeting_link', '').strip()
+    meeting.invite_sent_at = timezone.now()
+    meeting.save(update_fields=['meeting_link', 'invite_sent_at', 'updated_at'])
+    notify_meeting_calendar_invite(meeting)
+    messages.success(request, 'Calendar invite sent to both participants.')
+    return redirect('admin_meetings')
 
 
 @superadmin_required

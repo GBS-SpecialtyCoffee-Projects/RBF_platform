@@ -23,6 +23,74 @@
             <button type="button" class="btn-close ms-auto flex-shrink-0" data-bs-dismiss="alert" aria-label="Close" style="font-size:0.65rem;"></button>
         </div>
 
+        {% if messages %}
+        <div class="mb-3">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} py-2 px-3 mb-2 small">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="card shadow-sm p-3 mb-3" style="background-color:#fff;">
+            <h6 class="mb-3"><i class="fa-regular fa-calendar-check me-2"></i>Forum meetings</h6>
+            {% for meeting in meetings %}
+            <div class="d-flex justify-content-between align-items-start border rounded px-3 py-2 mb-2">
+                <div>
+                    <div class="fw-bold">{{ meeting.forum.title }}</div>
+                    <div class="small text-muted">
+                        {{ meeting.window.starts_at|date:"M d, Y H:i" }} &ndash; {{ meeting.window.ends_at|date:"H:i" }}
+                    </div>
+                </div>
+                <div class="text-end">
+                    {% if meeting.status == 'proposed' %}<span class="badge bg-warning text-dark">Proposed</span>
+                    {% elif meeting.status == 'confirmed' %}<span class="badge bg-success">Confirmed</span>
+                    {% elif meeting.status == 'declined' %}<span class="badge bg-secondary">Declined</span>
+                    {% else %}<span class="badge bg-light text-muted">Cancelled</span>{% endif %}
+
+                    {% if meeting.status == 'proposed' and meeting.proposed_by_id != request.user.id %}
+                    <div class="mt-2 d-flex gap-1 justify-content-end">
+                        <form method="post" action="{% url 'respond_meeting' meeting.id 'confirm' %}">{% csrf_token %}
+                            <button class="btn btn-sm btn-success">Confirm</button></form>
+                        <form method="post" action="{% url 'respond_meeting' meeting.id 'decline' %}">{% csrf_token %}
+                            <button class="btn btn-sm btn-outline-secondary">Decline</button></form>
+                    </div>
+                    {% endif %}
+                    {% if meeting.proposed_by_id == request.user.id and meeting.status == 'proposed' or meeting.proposed_by_id == request.user.id and meeting.status == 'confirmed' %}
+                    <form method="post" action="{% url 'respond_meeting' meeting.id 'cancel' %}" class="mt-1">{% csrf_token %}
+                        <button class="btn btn-sm btn-link text-danger p-0">Cancel</button></form>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p class="small text-muted mb-2">No meetings yet.</p>
+            {% endfor %}
+
+            {% if proposable_windows %}
+            <form method="post" action="{% url 'propose_meeting' other.id %}" class="d-flex gap-2 mt-2">
+                {% csrf_token %}
+                <select name="window_id" class="form-select form-select-sm" required>
+                    <option value="" disabled selected>Propose a time…</option>
+                    {% for w in proposable_windows %}
+                    <option value="{{ w.id }}">{{ w.forum.title }} — {{ w.starts_at|date:"M d, H:i" }}{% if w.label %} ({{ w.label }}){% endif %}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary flex-shrink-0">Propose</button>
+            </form>
+            {% elif forum_to_join %}
+            <div class="d-flex justify-content-between align-items-center mt-1">
+                <span class="small text-muted me-2">
+                    Your connection signed up for <strong>{{ forum_to_join.title }}</strong>{% if forum_to_join.next_window_start %} ({{ forum_to_join.next_window_start|date:"M d, Y" }}){% endif %} — sign up too to propose a meeting time.
+                </span>
+                <a href="{% url 'forum_detail' forum_to_join.id %}" class="btn btn-sm btn-primary flex-shrink-0">Join forum</a>
+            </div>
+            {% else %}
+            <p class="small text-muted mb-0 mt-1">
+                Sign up for the same forum as your connection to propose a meeting time.
+                <a href="{% url 'forum_list' %}">Browse forums</a>.
+            </p>
+            {% endif %}
+        </div>
+
         <div id="chat-messages" class="card shadow-sm p-3 mb-3"
              style="height: 60vh; overflow-y: auto; background-color: #fff;"
              data-current-user-id="{{ request.user.id }}">

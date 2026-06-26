@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Farmer, FarmerPhoto, MeetingRequest, RoasterPhoto, Roaster
+from .models import User, Farmer, FarmerPhoto, MeetingRequest, Connection, RoasterPhoto, Roaster
 from django.contrib.auth.models import Group
 from django.db.models import Count
 from django.utils.safestring import mark_safe
@@ -93,3 +93,11 @@ class MeetingRequestAdmin(admin.ModelAdmin):
     search_fields = ('requester__username', 'requestee__username', 'status')
     list_filter = ('status', 'created_at')
     ordering = ('created_at',)
+
+
+@admin.register(Connection)
+class ConnectionAdmin(admin.ModelAdmin):
+    list_display = ('user_a', 'user_b', 'initiator', 'status', 'created_at', 'updated_at')
+    search_fields = ('user_a__username', 'user_b__username', 'initiator__username', 'status')
+    list_filter = ('status', 'created_at')
+    ordering = ('-updated_at',)

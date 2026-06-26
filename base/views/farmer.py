@@ -1,15 +1,18 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck, FarmerHeaderImageForm, MeetingRequestForm
-from base.models import Roaster, RoasterPhoto, MeetingRequest, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore
-from base.notifications import notify_meeting_event
+from base.models import Roaster, RoasterPhoto, MeetingRequest, Connection, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore,Forum
+from base.notifications import notify_meeting_event, notify_connection_event
+from base.views.roaster import create_connection_request, apply_connection_action, connection_buckets
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 import logging
 import os
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -34,22 +37,12 @@ def farmer_dashboard(request):
     farmer_cup_scores = CupScore.objects.filter(farmer=farmer_profile)
     farmer_story = farmer_stories.first()
     farmer_photos_unadded = 6 - farmer_photos.count()
-    pending_meetings = MeetingRequest.objects.filter(
-        requestee=request.user, status='pending'
-    )[:2]
     languages = Language.objects.all()
-    # pending_meetings = MeetingRequest.objects.filter(
-    #     requester=request.user, status='accepted'
-    # ) | MeetingRequest.objects.filter(
-    #     requestee=request.user, status='accepted'
-    # )
 
-    # Check the number of pending or accepted meetings
-    active_meetings_count = MeetingRequest.objects.filter(
-        requester=request.user, status__in=['pending', 'accepted']
-    ).count()
-
-    can_request_meetings = active_meetings_count < 5
+    # Incoming connection requests awaiting the farmer's response.
+    incoming_connections, sent_connections, active_connections = connection_buckets(request.user)
+    pending_meetings = incoming_connections[:2]
+    can_request_meetings = Connection.pending_sent_count(request.user) < Connection.MAX_PENDING_SENT
 
     if request.method == 'POST' and 'main_form' in request.POST:
         form = FarmerProfileForm(request.POST, instance=farmer_profile)
@@ -94,12 +87,12 @@ def connections(request):
     if request.user.group != 'farmer':
         return redirect('roaster_dashboard')
 
-    meeting_requests = MeetingRequest.objects.filter(
-        requestee=request.user
-    ).select_related('requester')
-
+    incoming, sent, active = connection_buckets(request.user)
     return render(request, 'base/farmer_connections.html', {
-        'meeting_requests': meeting_requests,
+        'incoming_connections': incoming,
+        'sent_connections': sent,
+        'active_connections': active,
+        'upcoming_forum': Forum.next_upcoming(),
     })
 
 
@@ -114,6 +107,8 @@ def connection_roasters(request):
     # Get filter parameters from GET request
     country = request.GET.get('country')
     purchase_volume = request.GET.get('purchase_volume')
+    min_lot_size = request.GET.get('min_lot_size')
+    cup_score = request.GET.get('cup_score')
 
     # Filter the roasters queryset accordingly
     if country:
@@ -130,40 +125,30 @@ def connection_roasters(request):
         elif purchase_volume == '5000+':
             roasters = roasters.filter(purchase_volume__gte=5000)
 
+    if min_lot_size:
+        roasters = roasters.filter(min_lot_size__isnull=False)
+        if min_lot_size == '0-100':
+            roasters = roasters.filter(min_lot_size__gte=0, min_lot_size__lte=100)
+        elif min_lot_size == '100-500':
+            roasters = roasters.filter(min_lot_size__gte=100, min_lot_size__lte=500)
+        elif min_lot_size == '500-1000':
+            roasters = roasters.filter(min_lot_size__gte=500, min_lot_size__lte=1000)
+        elif min_lot_size == '1000+':
+            roasters = roasters.filter(min_lot_size__gte=1000)
+
+    if cup_score:
+        roasters = roasters.filter(cup_scores_interested__id=cup_score)
+
     if request.method == 'POST':
-        # Handle meeting request form submission
-        form = MeetingRequestForm(request.POST)
-        if form.is_valid():
-            active_meetings_count = MeetingRequest.objects.filter(
-                requester=request.user, status__in=['pending', 'accepted']
-            ).count()
+        # Handle connection request submission
+        recipient = get_object_or_404(User, id=request.POST.get('user_id'))
+        create_connection_request(request, recipient)
+        return _redirect_with_filters(request)
 
-            if active_meetings_count >= 5:
-                messages.error(request, "You cannot have more than 5 pending or accepted meetings.")
-                return _redirect_with_filters(request)
-
-            requestee_id = request.POST.get('user_id')
-            if MeetingRequest.objects.filter(
-                requester=request.user, requestee_id=requestee_id, status__in=['pending', 'accepted']
-            ).exists():
-                messages.error(request, "You already have an active request with this roaster.")
-                return _redirect_with_filters(request)
-
-            meeting_request = form.save(commit=False)
-            meeting_request.requester = request.user
-            meeting_request.requestee = get_object_or_404(User, id=requestee_id)
-            meeting_request.save()
-            notify_meeting_event(meeting_request, 'created')
-            return _redirect_with_filters(request)
-        else:
-            show_modal = True  # Show modal if the form is invalid
-
-    # Fetch the user's meeting requests
-    meeting_requests = MeetingRequest.objects.filter(requester=request.user)
-    active_meeting_requests = meeting_requests.filter(status__in=['pending', 'accepted'])
-    active_meetings_count = active_meeting_requests.count()
-    can_request_meetings = active_meetings_count < 5
-    connected_user_ids, sent_user_ids, incoming_user_ids = MeetingRequest.status_sets_for(request.user)
+    # Connection state for the current user
+    can_request_meetings = Connection.pending_sent_count(request.user) < Connection.MAX_PENDING_SENT
+    connected_user_ids, sent_user_ids, incoming_user_ids = Connection.status_sets_for(request.user)
+    active_meetings_count = len(sent_user_ids)
 
     # Available countries for filter dropdown
     available_countries = (
@@ -173,14 +158,23 @@ def connection_roasters(request):
         .order_by('country')
     )
 
+    # Randomize result order, kept stable across pages via a per-search seed
+    try:
+        seed = int(request.GET.get('seed'))
+    except (TypeError, ValueError):
+        seed = random.randint(1, 2_000_000_000)
+    roasters_list = list(roasters)
+    random.Random(seed).shuffle(roasters_list)
+
     # Pagination
-    paginator = Paginator(roasters, 10)
+    paginator = Paginator(roasters_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     # Build filter query string (without 'page') for template links
     filter_params = request.GET.copy()
     filter_params.pop('page', None)
+    filter_params['seed'] = seed
     filter_query_string = filter_params.urlencode()
 
     return render(request, 'base/connection_roasters.html', {
@@ -192,11 +186,13 @@ def connection_roasters(request):
         'connected_user_ids': connected_user_ids,
         'sent_user_ids': sent_user_ids,
         'incoming_user_ids': incoming_user_ids,
-        'meeting_requests': meeting_requests,
         'total_meetings_used': active_meetings_count,
         'selected_country': country,
         'selected_purchase_volume': purchase_volume,
+        'selected_min_lot_size': min_lot_size,
+        'selected_cup_score': cup_score,
         'available_countries': available_countries,
+        'available_cup_scores': CupScore.objects.all(),
         'filter_query_string': filter_query_string,
     })
 
@@ -211,28 +207,14 @@ def _redirect_with_filters(request):
 
 
 def manage_connection_request(request, meeting_id, action):
-    if request.user.group != 'farmer':
-        return redirect('roaster_dashboard')
-
     if request.method != 'POST':
         return HttpResponseNotAllowed(['POST'])
 
-    if action not in ('accept', 'reject'):
-        return HttpResponseBadRequest('Invalid action')
-
-    meeting_request = get_object_or_404(
-        MeetingRequest, id=meeting_id, requestee=request.user
+    connection = get_object_or_404(
+        Connection,
+        Q(pk=meeting_id) & (Q(user_a=request.user) | Q(user_b=request.user)),
     )
-    meeting_request.status = 'accepted' if action == 'accept' else 'rejected'
-    meeting_request.save()
-    notify_meeting_event(meeting_request, meeting_request.status)
-
-    referer = request.META.get('HTTP_REFERER', '')
-    if referer and url_has_allowed_host_and_scheme(
-        referer, allowed_hosts={request.get_host()}, require_https=request.is_secure()
-    ):
-        return redirect(referer)
-    return redirect('farmer_connections')
+    return apply_connection_action(request, connection, action)
 
 
 def edit_farmer_details(request):
@@ -322,7 +304,7 @@ def roaster_view(request, user_id):
         active_request = None
         connection_status = 'none'
         if not is_own_profile:
-            active_request = MeetingRequest.active_between(request.user, roaster_profile.user)
+            active_request = Connection.between(request.user, roaster_profile.user)
             if active_request:
                 connection_status = active_request.status_for(request.user)
     except Exception:

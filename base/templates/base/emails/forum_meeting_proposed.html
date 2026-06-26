@@ -1,0 +1,9 @@
+{% extends 'base/emails/_base_email.html' %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hi {{ invitee_name }},</p>
+<p style="margin:0 0 16px 0;"><strong>{{ proposer_name }}</strong> proposed a meeting time for <strong>{{ forum.title }}</strong>.</p>
+<p style="margin:0 0 16px 0;">
+    <strong>When:</strong> {{ window.starts_at|date:"M d, Y H:i" }} &ndash; {{ window.ends_at|date:"H:i" }}
+</p>
+<p style="margin:0;">Open your chat to confirm or decline the time.</p>
+{% endblock %}

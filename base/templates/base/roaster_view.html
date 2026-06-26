@@ -144,6 +144,14 @@
                         <p class="fw-bold mb-1">Coffee Types of Interest</p>
                         <span>{% if roaster_profile.coffee_types_interested %}{{ roaster_profile.coffee_types_interested }}{% else %}<span class="text-muted">—</span>{% endif %}</span>
                     </div>
+                    <div class="mt-3 gap-3">
+                        <p class="fw-bold mb-1">Cup Scores of Interest</p>
+                        {% for cup_score in roaster_profile.cup_scores_interested.all %}
+                            <span class="px-2 py-1 rounded me-1" style="background-color: rgb(180, 203, 207); color: black;">{{ cup_score }}</span>
+                        {% empty %}
+                            <span class="text-muted">—</span>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
 

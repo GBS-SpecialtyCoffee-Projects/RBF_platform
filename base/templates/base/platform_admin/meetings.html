@@ -1,0 +1,87 @@
+{% extends "base/platform_admin/base.html" %}
+{% block title_suffix %} — Meetings{% endblock %}
+{% block nav_meetings %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">Confirmed meetings</h4>
+</div>
+<p class="text-muted">Meetings both participants have confirmed. Add a video link (optional) and send a calendar invite to both of them.</p>
+
+<div class="card stat-card">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Roaster</th>
+                    <th>Farmer</th>
+                    <th>Forum</th>
+                    <th>When</th>
+                    <th>Invite</th>
+                    <th class="text-end pe-3"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in meetings %}
+                <tr>
+                    <td class="ps-3">{{ m.conversation.roaster.email }}</td>
+                    <td>{{ m.conversation.farmer.email }}</td>
+                    <td class="text-muted small">{{ m.forum.title }}</td>
+                    <td class="text-muted small">
+                        {{ m.window.starts_at|date:"M d, Y H:i" }} &ndash; {{ m.window.ends_at|date:"H:i" }}
+                    </td>
+                    <td class="text-muted small">
+                        {% if m.invite_sent_at %}
+                            <span class="badge bg-success">Sent {{ m.invite_sent_at|date:"M d, H:i" }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Not sent</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-3">
+                        <form method="post" action="{% url 'admin_meeting_send_invite' m.id %}" class="d-flex gap-2 justify-content-end">
+                            {% csrf_token %}
+                            <input type="url" name="meeting_link" class="form-control form-control-sm" style="max-width: 240px;"
+                                   placeholder="Zoom/video link (optional)" value="{{ m.meeting_link }}">
+                            <button type="submit" class="btn btn-sm btn-primary text-nowrap">
+                                <i class="fa-solid fa-paper-plane me-1"></i>
+                                {% if m.invite_sent_at %}Resend{% else %}Send invite{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-muted ps-3 py-4">No confirmed upcoming meetings.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if meetings.has_other_pages %}
+<nav class="mt-3">
+    <ul class="pagination pagination-sm justify-content-center mb-0">
+        {% if meetings.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ meetings.previous_page_number }}">Previous</a>
+        </li>
+        {% endif %}
+        {% for num in meetings.paginator.page_range %}
+            {% if meetings.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > meetings.number|add:"-3" and num < meetings.number|add:"3" %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+        {% if meetings.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ meetings.next_page_number }}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

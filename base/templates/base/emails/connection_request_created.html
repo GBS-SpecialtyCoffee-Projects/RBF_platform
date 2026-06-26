@@ -1,0 +1,9 @@
+{% extends 'base/emails/_base_email.html' %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hi {{ recipient_name }},</p>
+<p style="margin:0 0 16px 0;"><strong>{{ initiator_name }}</strong> wants to connect with you on Coffee Circuit.</p>
+{% if connection.message %}
+<p style="margin:0 0 16px 0;"><strong>Message:</strong><br>{{ connection.message|linebreaksbr }}</p>
+{% endif %}
+<p style="margin:0;">Sign in to your dashboard to accept or decline the request.</p>
+{% endblock %}

@@ -1,6 +1,6 @@
 # user_management/urls.py
 from django.urls import path
-from .views import account, farmer, roaster, platform_admin, resources, chat
+from .views import account, farmer, roaster, platform_admin, resources, chat, forums, meetings
 from django.conf import settings
 from django.conf.urls.static import static
 urlpatterns = [
@@ -18,6 +18,12 @@ urlpatterns = [
     path('platform-admin/resources/create/', platform_admin.admin_resource_create, name='admin_resource_create'),
     path('platform-admin/resources/<int:resource_id>/edit/', platform_admin.admin_resource_edit, name='admin_resource_edit'),
     path('platform-admin/resources/<int:resource_id>/delete/', platform_admin.admin_resource_delete, name='admin_resource_delete'),
+    path('platform-admin/forums/', platform_admin.admin_forums, name='admin_forums'),
+    path('platform-admin/forums/create/', platform_admin.admin_forum_create, name='admin_forum_create'),
+    path('platform-admin/forums/<int:forum_id>/edit/', platform_admin.admin_forum_edit, name='admin_forum_edit'),
+    path('platform-admin/forums/<int:forum_id>/delete/', platform_admin.admin_forum_delete, name='admin_forum_delete'),
+    path('platform-admin/meetings/', platform_admin.admin_meetings, name='admin_meetings'),
+    path('platform-admin/meetings/<int:meeting_id>/send-invite/', platform_admin.admin_meeting_send_invite, name='admin_meeting_send_invite'),
     path('', account.landing_page, name='landing_page'),
     path('onboarding/', account.farmer_onboarding, name='onboarding'),
     path('farmer_dashboard/', farmer.farmer_dashboard, name='farmer_dashboard'),
@@ -66,8 +72,14 @@ urlpatterns = [
     path('roaster/switch_story/<int:language_id>/<int:user_id>/', roaster.switch_story, name='switch_story2'),
     path('resources/', resources.resource_list, name='resource_list'),
     path('resources/<slug:slug>/', resources.resource_detail, name='resource_detail'),
+    path('forums/', forums.forum_list, name='forum_list'),
+    path('forums/<int:forum_id>/', forums.forum_detail, name='forum_detail'),
+    path('forums/<int:forum_id>/signup/', forums.forum_signup, name='forum_signup'),
+    path('forums/<int:forum_id>/cancel/', forums.forum_cancel_signup, name='forum_cancel_signup'),
     path('chat/', chat.chat_list, name='chat_list'),
     path('chat/<int:user_id>/', chat.chat_thread, name='chat_thread'),
+    path('chat/<int:user_id>/propose-meeting/', meetings.propose_meeting, name='propose_meeting'),
+    path('meetings/<int:meeting_id>/<str:action>/', meetings.respond_meeting, name='respond_meeting'),
 
 ]
 
