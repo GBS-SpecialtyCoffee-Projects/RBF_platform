@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.contrib import messages
 import logging
 import os
+import random
 
 logger = logging.getLogger(__name__)
 from django.urls import reverse
@@ -306,14 +307,23 @@ def connection_farmers(request):
         .order_by('country')
     )
 
+    # Randomize result order, kept stable across pages via a per-search seed
+    try:
+        seed = int(request.GET.get('seed'))
+    except (TypeError, ValueError):
+        seed = random.randint(1, 2_000_000_000)
+    farmers_list = list(farmers)
+    random.Random(seed).shuffle(farmers_list)
+
     # Pagination
-    paginator = Paginator(farmers, 10)
+    paginator = Paginator(farmers_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     # Build filter query string (without 'page') for template links
     filter_params = request.GET.copy()
     filter_params.pop('page', None)
+    filter_params['seed'] = seed
     filter_query_string = filter_params.urlencode()
 
     return render(request, 'base/connection_farmers.html', {

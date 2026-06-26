@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 import logging
 import os
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -157,14 +158,23 @@ def connection_roasters(request):
         .order_by('country')
     )
 
+    # Randomize result order, kept stable across pages via a per-search seed
+    try:
+        seed = int(request.GET.get('seed'))
+    except (TypeError, ValueError):
+        seed = random.randint(1, 2_000_000_000)
+    roasters_list = list(roasters)
+    random.Random(seed).shuffle(roasters_list)
+
     # Pagination
-    paginator = Paginator(roasters, 10)
+    paginator = Paginator(roasters_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     # Build filter query string (without 'page') for template links
     filter_params = request.GET.copy()
     filter_params.pop('page', None)
+    filter_params['seed'] = seed
     filter_query_string = filter_params.urlencode()
 
     return render(request, 'base/connection_roasters.html', {
