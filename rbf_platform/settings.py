@@ -28,16 +28,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-1v)d#2*(ui3w4@^lqh0)ufpj6w6re)noo7@w3b01q+)z+(0b82"
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    "django-insecure-1v)d#2*(ui3w4@^lqh0)ufpj6w6re)noo7@w3b01q+)z+(0b82",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = 'RENDER' not in os.environ
+# Explicit DEBUG env wins; otherwise default to on for local dev, off on Render.
+if 'DEBUG' in os.environ:
+    DEBUG = os.environ['DEBUG'] == 'True'
+else:
+    DEBUG = 'RENDER' not in os.environ
 
 ALLOWED_HOSTS = ['www.coffeecircuit.org', 'coffeecircuit.org']
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# Extra comma-separated hosts for non-Render deployments (e.g. the VPS test box).
+EXTRA_ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '')
+if EXTRA_ALLOWED_HOSTS:
+    ALLOWED_HOSTS += [h.strip() for h in EXTRA_ALLOWED_HOSTS.split(',') if h.strip()]
 
 
 # Application definition

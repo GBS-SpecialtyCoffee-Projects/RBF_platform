@@ -1,0 +1,22 @@
+services:
+  web:
+    build: .
+    env_file: .env
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      # Lets the container reach Postgres running on the VPS host.
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Persist locally-stored media across container rebuilds (when USE_S3 is unset).
+      - media:/app/media
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+volumes:
+  media:
