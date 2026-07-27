@@ -1,5 +1,6 @@
 # base/views/platform_admin.py
 
+import csv
 from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -7,6 +8,7 @@ from django.contrib.auth import login
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Value
 from django.db.models.functions import Concat
+from django.http import HttpResponse
 from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
@@ -15,6 +17,7 @@ from django.utils import timezone
 from base.models import (
     User, Farmer, Roaster, MeetingRequest, FarmerPhoto, RoasterPhoto,
     Language, Story, AuditLog, AuditAction, Resource, Forum, ForumMeeting,
+    InteractionEvent, InteractionEventType,
 )
 from base.notifications import notify_meeting_calendar_invite
 from .forms import (
@@ -401,6 +404,65 @@ def admin_meeting_send_invite(request, meeting_id):
     notify_meeting_calendar_invite(meeting)
     messages.success(request, 'Calendar invite sent to both participants.')
     return redirect('admin_meetings')
+
+
+def _filtered_interactions(request):
+    """Apply the raw-interaction filters shared by the table and CSV export."""
+    events = InteractionEvent.objects.select_related('user', 'target_user')
+    event_type = request.GET.get('event_type', '')
+    if event_type:
+        events = events.filter(event_type=event_type)
+    date_from = request.GET.get('from', '')
+    if date_from:
+        events = events.filter(created_at__date__gte=date_from)
+    date_to = request.GET.get('to', '')
+    if date_to:
+        events = events.filter(created_at__date__lte=date_to)
+    user_query = request.GET.get('user', '')
+    if user_query:
+        events = events.filter(user__email__icontains=user_query)
+    return events
+
+
+@admin_required
+def admin_interactions(request):
+    events = _filtered_interactions(request)
+
+    if request.GET.get('export') == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = (
+            'attachment; filename="interaction_events.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow([
+            'id', 'created_at', 'event_type', 'user', 'target_user',
+            'path', 'session_key', 'metadata',
+        ])
+        for event in events.iterator():
+            writer.writerow([
+                event.id,
+                event.created_at.isoformat(),
+                event.event_type,
+                event.user.email if event.user else '',
+                event.target_user.email if event.target_user else '',
+                event.path,
+                event.session_key,
+                event.metadata,
+            ])
+        return response
+
+    paginator = Paginator(events, 50)
+    page = paginator.get_page(request.GET.get('page'))
+    return render(request, 'base/platform_admin/interactions.html', {
+        'events': page,
+        'event_type_choices': InteractionEventType.choices,
+        'filters': {
+            'event_type': request.GET.get('event_type', ''),
+            'from': request.GET.get('from', ''),
+            'to': request.GET.get('to', ''),
+            'user': request.GET.get('user', ''),
+        },
+    })
 
 
 @superadmin_required

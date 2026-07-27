@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm, RoasterHeaderImageForm
 from base.models import Farmer, Language, MeetingRequest, Connection, RoasterPhoto,Roaster, FarmerPhoto, BuyerFunctions,Story,Season,ProcessingMethod,CupScore,Forum
 from base.notifications import notify_meeting_event, notify_connection_event
+from base.models import InteractionEventType
+from base.analytics import log_event
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib import messages
@@ -184,6 +186,10 @@ def create_connection_request(request, recipient):
 
     conn = Connection.request(request.user, recipient, message=request.POST.get('message', ''))
     notify_connection_event(conn, 'created')
+    log_event(
+        InteractionEventType.CONNECTION_REQUEST, request=request,
+        target_user=recipient, target_group=recipient.group,
+    )
     messages.success(request, "Connection request sent!")
     return conn
 
@@ -389,6 +395,12 @@ def farmer_view(request, user_id):
         return redirect('farmer_dashboard')
 
     farmer_profile = get_object_or_404(Farmer, user__id=user_id)
+
+    if request.user.id != user_id:
+        log_event(
+            InteractionEventType.PROFILE_VIEW, request=request,
+            target_user=farmer_profile.user, target_group='farmer',
+        )
 
     try:
         farmer_photos = FarmerPhoto.objects.filter(user=farmer_profile.user)

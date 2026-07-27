@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck, FarmerHeaderImageForm, MeetingRequestForm
-from base.models import Roaster, RoasterPhoto, MeetingRequest, Connection, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore,Forum
+from base.models import Roaster, RoasterPhoto, MeetingRequest, Connection, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore,Forum,InteractionEventType
 from base.notifications import notify_meeting_event, notify_connection_event
+from base.analytics import log_event
 from base.views.roaster import create_connection_request, apply_connection_action, connection_buckets
 from django.contrib.auth import get_user_model
 from django.contrib import messages
@@ -296,6 +297,12 @@ def roaster_view(request, user_id):
         return redirect('roaster_dashboard')
 
     roaster_profile = get_object_or_404(Roaster, user__id=user_id)
+
+    if request.user.id != user_id:
+        log_event(
+            InteractionEventType.PROFILE_VIEW, request=request,
+            target_user=roaster_profile.user, target_group='roaster',
+        )
 
     try:
         roaster_photos = RoasterPhoto.objects.filter(user=roaster_profile.user)

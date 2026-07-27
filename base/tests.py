@@ -10,8 +10,10 @@ from django.core.exceptions import ValidationError
 
 from base.models import (
     Connection, Conversation, Farmer, Forum, ForumMeeting, ForumSignup,
-    ForumWindow, MeetingRequest, Message, Roaster,
+    ForumWindow, InteractionEvent, InteractionEventType, MeetingRequest,
+    Message, Roaster,
 )
+from base.analytics import log_event
 from base.notifications import notify_meeting_event
 
 
@@ -900,3 +902,79 @@ class AdminMeetingsTests(TestCase):
         meeting.refresh_from_db()
         self.assertIsNone(meeting.invite_sent_at)
         self.assertEqual(len(mail.outbox), 0)
+
+
+class LogEventTests(TestCase):
+    def setUp(self):
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        self.farmer = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+
+    def test_log_event_records_row_with_metadata(self):
+        log_event(
+            InteractionEventType.PROFILE_VIEW, user=self.roaster,
+            target_user=self.farmer, source='test',
+        )
+        event = InteractionEvent.objects.get()
+        self.assertEqual(event.event_type, InteractionEventType.PROFILE_VIEW)
+        self.assertEqual(event.user, self.roaster)
+        self.assertEqual(event.target_user, self.farmer)
+        self.assertEqual(event.metadata, {'source': 'test'})
+
+    def test_log_event_swallows_errors(self):
+        # An over-long event_type violates the column, but logging must never
+        # raise into the request flow — it is caught and logged instead.
+        with self.assertLogs('base.analytics', level='ERROR'):
+            log_event('x' * 100, user=self.roaster)
+        self.assertFalse(InteractionEvent.objects.exists())
+
+
+class AdminInteractionsTests(TestCase):
+    def setUp(self):
+        self.superadmin = User.objects.create(
+            email='super@example.com', username='super',
+            is_staff=True, is_superuser=True,
+        )
+        self.staff = User.objects.create(
+            email='staff@example.com', username='staff', is_staff=True,
+        )
+        self.viewer = User.objects.create(
+            email='viewer@example.com', group='roaster', username='viewer',
+        )
+        InteractionEvent.objects.create(
+            event_type=InteractionEventType.LOGIN, user=self.viewer,
+        )
+        InteractionEvent.objects.create(
+            event_type=InteractionEventType.RESOURCE_VIEW, user=self.viewer,
+        )
+
+    def test_staff_admin_sees_events(self):
+        self.client.force_login(self.staff)
+        resp = self.client.get(reverse('admin_interactions'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['events'].paginator.count, 2)
+
+    def test_event_type_filter(self):
+        self.client.force_login(self.staff)
+        resp = self.client.get(
+            reverse('admin_interactions'),
+            {'event_type': InteractionEventType.LOGIN},
+        )
+        self.assertEqual(resp.context['events'].paginator.count, 1)
+
+    def test_csv_export(self):
+        self.client.force_login(self.staff)
+        resp = self.client.get(reverse('admin_interactions'), {'export': 'csv'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'text/csv')
+        body = resp.content.decode()
+        self.assertIn('event_type', body)
+        self.assertIn(InteractionEventType.LOGIN, body)
+
+    def test_non_staff_redirected(self):
+        self.client.force_login(self.viewer)
+        resp = self.client.get(reverse('admin_interactions'))
+        self.assertEqual(resp.status_code, 302)

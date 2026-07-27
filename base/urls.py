@@ -14,6 +14,7 @@ urlpatterns = [
     path('platform-admin/admins/create/', platform_admin.admin_create, name='admin_create'),
     path('platform-admin/admins/<int:user_id>/toggle/', platform_admin.admin_toggle, name='admin_toggle'),
     path('platform-admin/audit-log/', platform_admin.admin_audit_log, name='admin_audit_log'),
+    path('platform-admin/interactions/', platform_admin.admin_interactions, name='admin_interactions'),
     path('platform-admin/resources/', platform_admin.admin_resources, name='admin_resources'),
     path('platform-admin/resources/create/', platform_admin.admin_resource_create, name='admin_resource_create'),
     path('platform-admin/resources/<int:resource_id>/edit/', platform_admin.admin_resource_edit, name='admin_resource_edit'),

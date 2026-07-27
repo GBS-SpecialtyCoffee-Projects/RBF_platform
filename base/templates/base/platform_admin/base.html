@@ -112,6 +112,9 @@
             <i class="fa-solid fa-clock-rotate-left"></i> Audit Log
         </a>
         {% endif %}
+        <a href="{% url 'admin_interactions' %}" class="nav-link {% block nav_interactions %}{% endblock %}">
+            <i class="fa-solid fa-chart-line"></i> Interactions
+        </a>
     </nav>
     <div class="sidebar-footer">
         <small>{{ request.user.email }}</small>

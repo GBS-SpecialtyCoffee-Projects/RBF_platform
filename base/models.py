@@ -595,6 +595,45 @@ class AuditLog(models.Model):
         return f'{self.user} — {self.get_action_display()}'
 
 
+class InteractionEventType(models.TextChoices):
+    LOGIN = 'login', 'Logged in'
+    PROFILE_VIEW = 'profile_view', 'Viewed profile'
+    CONNECTION_REQUEST = 'connection_request', 'Sent connection request'
+    MEETING_PROPOSED = 'meeting_proposed', 'Proposed meeting'
+    MESSAGE_SENT = 'message_sent', 'Sent message'
+    RESOURCE_VIEW = 'resource_view', 'Viewed resource'
+
+
+class InteractionEvent(models.Model):
+    """Raw, append-only log of user interactions for research/analysis.
+
+    Kept intentionally unaggregated: one row per interaction, with a
+    free-form ``metadata`` JSON blob for event-specific context.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    event_type = models.CharField(
+        max_length=50, choices=InteractionEventType.choices, db_index=True,
+    )
+    target_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    path = models.CharField(max_length=255, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    session_key = models.CharField(max_length=40, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user} — {self.get_event_type_display()} @ {self.created_at:%Y-%m-%d %H:%M}'
+
+
 class Forum(models.Model):
     """A hosted relationship-building forum (event) that staff set up.
 
