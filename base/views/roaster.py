@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm, RoasterHeaderImageForm
-from base.models import Farmer, Language, MeetingRequest, Connection, RoasterPhoto,Roaster, FarmerPhoto, BuyerFunctions,Story,Season,ProcessingMethod,CupScore,Forum
+from base.models import Farmer, Language, MeetingRequest, Connection, RoasterPhoto,Roaster, FarmerPhoto, BuyerFunctions,Story,Season,ProcessingMethod,CupScore,Forum, InteractionEvent
 from base.notifications import notify_meeting_event, notify_connection_event
+from base.analytics import record_event, record_view
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib import messages
@@ -184,6 +185,10 @@ def create_connection_request(request, recipient):
 
     conn = Connection.request(request.user, recipient, message=request.POST.get('message', ''))
     notify_connection_event(conn, 'created')
+    record_event(
+        request.user, InteractionEvent.EventType.REQUEST_CONNECTION,
+        target=conn, target_user=recipient,
+    )
     messages.success(request, "Connection request sent!")
     return conn
 
@@ -197,10 +202,18 @@ def apply_connection_action(request, connection, action):
     if action == 'accept' and connection.status == Connection.PENDING and is_recipient:
         connection.accept()
         notify_connection_event(connection, 'accepted')
+        record_event(
+            user, InteractionEvent.EventType.ACCEPT_CONNECTION,
+            target=connection, target_user=connection.initiator,
+        )
         messages.success(request, "Connection accepted.")
     elif action == 'reject' and connection.status == Connection.PENDING and is_recipient:
         connection.decline()
         notify_connection_event(connection, 'declined')
+        record_event(
+            user, InteractionEvent.EventType.DECLINE_CONNECTION,
+            target=connection, target_user=connection.initiator,
+        )
         messages.info(request, "Request declined.")
     elif action == 'withdraw' and connection.status == Connection.PENDING and is_initiator:
         connection.withdraw()
@@ -408,6 +421,20 @@ def farmer_view(request, user_id):
         logger.exception("Error loading farmer profile data for user_id=%s", user_id)
         messages.error(request, "Something went wrong loading this profile. Please try again later.")
         return redirect('connections')
+
+    if not is_own_profile:
+        record_view(
+            request.user, InteractionEvent.EventType.VIEW_PROFILE,
+            farmer_profile.user, target=farmer_profile,
+            country=farmer_profile.country, story_count=farmer_stories.count(),
+        )
+        if farmer_stories:
+            record_view(
+                request.user, InteractionEvent.EventType.VIEW_STORY,
+                farmer_profile.user, target=farmer_stories[0],
+                story_count=farmer_stories.count(),
+                total_story_length=sum(len(s.story_text or '') for s in farmer_stories),
+            )
 
     return render(request, 'base/farmer_view.html', {
         'farmer_profile': farmer_profile,

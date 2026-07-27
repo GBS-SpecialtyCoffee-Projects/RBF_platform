@@ -277,7 +277,9 @@
     }
 
     document.getElementById("roasterOnboardingForm").addEventListener("submit", function(e) {
-        const code = document.getElementById("country_code").value;
+        const raw = document.getElementById("country_code").value;
+        const match = raw.match(/\(\+?(\d+)\)/);
+        const code = match ? "+" + match[1] : raw;
         const number = document.getElementById("phone_number").value;
         document.getElementById("full_phone_number").value = code + number;
     });

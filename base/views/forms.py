@@ -382,6 +382,11 @@ class RoasterProfileForm(forms.ModelForm):
 
 
 class FarmerProfilePhotoForm(forms.ModelForm):
+    country_code = forms.ChoiceField(
+        choices=COUNTRY_CODE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control', 'placeholder': 'Code'})
+    )
+
     class Meta:
         model = Farmer
         fields = ['profile_picture','firstname','lastname', 'city', 'state', 'country','country_code','phone_number']
@@ -392,7 +397,6 @@ class FarmerProfilePhotoForm(forms.ModelForm):
             'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
             'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
             'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}),
-            'country_code': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Code'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number'}),
 
         }

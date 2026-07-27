@@ -1,4 +1,5 @@
 {% extends "base/platform_admin/base.html" %}
+{% load static %}
 {% block title_suffix %} — {{ farmer.firstname }} {{ farmer.lastname }}{% endblock %}
 {% block nav_farmers %}active{% endblock %}
 
@@ -127,7 +128,9 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label small">{{ form.cultivars.label }}</label>
-                            {{ form.cultivars }}
+                            <div class="cultivars-widget">
+                              <div class="cultivars-original">{{ form.cultivars }}</div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small">{{ form.annual_production_unit.label }}</label>
@@ -263,4 +266,8 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/cultivars_input.js' %}"></script>
 {% endblock %}

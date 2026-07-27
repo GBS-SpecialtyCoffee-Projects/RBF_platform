@@ -102,6 +102,9 @@
         <a href="{% url 'admin_meetings' %}" class="nav-link {% block nav_meetings %}{% endblock %}">
             <i class="fa-solid fa-video"></i> Meetings
         </a>
+        <a href="{% url 'admin_analytics' %}" class="nav-link {% block nav_analytics %}{% endblock %}">
+            <i class="fa-solid fa-chart-line"></i> Analytics
+        </a>
         {% if request.user.is_superuser %}
         <a href="{% url 'admin_users' %}" class="nav-link {% block nav_admins %}{% endblock %}">
             <i class="fa-solid fa-user-shield"></i> Admins

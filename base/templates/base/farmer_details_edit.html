@@ -35,9 +35,10 @@
                 <span class="input-group-text">kg</span>
             </div>
             {{ main_form.cultivars.label }}
-            <div class="input-group mb-3">
-                
+            <div class="cultivars-widget">
+              <div class="cultivars-original input-group mb-3">
                 {{ main_form.cultivars }}
+              </div>
             </div>
             {{ main_form.cup_scores_received.label }}
             <div class="input-group mb-3">
@@ -77,4 +78,8 @@
 
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/cultivars_input.js' %}"></script>
 {% endblock %}
