@@ -1071,3 +1071,138 @@ class AnalyticsDashboardViewTests(TestCase):
         resp = self.client.get(reverse('admin_analytics'))
         self.assertEqual(resp.status_code, 302)
         self.assertIn(reverse('admin_login'), resp.url)
+
+
+class CountryCodeChoiceTests(TestCase):
+    def test_choice_values_are_unique(self):
+        # Duplicate values (all +1 countries sharing '+1') were the root cause
+        # of the wrong country showing on edit.
+        from base.views.country_codes import COUNTRY_CODE_CHOICES
+        values = [value for value, _ in COUNTRY_CODE_CHOICES]
+        self.assertEqual(len(values), len(set(values)))
+
+    def test_edit_form_round_trips_selected_country(self):
+        from base.views.forms import FarmerForm
+        user = User.objects.create(
+            email='gt@example.com', group='farmer', username='gtuser',
+        )
+        farmer = Farmer.objects.create(
+            user=user, firstname='Gabe', lastname='Guatemala',
+            country_code='Guatemala (+502)',
+        )
+        rendered = str(FarmerForm(instance=farmer)['country_code'])
+        self.assertIn('value="Guatemala (+502)" selected', rendered)
+        # The bug symptom: it must NOT default to the first +1 country.
+        self.assertNotIn('value="Antigua and Barbuda (+1)" selected', rendered)
+
+
+class CultivarsWidgetTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create(
+            email='admin@example.com', username='admin', is_staff=True,
+        )
+        self.farmer_user = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        # Stored the same way as always: comma-separated in one field.
+        Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            cultivars='Caturra,Bourbon,Typica',
+        )
+
+    def test_admin_detail_renders_cultivars_widget(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get(
+            reverse('admin_farmer_detail', args=[self.farmer_user.id])
+        )
+        self.assertEqual(resp.status_code, 200)
+        html = resp.content.decode()
+        # The progressive-enhancement wrapper and its script are wired in.
+        self.assertIn('cultivars-widget', html)
+        self.assertIn('cultivars-original', html)
+        self.assertIn('cultivars_input.js', html)
+        # The real comma-separated value is still present for the JS to seed from.
+        self.assertIn('Caturra,Bourbon,Typica', html)
+
+
+class OnboardingBadgeTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        self.farmer = Farmer.objects.create(
+            user=self.user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+
+    def test_pending_count_property(self):
+        # All seven tasks start incomplete.
+        self.assertEqual(self.farmer.pending_orientation_tasks, 7)
+        self.farmer.profile_completed = True
+        self.farmer.storytelling_workshop = True
+        self.farmer.save()
+        self.assertEqual(self.farmer.pending_orientation_tasks, 5)
+
+    def test_badge_shows_pending_count(self):
+        self.farmer.profile_completed = True
+        self.farmer.storytelling_workshop = True
+        self.farmer.video_pricing = True
+        self.farmer.save()  # 4 remaining
+        self.client.force_login(self.user)
+        html = self.client.get(reverse('farmer_dashboard')).content.decode()
+        self.assertIn('<span class="badge bg-danger">4</span>', html)
+
+    def test_badge_hidden_when_complete(self):
+        for field in Farmer.ORIENTATION_TASK_FIELDS:
+            setattr(self.farmer, field, True)
+        self.farmer.save()
+        self.client.force_login(self.user)
+        html = self.client.get(reverse('farmer_dashboard')).content.decode()
+        self.assertNotIn('badge bg-danger', html)
+
+
+class ConnectionMessageBadgeTests(TestCase):
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        self.farmer = Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+        self.roaster_user = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        Roaster.objects.create(
+            user=self.roaster_user, firstname='Roni', lastname='Roaster',
+            is_details_filled=True,
+        )
+
+    def test_pending_received_counts_only_incoming(self):
+        Connection.request(self.roaster_user, self.farmer_user)
+        # Recipient sees the pending request; the initiator does not.
+        self.assertEqual(self.farmer_user.pending_connections_count, 1)
+        self.assertEqual(self.roaster_user.pending_connections_count, 0)
+
+    def test_unread_excludes_own_and_read_messages(self):
+        conv = Conversation.objects.create(
+            roaster=self.roaster_user, farmer=self.farmer_user,
+        )
+        Message.objects.create(conversation=conv, sender=self.roaster_user, body='hi')
+        Message.objects.create(conversation=conv, sender=self.roaster_user, body='yo')
+        # The farmer's own message must not count as unread for the farmer.
+        Message.objects.create(conversation=conv, sender=self.farmer_user, body='hey')
+        self.assertEqual(self.farmer_user.unread_messages_count, 2)
+        self.assertEqual(self.roaster_user.unread_messages_count, 1)
+
+    def test_badges_render_in_navbar(self):
+        Connection.request(self.roaster_user, self.farmer_user)
+        conv = Conversation.objects.create(
+            roaster=self.roaster_user, farmer=self.farmer_user,
+        )
+        Message.objects.create(conversation=conv, sender=self.roaster_user, body='hi')
+        self.client.force_login(self.farmer_user)
+        html = self.client.get(reverse('farmer_dashboard')).content.decode()
+        self.assertIn('CONNECTIONS\n', html)
+        # Both badges present with their counts.
+        self.assertEqual(html.count('<span class="badge bg-danger">1</span>'), 2)

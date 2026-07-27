@@ -497,8 +497,10 @@
                 {{ main_form.annual_production }}
                 <span class="input-group-text">kg</span>
             </div>
-            <div class="input-group mb-3">
+            <div class="cultivars-widget">
+              <div class="cultivars-original input-group mb-3">
                 {{ main_form.cultivars }}
+              </div>
             </div>
             <div class="input-group mb-3">
                 {{ main_form.cup_scores_received }}
@@ -564,5 +566,9 @@
 
 {% include 'base/partials/reject_confirm_modal.html' %}
 
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/cultivars_input.js' %}"></script>
 {% endblock %}
 
