@@ -55,6 +55,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
+    @property
+    def pending_connections_count(self):
+        """Incoming connection requests awaiting this user's response."""
+        return Connection.pending_received_count(self)
+
+    @property
+    def unread_messages_count(self):
+        """Unread chat messages addressed to this user."""
+        return Message.unread_count_for(self)
+
 # second table: Farmer is related with User by userid, one userid can only match one farmer profile
 
 class Season(models.Model):
@@ -148,7 +158,7 @@ class Farmer(models.Model):
     annual_production = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Annual production in tons")
     annual_production_unit = models.CharField(max_length=255, choices=PROD_UNIT_CHOICES, default='kilograms', blank=True, null=True)
     cultivars = models.CharField(max_length=255, blank=True, null=True)
-    country_code = models.CharField(max_length=255, blank=True, null=True, default='US (+1)')
+    country_code = models.CharField(max_length=255, blank=True, null=True, default='United States (+1)')
     phone_number = models.CharField(max_length=255, blank=True, null=True)
     cup_scores_received = models.ManyToManyField(CupScore, blank=True)
     source_of_cup_scores = models.CharField(max_length=255, blank=True, null=True)
@@ -178,6 +188,20 @@ class Farmer(models.Model):
     is_member_organization = models.BooleanField(default=False,choices=[(True, 'Yes'), (False, 'No')])
     member_organization_name = models.CharField(max_length=255, blank=True, null=True)
     is_profile_published = models.BooleanField(default=False)
+
+    # Boolean flags that make up the onboarding/orientation checklist.
+    ORIENTATION_TASK_FIELDS = (
+        'profile_completed', 'storytelling_workshop', 'video_pricing',
+        'video_intl', 'video_comm_tips', 'video_relationships',
+        'video_perceptions',
+    )
+
+    @property
+    def pending_orientation_tasks(self):
+        """Count of onboarding tasks not yet completed (0 when fully onboarded)."""
+        return sum(
+            1 for field in self.ORIENTATION_TASK_FIELDS if not getattr(self, field)
+        )
 
     def __str__(self):
         return f'{self.firstname} {self.lastname} - {self.farm_name}'
@@ -209,7 +233,7 @@ class Roaster(models.Model):
     coffee_types_interested = models.TextField(blank=True, null=True)
     cup_scores_interested = models.ManyToManyField(CupScore, blank=True, related_name='interested_roasters')
     profile_picture = models.ImageField(storage=get_roaster_profile_storage,blank=True, null=True)
-    country_code = models.CharField(max_length=255, blank=True, null=True, default='US (+1)')
+    country_code = models.CharField(max_length=255, blank=True, null=True, default='United States (+1)')
     phone_number = models.CharField(max_length=255, blank=True, null=True)
     header_image = models.ImageField(storage=get_roaster_profile_storage, blank=True, null=True)
     is_details_filled = models.BooleanField(default=False)
@@ -479,6 +503,14 @@ class Connection(models.Model):
         """Outgoing pending invites — the figure the spam guard caps."""
         return cls.objects.filter(initiator=user, status=cls.PENDING).count()
 
+    @classmethod
+    def pending_received_count(cls, user):
+        """Incoming pending requests awaiting the user's response."""
+        return cls.objects.filter(
+            models.Q(user_a=user) | models.Q(user_b=user),
+            status=cls.PENDING,
+        ).exclude(initiator=user).count()
+
 
 class Conversation(models.Model):
     roaster = models.ForeignKey(User, on_delete=models.CASCADE, related_name='conversations_as_roaster')
@@ -512,6 +544,14 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Msg {self.id} from {self.sender.email} in conv {self.conversation_id}"
+
+    @classmethod
+    def unread_count_for(cls, user):
+        """Messages in the user's conversations that they haven't read yet."""
+        return cls.objects.filter(
+            models.Q(conversation__roaster=user) | models.Q(conversation__farmer=user),
+            read_at__isnull=True,
+        ).exclude(sender=user).count()
 
 
 class Language (models.Model):

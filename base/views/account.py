@@ -3,6 +3,7 @@ from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from .forms import SignupForm, SigninForm, PasswordResetForm, FarmerForm, StoryForm
+from base.views.country_codes import COUNTRY_CODE_CHOICES
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
@@ -105,7 +106,10 @@ def farmer_details(request):
     else:
         story_form = StoryForm()
         farmer_form = FarmerForm(instance=farmer)
-    return render(request, 'base/farmer_signup.html', {'farmer_form': farmer_form, 'story_form': story_form})
+    return render(request, 'base/farmer_signup.html', {
+        'farmer_form': farmer_form, 'story_form': story_form,
+        'country_code_choices': COUNTRY_CODE_CHOICES,
+    })
 
 def roaster_details(request):
     try:
@@ -127,7 +131,10 @@ def roaster_details(request):
     else:
         form = RoasterForm(instance=roaster)
 
-    return render(request, 'base/roaster_signup.html', {'form': form})
+    return render(request, 'base/roaster_signup.html', {
+        'form': form,
+        'country_code_choices': COUNTRY_CODE_CHOICES,
+    })
 
 
 def signin_view(request):
