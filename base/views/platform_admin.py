@@ -1,5 +1,6 @@
 # base/views/platform_admin.py
 
+from datetime import timedelta
 from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -16,6 +17,7 @@ from base.models import (
     User, Farmer, Roaster, MeetingRequest, FarmerPhoto, RoasterPhoto,
     Language, Story, AuditLog, AuditAction, Resource, Forum, ForumMeeting,
 )
+from base import analytics_reports
 from base.notifications import notify_meeting_calendar_invite
 from .forms import (
     FarmerForm, RoasterForm, SigninForm, AdminCreateForm, ResourceForm,
@@ -415,4 +417,56 @@ def admin_audit_log(request):
         'logs': page,
         'action_choices': AuditAction.choices,
         'current_filter': action_filter,
+    })
+
+
+RANGE_OPTIONS = [('7', 'Last 7 days'), ('30', 'Last 30 days'),
+                 ('90', 'Last 90 days'), ('all', 'All time')]
+
+
+@admin_required
+def admin_analytics(request):
+    """Staff dashboard: how roasters and farmers interact (funnel, story
+    impact, match quality, engagement volume)."""
+    days = request.GET.get('days', '30')
+    valid = {value for value, _ in RANGE_OPTIONS}
+    if days not in valid:
+        days = '30'
+    start = None if days == 'all' else timezone.now() - timedelta(days=int(days))
+
+    funnel = analytics_reports.funnel(start=start)
+    story = analytics_reports.story_impact(start=start)
+    match = analytics_reports.match_quality(start=start)
+    volume = analytics_reports.engagement_volume(start=start)
+
+    charts = {
+        'funnel': {
+            'labels': [s['label'] for s in funnel['stages']],
+            'counts': [s['count'] for s in funnel['stages']],
+        },
+        'timeseries': {
+            'labels': [row['day'] for row in volume['timeseries']],
+            'counts': [row['n'] for row in volume['timeseries']],
+        },
+        'story': {
+            'labels': ['With stories', 'Without stories'],
+            'avg_views': [story['with_stories']['avg_views_per_farmer'],
+                          story['without_stories']['avg_views_per_farmer']],
+            'avg_active': [story['with_stories']['avg_active_per_farmer'],
+                           story['without_stories']['avg_active_per_farmer']],
+        },
+        'farmer_country': {
+            'labels': [c for c, _ in match['by_farmer_country'][:10]],
+            'counts': [n for _, n in match['by_farmer_country'][:10]],
+        },
+    }
+
+    return render(request, 'base/platform_admin/analytics.html', {
+        'days': days,
+        'range_options': RANGE_OPTIONS,
+        'funnel': funnel,
+        'story': story,
+        'match': match,
+        'volume': volume,
+        'charts': charts,
     })
