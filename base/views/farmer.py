@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck, FarmerHeaderImageForm, MeetingRequestForm
-from base.models import Roaster, RoasterPhoto, MeetingRequest, Connection, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore,Forum
+from base.models import Roaster, RoasterPhoto, MeetingRequest, Connection, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore,Forum, InteractionEvent
 from base.notifications import notify_meeting_event, notify_connection_event
 from base.views.roaster import create_connection_request, apply_connection_action, connection_buckets
+from base.analytics import record_view
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -311,6 +312,13 @@ def roaster_view(request, user_id):
         logger.exception("Error loading roaster profile data for user_id=%s", user_id)
         messages.error(request, "Something went wrong loading this profile. Please try again later.")
         return redirect('farmer_dashboard')
+
+    if not is_own_profile:
+        record_view(
+            request.user, InteractionEvent.EventType.VIEW_PROFILE,
+            roaster_profile.user, target=roaster_profile,
+            country=roaster_profile.country,
+        )
 
     return render(request, 'base/roaster_view.html', {
         'roaster_profile': roaster_profile,

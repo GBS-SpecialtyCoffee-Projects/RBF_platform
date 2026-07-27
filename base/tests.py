@@ -8,9 +8,11 @@ from django.utils import timezone
 
 from django.core.exceptions import ValidationError
 
+from base.analytics import record_event, record_view
+from base import analytics_reports
 from base.models import (
     Connection, Conversation, Farmer, Forum, ForumMeeting, ForumSignup,
-    ForumWindow, MeetingRequest, Message, Roaster,
+    ForumWindow, InteractionEvent, MeetingRequest, Message, Roaster, Story,
 )
 from base.notifications import notify_meeting_event
 
@@ -900,3 +902,172 @@ class AdminMeetingsTests(TestCase):
         meeting.refresh_from_db()
         self.assertIsNone(meeting.invite_sent_at)
         self.assertEqual(len(mail.outbox), 0)
+
+
+class AnalyticsCaptureTests(TestCase):
+    def setUp(self):
+        self.roaster_user = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser'
+        )
+        self.farmer_user = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser'
+        )
+
+    def test_record_event_stores_roles_and_target(self):
+        conn = Connection.request(self.roaster_user, self.farmer_user)
+        event = record_event(
+            self.roaster_user, InteractionEvent.EventType.REQUEST_CONNECTION,
+            target=conn, target_user=self.farmer_user,
+        )
+        self.assertEqual(event.actor, self.roaster_user)
+        self.assertEqual(event.target_user, self.farmer_user)
+        self.assertEqual(event.target, conn)
+        self.assertEqual(event.metadata['actor_role'], 'roaster')
+        self.assertEqual(event.metadata['target_role'], 'farmer')
+
+    def test_record_event_infers_target_user_from_target(self):
+        conn = Connection.request(self.roaster_user, self.farmer_user)
+        event = record_event(
+            self.roaster_user, InteractionEvent.EventType.REQUEST_CONNECTION,
+            target=conn,
+        )
+        # Connection exposes ``recipient``; target_user should be inferred.
+        self.assertEqual(event.target_user, self.farmer_user)
+
+    def test_record_view_dedupes_same_day(self):
+        first = record_view(
+            self.roaster_user, InteractionEvent.EventType.VIEW_PROFILE,
+            self.farmer_user,
+        )
+        second = record_view(
+            self.roaster_user, InteractionEvent.EventType.VIEW_PROFILE,
+            self.farmer_user,
+        )
+        self.assertIsNotNone(first)
+        self.assertIsNone(second)
+        self.assertEqual(
+            InteractionEvent.objects.filter(
+                event_type=InteractionEvent.EventType.VIEW_PROFILE
+            ).count(),
+            1,
+        )
+
+    def test_record_view_skips_self_view(self):
+        event = record_view(
+            self.roaster_user, InteractionEvent.EventType.VIEW_PROFILE,
+            self.roaster_user,
+        )
+        self.assertIsNone(event)
+        self.assertFalse(InteractionEvent.objects.exists())
+
+    def test_record_event_never_raises(self):
+        # An unsaved target_user can't be used as a FK; the write fails but is
+        # swallowed so the caller's request is never broken.
+        result = record_event(
+            self.roaster_user, InteractionEvent.EventType.SEND_MESSAGE,
+            target_user=User(email='ghost@example.com', username='ghost'),
+        )
+        self.assertIsNone(result)
+
+
+class AnalyticsReportsTests(TestCase):
+    def setUp(self):
+        self.roaster_user = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser'
+        )
+        Roaster.objects.create(user=self.roaster_user, company_name='Acme', country='Kenya')
+
+        self.farmer_with = User.objects.create(
+            email='fw@example.com', group='farmer', username='fw'
+        )
+        fw_profile = Farmer.objects.create(
+            user=self.farmer_with, firstname='Ada', lastname='Lima',
+            farm_name='Sunrise', country='Colombia',
+        )
+        Story.objects.create(
+            user=self.farmer_with, farmer=fw_profile, story_text='A rich story.'
+        )
+
+        self.farmer_without = User.objects.create(
+            email='fo@example.com', group='farmer', username='fo'
+        )
+        Farmer.objects.create(
+            user=self.farmer_without, firstname='Bob', lastname='Diaz',
+            farm_name='Hilltop', country='Brazil',
+        )
+
+        # Roaster views the storied farmer, then connects with them (accepted).
+        record_view(
+            self.roaster_user, InteractionEvent.EventType.VIEW_PROFILE,
+            self.farmer_with,
+        )
+        active = Connection.request(self.roaster_user, self.farmer_with)
+        active.accept()
+        # A pending, unaccepted request to the other farmer.
+        Connection.request(self.roaster_user, self.farmer_without)
+
+        conv = Conversation.objects.create(
+            roaster=self.roaster_user, farmer=self.farmer_with
+        )
+        Message.objects.create(conversation=conv, sender=self.roaster_user, body='hi')
+
+    def test_funnel_stage_counts(self):
+        stages = {s['key']: s['count'] for s in analytics_reports.funnel()['stages']}
+        self.assertEqual(stages['profile_views'], 1)
+        self.assertEqual(stages['messages'], 1)
+        self.assertEqual(stages['requests'], 2)
+        self.assertEqual(stages['active'], 1)
+
+    def test_story_impact_separates_groups(self):
+        report = analytics_reports.story_impact()
+        self.assertEqual(report['with_stories']['farmers'], 1)
+        self.assertEqual(report['without_stories']['farmers'], 1)
+        # The storied farmer got the view and the active connection.
+        self.assertEqual(report['with_stories']['profile_views'], 1)
+        self.assertEqual(report['with_stories']['active_connections'], 1)
+        self.assertEqual(report['without_stories']['active_connections'], 0)
+
+    def test_match_quality_buckets_by_country(self):
+        report = analytics_reports.match_quality()
+        self.assertEqual(report['active_total'], 1)
+        self.assertEqual(dict(report['by_farmer_country']).get('Colombia'), 1)
+        self.assertEqual(dict(report['by_roaster_country']).get('Kenya'), 1)
+        self.assertEqual(report['initiation'].get('roaster'), 1)
+
+    def test_engagement_volume_totals(self):
+        report = analytics_reports.engagement_volume()
+        self.assertEqual(report['connection_requests'], 2)
+        self.assertEqual(report['active_connections'], 1)
+        self.assertEqual(report['messages'], 1)
+        self.assertEqual(
+            report['events_by_type'].get(InteractionEvent.EventType.VIEW_PROFILE), 1
+        )
+
+
+class AnalyticsDashboardViewTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create(
+            email='staff@example.com', username='staff', is_staff=True
+        )
+        self.member = User.objects.create(
+            email='member@example.com', username='member', group='farmer'
+        )
+
+    def test_staff_can_load_dashboard(self):
+        self.client.force_login(self.staff)
+        resp = self.client.get(reverse('admin_analytics'))
+        self.assertEqual(resp.status_code, 200)
+        for key in ('funnel', 'story', 'match', 'volume', 'charts'):
+            self.assertIn(key, resp.context)
+
+    def test_range_param_is_validated(self):
+        self.client.force_login(self.staff)
+        resp = self.client.get(reverse('admin_analytics'), {'days': 'bogus'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['days'], '30')
+
+    def test_non_staff_redirected(self):
+        self.client.force_login(self.member)
+        resp = self.client.get(reverse('admin_analytics'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse('admin_login'), resp.url)
