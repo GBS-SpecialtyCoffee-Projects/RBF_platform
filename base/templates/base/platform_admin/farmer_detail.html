@@ -249,6 +249,48 @@
             </div>
         </div>
 
+        <!-- Send email -->
+        <div class="card stat-card mb-4">
+            <div class="card-header bg-white py-3">
+                <span class="fw-semibold">Send Email</span>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="email">
+                    <p class="small text-muted mb-2">To: {{ farmer.user.email }}</p>
+                    <div class="mb-2">
+                        {{ email_form.subject }}
+                        {% for error in email_form.subject.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        {{ email_form.body }}
+                        {% for error in email_form.body.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                        <i class="fa-solid fa-paper-plane me-1"></i> Send email
+                    </button>
+                </form>
+                {% if sent_emails %}
+                <hr class="my-3">
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">Recently sent</h6>
+                {% for email in sent_emails %}
+                <div class="small text-muted d-flex justify-content-between gap-2">
+                    <span class="text-truncate">{{ email.subject }}</span>
+                    <span class="text-nowrap">
+                        {{ email.sent_at|date:"M d" }}
+                        {% if not email.delivered %}<span class="badge bg-danger">Failed</span>{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
         <!-- Photos -->
         {% if photos %}
         <div class="card stat-card">

@@ -11,6 +11,10 @@
     font-size: inherit; */
   }
 
+html {
+    scroll-behavior: smooth;
+}
+
 .main-bg{
     height: 100vh;
     background:linear-gradient(rgba(0,0,0,0.3),rgba(33,37,41,1)),url('../img/banner2.jpg') no-repeat center center fixed;
@@ -21,6 +25,12 @@
 
 h1.landing-text{
     font-size: 40px;
+}
+
+/* Collapse toggles built on <div> (e.g. the landing page FAQ) don't get the
+   pointer cursor that <button>/<a> toggles do. */
+[data-bs-toggle="collapse"] {
+    cursor: pointer;
 }
 
 .profile-bg{

@@ -1,4 +1,6 @@
 from datetime import timedelta
+from smtplib import SMTPException
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -11,8 +13,9 @@ from django.core.exceptions import ValidationError
 from base.analytics import record_event, record_view
 from base import analytics_reports
 from base.models import (
-    Connection, Conversation, Farmer, Forum, ForumMeeting, ForumSignup,
-    ForumWindow, InteractionEvent, MeetingRequest, Message, Roaster, Story,
+    AdminEmail, Connection, Conversation, Farmer, Forum, ForumMeeting,
+    ForumSignup, ForumWindow, InteractionEvent, MeetingRequest, Message,
+    Resource, Roaster, Story,
 )
 from base.notifications import notify_meeting_event
 
@@ -904,6 +907,154 @@ class AdminMeetingsTests(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
 
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    EMAIL_FROM='noreply@coffeecircuit.test',
+)
+class AdminEmailTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create(
+            email='admin@example.com', username='admin', is_staff=True,
+        )
+        self.farmer = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        Farmer.objects.create(
+            user=self.farmer, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        Roaster.objects.create(
+            user=self.roaster, firstname='Roni', lastname='Roaster',
+            company_name='Roni Coffee', is_details_filled=True,
+        )
+
+    def test_pages_render_compose_form(self):
+        self.client.force_login(self.admin)
+        for url in (
+            reverse('admin_emails'),
+            reverse('admin_farmer_detail', args=[self.farmer.id]),
+            reverse('admin_roaster_detail', args=[self.roaster.id]),
+        ):
+            with self.subTest(url=url):
+                resp = self.client.get(url)
+                self.assertEqual(resp.status_code, 200)
+                self.assertContains(resp, 'name="subject"')
+                self.assertContains(resp, 'name="body"')
+
+    def test_roaster_detail_renders_without_company_name(self):
+        """company_name is nullable, so the avatar initial must tolerate None."""
+        user = User.objects.create(
+            email='nocompany@example.com', group='roaster', username='nocompany',
+        )
+        Roaster.objects.create(
+            user=user, firstname='No', lastname='Company', is_details_filled=True,
+        )
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('admin_roaster_detail', args=[user.id]))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_send_from_farmer_detail(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse('admin_farmer_detail', args=[self.farmer.id]),
+            {'form_type': 'email', 'subject': 'Welcome', 'body': 'Hello there'},
+        )
+        self.assertEqual(resp.status_code, 302)
+        record = AdminEmail.objects.get()
+        self.assertEqual(record.recipient, self.farmer)
+        self.assertEqual(record.sent_by, self.admin)
+        self.assertTrue(record.delivered)
+        self.assertEqual(record.error, '')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.farmer.email])
+        self.assertEqual(mail.outbox[0].subject, 'Welcome')
+        self.assertIn('Hello there', mail.outbox[0].body)
+        self.assertEqual(mail.outbox[0].reply_to, [self.admin.email])
+
+    def test_send_from_roaster_detail(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse('admin_roaster_detail', args=[self.roaster.id]),
+            {'form_type': 'email', 'subject': 'Hi', 'body': 'A message'},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(AdminEmail.objects.get().recipient, self.roaster)
+        self.assertEqual(mail.outbox[0].to, [self.roaster.email])
+
+    def test_send_from_emails_page(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse('admin_emails'),
+            {
+                'recipient': self.farmer.id,
+                'subject': 'Broadcast',
+                'body': 'Body text',
+            },
+        )
+        self.assertEqual(resp.status_code, 302)
+        record = AdminEmail.objects.get()
+        self.assertEqual(record.recipient, self.farmer)
+        self.assertTrue(record.delivered)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_blank_fields_send_nothing(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse('admin_farmer_detail', args=[self.farmer.id]),
+            {'form_type': 'email', 'subject': '   ', 'body': ''},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(AdminEmail.objects.exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_invalid_email_does_not_touch_profile(self):
+        self.client.force_login(self.admin)
+        self.client.post(
+            reverse('admin_farmer_detail', args=[self.farmer.id]),
+            {'form_type': 'email', 'subject': '', 'body': ''},
+        )
+        farmer = Farmer.objects.get(user=self.farmer)
+        self.assertEqual(farmer.firstname, 'Fiona')
+
+    def test_requires_staff(self):
+        self.client.force_login(self.farmer)
+        resp = self.client.post(
+            reverse('admin_emails'),
+            {'recipient': self.farmer.id, 'subject': 'Hi', 'body': 'Nope'},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse('admin_login'), resp.url)
+        self.assertFalse(AdminEmail.objects.exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_staff_recipients_not_selectable(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse('admin_emails'),
+            {'recipient': self.admin.id, 'subject': 'Hi', 'body': 'Nope'},
+        )
+        self.assertEqual(resp.status_code, 404)
+        self.assertFalse(AdminEmail.objects.exists())
+
+    def test_send_failure_is_recorded(self):
+        self.client.force_login(self.admin)
+        with patch(
+            'base.notifications.EmailMultiAlternatives.send',
+            side_effect=SMTPException('smtp is down'),
+        ):
+            resp = self.client.post(
+                reverse('admin_farmer_detail', args=[self.farmer.id]),
+                {'form_type': 'email', 'subject': 'Oops', 'body': 'Body'},
+            )
+        self.assertEqual(resp.status_code, 302)
+        record = AdminEmail.objects.get()
+        self.assertFalse(record.delivered)
+        self.assertIn('smtp is down', record.error)
+
+
 class AnalyticsCaptureTests(TestCase):
     def setUp(self):
         self.roaster_user = User.objects.create(
@@ -1206,3 +1357,58 @@ class ConnectionMessageBadgeTests(TestCase):
         self.assertIn('CONNECTIONS\n', html)
         # Both badges present with their counts.
         self.assertEqual(html.count('<span class="badge bg-danger">1</span>'), 2)
+
+
+class PublicResourceAccessTests(TestCase):
+    """Resources are linked from the home page and must be public."""
+
+    def setUp(self):
+        self.resource = Resource.objects.create(
+            title='Washed Process Basics',
+            slug='washed-process-basics',
+            body='Body text.',
+            is_published=True,
+        )
+
+    def test_resource_list_anonymous(self):
+        response = self.client.get(reverse('resource_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Washed Process Basics')
+
+    def test_resource_detail_anonymous(self):
+        response = self.client.get(
+            reverse('resource_detail', args=[self.resource.slug])
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_unpublished_resource_hidden(self):
+        draft = Resource.objects.create(
+            title='Draft', slug='draft', body='x', is_published=False,
+        )
+        response = self.client.get(
+            reverse('resource_detail', args=[draft.slug])
+        )
+        self.assertEqual(response.status_code, 404)
+
+
+class LandingPageCallToActionTests(TestCase):
+    """Hero and role buttons on the landing page point somewhere."""
+
+    def test_learn_more_anchors_to_about_section(self):
+        html = self.client.get(reverse('landing_page')).content.decode()
+        self.assertIn('href="#about"', html)
+        self.assertIn('id="about"', html)
+
+    def test_role_buttons_link_to_signup_with_group(self):
+        html = self.client.get(reverse('landing_page')).content.decode()
+        signup_url = reverse('signup')
+        self.assertIn(f'{signup_url}?group=farmer', html)
+        self.assertIn(f'{signup_url}?group=roaster', html)
+
+    def test_signup_preselects_group_from_query(self):
+        response = self.client.get(reverse('signup'), {'group': 'roaster'})
+        self.assertEqual(response.context['form'].initial.get('group'), 'roaster')
+
+    def test_signup_ignores_unknown_group(self):
+        response = self.client.get(reverse('signup'), {'group': 'bogus'})
+        self.assertIsNone(response.context['form'].initial.get('group'))

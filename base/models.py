@@ -637,6 +637,30 @@ class AuditLog(models.Model):
         return f'{self.user} — {self.get_action_display()}'
 
 
+class AdminEmail(models.Model):
+    """A one-off email a platform admin composed and sent to a single user."""
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='admin_emails_received',
+    )
+    sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+        related_name='admin_emails_sent',
+    )
+    subject = models.CharField(max_length=200)
+    body = models.TextField()
+    sent_at = models.DateTimeField(auto_now_add=True)
+    delivered = models.BooleanField(default=False)
+    error = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-sent_at']
+
+    def __str__(self):
+        return f'{self.recipient} — {self.subject}'
+
+
 class Forum(models.Model):
     """A hosted relationship-building forum (event) that staff set up.
 

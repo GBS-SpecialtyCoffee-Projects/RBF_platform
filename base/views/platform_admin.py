@@ -16,12 +16,13 @@ from django.utils import timezone
 from base.models import (
     User, Farmer, Roaster, MeetingRequest, FarmerPhoto, RoasterPhoto,
     Language, Story, AuditLog, AuditAction, Resource, Forum, ForumMeeting,
+    AdminEmail,
 )
 from base import analytics_reports
-from base.notifications import notify_meeting_calendar_invite
+from base.notifications import notify_admin_message, notify_meeting_calendar_invite
 from .forms import (
     FarmerForm, RoasterForm, SigninForm, AdminCreateForm, ResourceForm,
-    ForumForm, ForumWindowFormSet,
+    ForumForm, ForumWindowFormSet, AdminEmailForm,
 )
 
 
@@ -119,20 +120,45 @@ def admin_roasters(request):
     return render(request, 'base/platform_admin/roasters.html', {'roasters': page, 'query': query})
 
 
+def _send_admin_email(request, recipient, form):
+    """Persist and send a composed admin email, flashing the real outcome."""
+    admin_email = form.save(commit=False)
+    admin_email.recipient = recipient
+    admin_email.sent_by = request.user
+    admin_email.save()
+    if notify_admin_message(admin_email):
+        messages.success(request, f'Email sent to {recipient.email}.')
+    else:
+        messages.error(
+            request,
+            f'Could not send the email to {recipient.email}: {admin_email.error}',
+        )
+
+
 @admin_required
 def admin_farmer_detail(request, user_id):
     farmer = get_object_or_404(Farmer, user__id=user_id)
     photos = FarmerPhoto.objects.filter(user=farmer.user).exclude(photo='').exclude(photo__isnull=True)
+    email_form = AdminEmailForm()
 
     if request.method == 'POST':
-        if request.POST.get('form_type') == 'status':
+        if request.POST.get('form_type') == 'email':
+            email_form = AdminEmailForm(request.POST)
+            if email_form.is_valid():
+                _send_admin_email(request, farmer.user, email_form)
+                return redirect('admin_farmer_detail', user_id=user_id)
+            # Fall through to render so the compose errors are shown, but
+            # never let this POST reach the profile form below.
+            form = FarmerForm(instance=farmer)
+
+        elif request.POST.get('form_type') == 'status':
             farmer.is_details_filled = 'is_details_filled' in request.POST
             farmer.is_profile_published = 'is_profile_published' in request.POST
             farmer.save(update_fields=['is_details_filled', 'is_profile_published'])
             messages.success(request, 'Account status updated.')
             return redirect('admin_farmer_detail', user_id=user_id)
 
-        if request.POST.get('form_type') == 'story':
+        elif request.POST.get('form_type') == 'story':
             language = get_object_or_404(Language, id=request.POST.get('language_id'))
             story_text = request.POST.get('story_text', '').strip()
             story = Story.objects.filter(user=farmer.user, language=language).first()
@@ -148,11 +174,12 @@ def admin_farmer_detail(request, user_id):
                 messages.success(request, f'Story ({language.name}) added.')
             return redirect('admin_farmer_detail', user_id=user_id)
 
-        form = FarmerForm(request.POST, request.FILES, instance=farmer)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f'Profile for {farmer.user.email} updated.')
-            return redirect('admin_farmer_detail', user_id=user_id)
+        else:
+            form = FarmerForm(request.POST, request.FILES, instance=farmer)
+            if form.is_valid():
+                form.save()
+                messages.success(request, f'Profile for {farmer.user.email} updated.')
+                return redirect('admin_farmer_detail', user_id=user_id)
     else:
         form = FarmerForm(instance=farmer)
 
@@ -165,6 +192,8 @@ def admin_farmer_detail(request, user_id):
         'form': form,
         'photos': photos,
         'language_stories': language_stories,
+        'email_form': email_form,
+        'sent_emails': AdminEmail.objects.filter(recipient=farmer.user)[:5],
     })
 
 
@@ -172,19 +201,30 @@ def admin_farmer_detail(request, user_id):
 def admin_roaster_detail(request, user_id):
     roaster = get_object_or_404(Roaster, user__id=user_id)
     photos = RoasterPhoto.objects.filter(user=roaster.user)
+    email_form = AdminEmailForm()
 
     if request.method == 'POST':
-        if request.POST.get('form_type') == 'status':
+        if request.POST.get('form_type') == 'email':
+            email_form = AdminEmailForm(request.POST)
+            if email_form.is_valid():
+                _send_admin_email(request, roaster.user, email_form)
+                return redirect('admin_roaster_detail', user_id=user_id)
+            # Fall through to render so the compose errors are shown, but
+            # never let this POST reach the profile form below.
+            form = RoasterForm(instance=roaster)
+
+        elif request.POST.get('form_type') == 'status':
             roaster.is_details_filled = 'is_details_filled' in request.POST
             roaster.save(update_fields=['is_details_filled'])
             messages.success(request, 'Account status updated.')
             return redirect('admin_roaster_detail', user_id=user_id)
 
-        form = RoasterForm(request.POST, request.FILES, instance=roaster)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f'Profile for {roaster.user.email} updated.')
-            return redirect('admin_roaster_detail', user_id=user_id)
+        else:
+            form = RoasterForm(request.POST, request.FILES, instance=roaster)
+            if form.is_valid():
+                form.save()
+                messages.success(request, f'Profile for {roaster.user.email} updated.')
+                return redirect('admin_roaster_detail', user_id=user_id)
     else:
         form = RoasterForm(instance=roaster)
 
@@ -192,6 +232,8 @@ def admin_roaster_detail(request, user_id):
         'roaster': roaster,
         'form': form,
         'photos': photos,
+        'email_form': email_form,
+        'sent_emails': AdminEmail.objects.filter(recipient=roaster.user)[:5],
     })
 
 
@@ -403,6 +445,30 @@ def admin_meeting_send_invite(request, meeting_id):
     notify_meeting_calendar_invite(meeting)
     messages.success(request, 'Calendar invite sent to both participants.')
     return redirect('admin_meetings')
+
+
+@admin_required
+def admin_emails(request):
+    """Compose a one-off email to any platform user, with a send history."""
+    email_form = AdminEmailForm()
+
+    if request.method == 'POST':
+        recipient = get_object_or_404(
+            User, id=request.POST.get('recipient'), is_staff=False,
+        )
+        email_form = AdminEmailForm(request.POST)
+        if email_form.is_valid():
+            _send_admin_email(request, recipient, email_form)
+            return redirect('admin_emails')
+
+    sent = AdminEmail.objects.select_related('recipient', 'sent_by')
+    paginator = Paginator(sent, 20)
+    page = paginator.get_page(request.GET.get('page'))
+    return render(request, 'base/platform_admin/emails.html', {
+        'email_form': email_form,
+        'recipients': User.objects.filter(is_staff=False).order_by('email'),
+        'sent_emails': page,
+    })
 
 
 @superadmin_required

@@ -31,6 +31,8 @@ class AuthMiddleware(MiddlewareMixin):
             'activate',
             'reset_password',
             'signout',
+            'resource_list',
+            'resource_detail',
 #             resolve_url('reset_password'),
 #             resolve_url('email_verify'),
 #             resolve_url('verify_email'),

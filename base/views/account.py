@@ -62,7 +62,11 @@ def signup_view(request):
             except IntegrityError:
                 form.add_error(None, 'An account with this email or username already exists. Please try again.')
     else:
-        form = SignupForm()
+        # Landing page role buttons link here with ?group=farmer|roaster.
+        group = request.GET.get('group')
+        valid_groups = dict(User.GROUP_CHOICES)
+        initial = {'group': group} if group in valid_groups else {}
+        form = SignupForm(initial=initial)
     return render(request, 'base/signup.html', {'form': form})
 
 

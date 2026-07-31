@@ -13,6 +13,7 @@ urlpatterns = [
     path('platform-admin/admins/', platform_admin.admin_users, name='admin_users'),
     path('platform-admin/admins/create/', platform_admin.admin_create, name='admin_create'),
     path('platform-admin/admins/<int:user_id>/toggle/', platform_admin.admin_toggle, name='admin_toggle'),
+    path('platform-admin/emails/', platform_admin.admin_emails, name='admin_emails'),
     path('platform-admin/audit-log/', platform_admin.admin_audit_log, name='admin_audit_log'),
     path('platform-admin/analytics/', platform_admin.admin_analytics, name='admin_analytics'),
     path('platform-admin/resources/', platform_admin.admin_resources, name='admin_resources'),
