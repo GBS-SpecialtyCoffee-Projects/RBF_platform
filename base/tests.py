@@ -978,3 +978,61 @@ class AdminInteractionsTests(TestCase):
         self.client.force_login(self.viewer)
         resp = self.client.get(reverse('admin_interactions'))
         self.assertEqual(resp.status_code, 302)
+
+
+class AdminPendingRequestsTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create(
+            email='staff@example.com', username='staff', is_staff=True,
+        )
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+
+    def _farmer(self, name):
+        return User.objects.create(
+            email=f'{name}@example.com', group='farmer', username=name,
+        )
+
+    def _page(self):
+        self.client.force_login(self.staff)
+        return self.client.get(reverse('admin_pending_requests'))
+
+    def test_lists_only_pending_connections(self):
+        Connection.request(self.roaster, self._farmer('waiting'))
+        Connection.request(self.roaster, self._farmer('accepted')).accept()
+        Connection.objects.create(
+            user_a=self.roaster, user_b=self._farmer('declined'),
+            initiator=self.roaster, status=Connection.DECLINED,
+        )
+
+        resp = self._page()
+        self.assertEqual(resp.status_code, 200)
+        rows = resp.context['connections']
+        self.assertEqual(rows.paginator.count, 1)
+        self.assertEqual(rows[0].recipient.email, 'waiting@example.com')
+
+    def test_shows_initiator_and_target(self):
+        farmer = self._farmer('target')
+        connection = Connection.request(farmer, self.roaster)
+
+        row = self._page().context['connections'][0]
+        self.assertEqual(row.initiator, farmer)
+        self.assertEqual(row.recipient, self.roaster)
+        self.assertEqual(row.id, connection.id)
+
+    def test_longest_waiting_listed_first(self):
+        newest = Connection.request(self.roaster, self._farmer('newest'))
+        oldest = Connection.request(self.roaster, self._farmer('oldest'))
+        # created_at is auto_now_add, so rewrite it to age the row.
+        Connection.objects.filter(id=oldest.id).update(
+            created_at=timezone.now() - timedelta(days=10),
+        )
+
+        rows = self._page().context['connections']
+        self.assertEqual([row.id for row in rows], [oldest.id, newest.id])
+
+    def test_non_staff_redirected(self):
+        self.client.force_login(self.roaster)
+        resp = self.client.get(reverse('admin_pending_requests'))
+        self.assertEqual(resp.status_code, 302)

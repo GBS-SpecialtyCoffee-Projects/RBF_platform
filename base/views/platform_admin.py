@@ -15,7 +15,7 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 
 from base.models import (
-    User, Farmer, Roaster, MeetingRequest, FarmerPhoto, RoasterPhoto,
+    User, Farmer, Roaster, MeetingRequest, Connection, FarmerPhoto, RoasterPhoto,
     Language, Story, AuditLog, AuditAction, Resource, Forum, ForumMeeting,
     InteractionEvent, InteractionEventType,
 )
@@ -404,6 +404,21 @@ def admin_meeting_send_invite(request, meeting_id):
     notify_meeting_calendar_invite(meeting)
     messages.success(request, 'Calendar invite sent to both participants.')
     return redirect('admin_meetings')
+
+
+@admin_required
+def admin_pending_requests(request):
+    """Connection requests still awaiting a response, longest-waiting first."""
+    connections = (
+        Connection.objects.filter(status=Connection.PENDING)
+        .select_related('initiator', 'user_a', 'user_b')
+        .order_by('created_at')
+    )
+    paginator = Paginator(connections, 20)
+    page = paginator.get_page(request.GET.get('page'))
+    return render(request, 'base/platform_admin/pending_requests.html', {
+        'connections': page,
+    })
 
 
 def _filtered_interactions(request):
