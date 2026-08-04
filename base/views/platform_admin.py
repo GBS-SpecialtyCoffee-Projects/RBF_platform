@@ -35,15 +35,6 @@ def admin_required(view_func):
     return wrapper
 
 
-def superadmin_required(view_func):
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated or not request.user.is_superuser:
-            return redirect('admin_dashboard')
-        return view_func(request, *args, **kwargs)
-    return wrapper
-
-
 def admin_login(request):
     if request.user.is_authenticated and request.user.is_staff:
         return redirect('admin_dashboard')
@@ -196,13 +187,13 @@ def admin_roaster_detail(request, user_id):
     })
 
 
-@superadmin_required
+@admin_required
 def admin_users(request):
     admins = User.objects.filter(is_staff=True).order_by('-date_joined')
     return render(request, 'base/platform_admin/admins.html', {'admins': admins})
 
 
-@superadmin_required
+@admin_required
 def admin_create(request):
     if request.method == 'POST':
         form = AdminCreateForm(request.POST)
@@ -222,7 +213,7 @@ def admin_create(request):
     return render(request, 'base/platform_admin/admin_create.html', {'form': form})
 
 
-@superadmin_required
+@admin_required
 def admin_toggle(request, user_id):
     if request.method == 'POST':
         user = get_object_or_404(User, id=user_id)
@@ -480,7 +471,7 @@ def admin_interactions(request):
     })
 
 
-@superadmin_required
+@admin_required
 def admin_audit_log(request):
     logs = AuditLog.objects.select_related('user').all()
     action_filter = request.GET.get('action', '')

@@ -980,6 +980,57 @@ class AdminInteractionsTests(TestCase):
         self.assertEqual(resp.status_code, 302)
 
 
+class AdminStaffAccessTests(TestCase):
+    """Every platform-admin page is open to any staff admin, not just superusers."""
+
+    STAFF_PAGES = [
+        'admin_dashboard', 'admin_farmers', 'admin_roasters', 'admin_users',
+        'admin_create', 'admin_audit_log', 'admin_pending_requests',
+        'admin_interactions', 'admin_resources', 'admin_forums', 'admin_meetings',
+    ]
+
+    def setUp(self):
+        self.staff = User.objects.create(
+            email='staff@example.com', username='staff', is_staff=True,
+        )
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+
+    def test_staff_can_open_every_admin_page(self):
+        self.client.force_login(self.staff)
+        for name in self.STAFF_PAGES:
+            with self.subTest(page=name):
+                resp = self.client.get(reverse(name))
+                self.assertEqual(resp.status_code, 200)
+
+    def test_non_staff_redirected_from_every_admin_page(self):
+        self.client.force_login(self.roaster)
+        for name in self.STAFF_PAGES:
+            with self.subTest(page=name):
+                resp = self.client.get(reverse(name))
+                self.assertEqual(resp.status_code, 302)
+
+    def test_staff_can_toggle_another_admin(self):
+        other = User.objects.create(
+            email='other@example.com', username='other', is_staff=True,
+        )
+        self.client.force_login(self.staff)
+        self.client.post(reverse('admin_toggle', args=[other.id]))
+        other.refresh_from_db()
+        self.assertFalse(other.is_staff)
+
+    def test_superuser_accounts_stay_protected_from_toggle(self):
+        superuser = User.objects.create(
+            email='super@example.com', username='super',
+            is_staff=True, is_superuser=True,
+        )
+        self.client.force_login(self.staff)
+        self.client.post(reverse('admin_toggle', args=[superuser.id]))
+        superuser.refresh_from_db()
+        self.assertTrue(superuser.is_staff)
+
+
 class AdminPendingRequestsTests(TestCase):
     def setUp(self):
         self.staff = User.objects.create(
