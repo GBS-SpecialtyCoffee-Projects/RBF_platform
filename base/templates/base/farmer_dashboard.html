@@ -254,7 +254,10 @@
                         {% if photo.photo %}
                         <div class="col-sm-4 mb-3" >
                             <img style="width: 150px;height: 150px;object-fit: cover;"   class="rounded" src="{{photo.photo.url}}" alt="..." >
-                            <a href="{% url 'delete_farmer_photo' photo.id %}" class="btn btn-danger btn-sm mt-2">Delete</a>
+                            <form method="post" action="{% url 'delete_farmer_photo' photo.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm mt-2">Delete</button>
+                            </form>
                         </div>
                         {% endif %}
                     {% endfor %}

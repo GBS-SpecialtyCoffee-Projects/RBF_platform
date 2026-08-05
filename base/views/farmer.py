@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck, FarmerHeaderImageForm, MeetingRequestForm
-from base.models import Roaster, RoasterPhoto, MeetingRequest, Connection, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore,Forum,InteractionEventType
+from base.models import Roaster, RoasterPhoto, MeetingRequest, Connection, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore,Forum,InteractionEventType,ProfileChangeSource
 from base.notifications import notify_meeting_event, notify_connection_event
 from base.analytics import log_event
+from base.profile_history import record_form_change, record_photo_change
 from base.views.roaster import create_connection_request, apply_connection_action, connection_buckets
 from django.contrib.auth import get_user_model
 from django.contrib import messages
@@ -11,6 +12,7 @@ from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 import logging
 import os
 import random
@@ -230,6 +232,9 @@ def edit_farmer_details(request):
         if form.is_valid():
             print('in valid')
             form.save()
+            record_form_change(
+                form, user=request.user, source=ProfileChangeSource.PROFILE_EDIT,
+            )
             return redirect('farmer_dashboard')
         else:
             print(form.errors)
@@ -246,8 +251,12 @@ def upload_photo(request):
         if form.is_valid():
             farmer_photo = form.save(commit=False)
             farmer_photo.user = request.user  # Set the user to the currently logged-in user
-            farmer_photo.clean()  
+            farmer_photo.clean()
+            before = FarmerPhoto.objects.filter(user=request.user).count()
             farmer_photo.save()
+            record_photo_change(
+                request.user, old_count=before, new_count=before + 1,
+            )
             return redirect('farmer_dashboard')
     else:
         form = FarmerPhotoForm()
@@ -259,6 +268,9 @@ def update_profile(request):
         form = FarmerProfilePhotoForm(request.POST, request.FILES, instance=farmer_profile)
         if form.is_valid():
             form.save()
+            record_form_change(
+                form, user=request.user, source=ProfileChangeSource.PICTURE,
+            )
             referer = request.META.get('HTTP_REFERER', '')
             if 'farmer/' in referer:
                 return redirect('farmer_profile', user_id=request.user.id)
@@ -274,23 +286,22 @@ def update_header_image(request):
         form = FarmerHeaderImageForm(request.POST, request.FILES, instance=farmer_profile)
         if form.is_valid():
             form.save()
+            record_form_change(
+                form, user=request.user, source=ProfileChangeSource.HEADER,
+            )
             referer = request.META.get('HTTP_REFERER', '')
             if 'farmer/' in referer:
                 return redirect('farmer_profile', user_id=request.user.id)
             return redirect('farmer_dashboard')
     return redirect('farmer_dashboard')
 
+@require_POST
 def delete_farmer_photo(request, photo_id):
     photo = get_object_or_404(FarmerPhoto, id=photo_id, user=request.user)
-    if request.method == 'GET':
-        # Delete the file from the filesystem
-        # if photo.photo and os.path.isfile(photo.photo.path):
-        #     os.remove(photo.photo.path)
-
-        # Delete the record from the database
-        photo.delete()
-
-        return redirect('farmer_dashboard')
+    before = FarmerPhoto.objects.filter(user=request.user).count()
+    photo.delete()
+    record_photo_change(request.user, old_count=before, new_count=before - 1)
+    return redirect('farmer_dashboard')
 
 def roaster_view(request, user_id):
     if request.user.group != 'farmer' and request.user.id != user_id:
@@ -510,6 +521,9 @@ def update_story(request):
         if form.is_valid():
             # print('in valid')
             instance =form.save()
+            record_form_change(
+                form, user=request.user, source=ProfileChangeSource.STORY,
+            )
             return JsonResponse({'success': 'success', 'story': instance.story_text}, status=200)
             # return redirect('farmer_dashboard')  # Redirect to a profile page or any other page
     else:
@@ -531,6 +545,9 @@ def add_story(request):
             instance =form.save(commit=False)
             instance.user = farmer
             instance.save()
+            record_form_change(
+                form, user=request.user, source=ProfileChangeSource.STORY,
+            )
             return JsonResponse({'success': 'success', 'story': instance.story_text}, status=200)
             # return redirect('farmer_dashboard')  # Redirect to a profile page or any other page
     else:

@@ -634,6 +634,47 @@ class InteractionEvent(models.Model):
         return f'{self.user} — {self.get_event_type_display()} @ {self.created_at:%Y-%m-%d %H:%M}'
 
 
+class ProfileChangeSource(models.TextChoices):
+    PROFILE_EDIT = 'profile_edit', 'Profile edit'
+    STORY = 'story', 'Story'
+    PHOTO = 'photo', 'Photo'
+    PICTURE = 'picture', 'Profile picture'
+    HEADER = 'header', 'Header image'
+    ADMIN = 'admin', 'Admin edit'
+
+
+class ProfileChange(models.Model):
+    """Append-only record of what changed on a farmer profile, and when.
+
+    ``changes`` holds ``{field: {"old": ..., "new": ...}}``. Photos are
+    recorded as counts only — files are never copied here.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    source = models.CharField(
+        max_length=20, choices=ProfileChangeSource.choices, db_index=True,
+    )
+    changes = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user} — {self.get_source_display()} @ {self.created_at:%Y-%m-%d %H:%M}'
+
+    @property
+    def changed_fields(self):
+        return sorted(self.changes)
+
+
 class Forum(models.Model):
     """A hosted relationship-building forum (event) that staff set up.
 
