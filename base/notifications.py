@@ -89,6 +89,16 @@ def _send(user, subject, template, context):
         )
 
 
+def notify_signup(user):
+    """Welcome a newly registered user and point them at their next step."""
+    _send(
+        user,
+        subject="Welcome to Coffee Circuit",
+        template='base/emails/welcome.html',
+        context={'recipient_name': _display_name(user), 'group': user.group},
+    )
+
+
 def notify_connection_event(connection, event):
     """Email notifications for the Connection lifecycle (created/accepted/declined)."""
     initiator = connection.initiator

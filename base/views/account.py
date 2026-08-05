@@ -14,6 +14,7 @@ from django.utils.html import strip_tags
 from django.contrib.sites.shortcuts import get_current_site
 from .tokens import account_activation_token
 from base.models import User, Farmer, Roaster, Language
+from base.notifications import _display_name, notify_signup
 from django.utils import translation
 from django.conf import settings
 from django.http import JsonResponse
@@ -53,6 +54,7 @@ def signup_view(request):
         if form.is_valid():
             try:
                 user = form.save()
+                notify_signup(user)
                 login(request, user)
                 request.session['group'] = user.group
                 if user.group == 'farmer':
@@ -224,7 +226,7 @@ def verify_email(request):
             user = User.objects.get(email=email)
             mail_subject = 'Password reset verification'
             message = render_to_string('base/template_verify_email.html', {
-                'user': user,
+                'recipient_name': _display_name(user),
                 'domain': get_current_site(request).domain,
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'token': default_token_generator.make_token(user),
