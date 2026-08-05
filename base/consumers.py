@@ -4,7 +4,8 @@ from django.db.models import Q
 from django.utils import timezone
 
 from base.analytics import record_event
-from base.models import Conversation, InteractionEvent, Message
+from base.models import Conversation, InteractionEventType, InteractionEvent, Message
+from base.analytics import log_event
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
@@ -73,6 +74,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             body=body,
         )
         Conversation.objects.filter(id=conversation_id).update(updated_at=timezone.now())
+        conversation = message.conversation
+        target = (
+            conversation.farmer if conversation.roaster_id == sender_id
+            else conversation.roaster
+        )
+        log_event(
+            InteractionEventType.MESSAGE_SENT, user=message.sender,
+            target_user=target, conversation_id=conversation_id,
+        )
 
         conv = message.conversation
         recipient = conv.farmer if sender_id == conv.roaster_id else conv.roaster

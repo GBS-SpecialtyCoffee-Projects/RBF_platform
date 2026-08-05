@@ -637,6 +637,86 @@ class AuditLog(models.Model):
         return f'{self.user} — {self.get_action_display()}'
 
 
+class InteractionEventType(models.TextChoices):
+    LOGIN = 'login', 'Logged in'
+    PROFILE_VIEW = 'profile_view', 'Viewed profile'
+    CONNECTION_REQUEST = 'connection_request', 'Sent connection request'
+    MEETING_PROPOSED = 'meeting_proposed', 'Proposed meeting'
+    MESSAGE_SENT = 'message_sent', 'Sent message'
+    RESOURCE_VIEW = 'resource_view', 'Viewed resource'
+
+
+class InteractionEvent(models.Model):
+    """Raw, append-only log of user interactions for research/analysis.
+
+    Kept intentionally unaggregated: one row per interaction, with a
+    free-form ``metadata`` JSON blob for event-specific context.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    event_type = models.CharField(
+        max_length=50, choices=InteractionEventType.choices, db_index=True,
+    )
+    target_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    path = models.CharField(max_length=255, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    session_key = models.CharField(max_length=40, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user} — {self.get_event_type_display()} @ {self.created_at:%Y-%m-%d %H:%M}'
+
+
+class ProfileChangeSource(models.TextChoices):
+    PROFILE_EDIT = 'profile_edit', 'Profile edit'
+    STORY = 'story', 'Story'
+    PHOTO = 'photo', 'Photo'
+    PICTURE = 'picture', 'Profile picture'
+    HEADER = 'header', 'Header image'
+    ADMIN = 'admin', 'Admin edit'
+
+
+class ProfileChange(models.Model):
+    """Append-only record of what changed on a farmer profile, and when.
+
+    ``changes`` holds ``{field: {"old": ..., "new": ...}}``. Photos are
+    recorded as counts only — files are never copied here.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    source = models.CharField(
+        max_length=20, choices=ProfileChangeSource.choices, db_index=True,
+    )
+    changes = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user} — {self.get_source_display()} @ {self.created_at:%Y-%m-%d %H:%M}'
+
+    @property
+    def changed_fields(self):
+        return sorted(self.changes)
+
+
 class AdminEmail(models.Model):
     """A one-off email a platform admin composed and sent to a single user."""
 

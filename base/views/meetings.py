@@ -4,8 +4,9 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 
 from base.analytics import record_event
-from base.models import Conversation, ForumMeeting, InteractionEvent, User
+from base.models import Conversation, ForumMeeting, InteractionEventType, InteractionEvent, User
 from base.notifications import notify_forum_meeting_event
+from base.analytics import log_event
 from base.views.chat import _accepted_connection_exists, _resolve_pair
 
 
@@ -32,9 +33,9 @@ def propose_meeting(request, user_id):
         conversation=conversation, window=window, proposed_by=request.user,
     )
     notify_forum_meeting_event(meeting, 'proposed')
-    record_event(
-        request.user, InteractionEvent.EventType.REQUEST_MEETING,
-        target=meeting, target_user=other,
+    log_event(
+        InteractionEventType.MEETING_PROPOSED, request=request,
+        target_user=other, meeting_id=meeting.id,
     )
     messages.success(request, "Meeting time proposed.")
     return redirect('chat_thread', user_id=user_id)

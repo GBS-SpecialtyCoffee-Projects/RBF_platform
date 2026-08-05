@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Farmer, FarmerPhoto, MeetingRequest, Connection, RoasterPhoto, Roaster, InteractionEvent
+from .models import User, Farmer, FarmerPhoto, MeetingRequest, Connection, RoasterPhoto, Roaster, InteractionEvent, InteractionEvent
 from django.contrib.auth.models import Group
 from django.db.models import Count
 from django.utils.safestring import mark_safe
@@ -101,6 +101,21 @@ class ConnectionAdmin(admin.ModelAdmin):
     search_fields = ('user_a__username', 'user_b__username', 'initiator__username', 'status')
     list_filter = ('status', 'created_at')
     ordering = ('-updated_at',)
+
+
+@admin.register(InteractionEvent)
+class InteractionEventAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'event_type', 'user', 'target_user', 'path')
+    search_fields = ('user__email', 'target_user__email', 'path')
+    list_filter = ('event_type', 'created_at')
+    ordering = ('-created_at',)
+    readonly_fields = (
+        'user', 'event_type', 'target_user', 'path', 'metadata',
+        'session_key', 'created_at',
+    )
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(InteractionEvent)

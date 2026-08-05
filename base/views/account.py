@@ -13,7 +13,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
 from django.contrib.sites.shortcuts import get_current_site
 from .tokens import account_activation_token
-from base.models import User, Farmer, Roaster, Language
+from base.models import User, Farmer, Roaster, Language, InteractionEventType
+from base.analytics import log_event
 from base.notifications import _display_name, notify_signup
 from django.utils import translation
 from django.conf import settings
@@ -157,6 +158,9 @@ def signin_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            log_event(
+                InteractionEventType.LOGIN, request=request, group=user.group,
+            )
             if user.group == 'farmer':
                 redirect_url = reverse('farmer_dashboard')
             elif user.group == 'roaster':
