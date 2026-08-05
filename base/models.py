@@ -1,7 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -637,6 +635,113 @@ class AuditLog(models.Model):
         return f'{self.user} — {self.get_action_display()}'
 
 
+class InteractionEventType(models.TextChoices):
+    LOGIN = 'login', 'Logged in'
+    PROFILE_VIEW = 'profile_view', 'Viewed profile'
+    STORY_VIEW = 'story_view', 'Viewed story'
+    CONNECTION_REQUEST = 'connection_request', 'Sent connection request'
+    CONNECTION_ACCEPTED = 'connection_accepted', 'Accepted connection'
+    CONNECTION_DECLINED = 'connection_declined', 'Declined connection'
+    MEETING_PROPOSED = 'meeting_proposed', 'Proposed meeting'
+    MESSAGE_SENT = 'message_sent', 'Sent message'
+    RESOURCE_VIEW = 'resource_view', 'Viewed resource'
+
+
+class InteractionEvent(models.Model):
+    """Raw, append-only log of user interactions for research/analysis.
+
+    Kept intentionally unaggregated: one row per interaction, with a
+    free-form ``metadata`` JSON blob for event-specific context.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    event_type = models.CharField(
+        max_length=50, choices=InteractionEventType.choices, db_index=True,
+    )
+    target_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    path = models.CharField(max_length=255, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    session_key = models.CharField(max_length=40, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user} — {self.get_event_type_display()} @ {self.created_at:%Y-%m-%d %H:%M}'
+
+
+class ProfileChangeSource(models.TextChoices):
+    PROFILE_EDIT = 'profile_edit', 'Profile edit'
+    STORY = 'story', 'Story'
+    PHOTO = 'photo', 'Photo'
+    PICTURE = 'picture', 'Profile picture'
+    HEADER = 'header', 'Header image'
+    ADMIN = 'admin', 'Admin edit'
+
+
+class ProfileChange(models.Model):
+    """Append-only record of what changed on a farmer profile, and when.
+
+    ``changes`` holds ``{field: {"old": ..., "new": ...}}``. Photos are
+    recorded as counts only — files are never copied here.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    source = models.CharField(
+        max_length=20, choices=ProfileChangeSource.choices, db_index=True,
+    )
+    changes = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user} — {self.get_source_display()} @ {self.created_at:%Y-%m-%d %H:%M}'
+
+    @property
+    def changed_fields(self):
+        return sorted(self.changes)
+
+
+class AdminEmail(models.Model):
+    """A one-off email a platform admin composed and sent to a single user."""
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='admin_emails_received',
+    )
+    sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+        related_name='admin_emails_sent',
+    )
+    subject = models.CharField(max_length=200)
+    body = models.TextField()
+    sent_at = models.DateTimeField(auto_now_add=True)
+    delivered = models.BooleanField(default=False)
+    error = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-sent_at']
+
+    def __str__(self):
+        return f'{self.recipient} — {self.subject}'
+
+
 class Forum(models.Model):
     """A hosted relationship-building forum (event) that staff set up.
 
@@ -890,51 +995,3 @@ class ForumMeeting(models.Model):
             .order_by('window__starts_at')
         )
 
-
-class InteractionEvent(models.Model):
-    """Directed analytics event capturing how roasters and farmers interact.
-
-    Distinct from ``AuditLog`` (an audit trail of who-did-what): this table
-    records the actor **and** who the action was aimed at, plus denormalized
-    context in ``metadata``, so engagement / funnel / match-quality analytics
-    can be queried cheaply and stay stable even if profiles change later.
-    """
-
-    class EventType(models.TextChoices):
-        VIEW_PROFILE = 'view_profile', 'Viewed profile'
-        VIEW_STORY = 'view_story', 'Viewed story'
-        SEND_MESSAGE = 'send_message', 'Sent message'
-        REQUEST_CONNECTION = 'request_connection', 'Requested connection'
-        ACCEPT_CONNECTION = 'accept_connection', 'Accepted connection'
-        DECLINE_CONNECTION = 'decline_connection', 'Declined connection'
-        REQUEST_MEETING = 'request_meeting', 'Proposed meeting'
-
-    actor = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='interaction_events',
-    )
-    target_user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='interaction_events_received',
-    )
-    event_type = models.CharField(max_length=32, choices=EventType.choices)
-    content_type = models.ForeignKey(
-        ContentType, on_delete=models.SET_NULL, null=True, blank=True,
-    )
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    target = GenericForeignKey('content_type', 'object_id')
-    metadata = models.JSONField(default=dict, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-
-    class Meta:
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['event_type', 'created_at']),
-            models.Index(fields=['target_user', 'event_type']),
-            models.Index(fields=['actor', 'event_type']),
-        ]
-
-    def __str__(self):
-        return (
-            f'{self.actor} — {self.get_event_type_display()} → {self.target_user}'
-        )
