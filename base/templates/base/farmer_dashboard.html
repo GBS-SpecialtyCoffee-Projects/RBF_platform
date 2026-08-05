@@ -254,7 +254,10 @@
                         {% if photo.photo %}
                         <div class="col-sm-4 mb-3" >
                             <img style="width: 150px;height: 150px;object-fit: cover;"   class="rounded" src="{{photo.photo.url}}" alt="..." >
-                            <a href="{% url 'delete_farmer_photo' photo.id %}" class="btn btn-danger btn-sm mt-2">Delete</a>
+                            <form method="post" action="{% url 'delete_farmer_photo' photo.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm mt-2">Delete</button>
+                            </form>
                         </div>
                         {% endif %}
                     {% endfor %}
@@ -497,8 +500,10 @@
                 {{ main_form.annual_production }}
                 <span class="input-group-text">kg</span>
             </div>
-            <div class="input-group mb-3">
+            <div class="cultivars-widget">
+              <div class="cultivars-original input-group mb-3">
                 {{ main_form.cultivars }}
+              </div>
             </div>
             <div class="input-group mb-3">
                 {{ main_form.cup_scores_received }}
@@ -564,5 +569,9 @@
 
 {% include 'base/partials/reject_confirm_modal.html' %}
 
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/cultivars_input.js' %}"></script>
 {% endblock %}
 

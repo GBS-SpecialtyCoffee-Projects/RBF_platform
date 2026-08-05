@@ -1,7 +1,7 @@
 # forms.py
 
 from django import forms
-from base.models import FarmerPhoto,Roaster, RoasterPhoto, User, Farmer, MeetingRequest,Story, Resource, Forum, ForumWindow
+from base.models import FarmerPhoto,Roaster, RoasterPhoto, User, Farmer, MeetingRequest,Story, Resource, Forum, ForumWindow, AdminEmail
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
@@ -382,6 +382,11 @@ class RoasterProfileForm(forms.ModelForm):
 
 
 class FarmerProfilePhotoForm(forms.ModelForm):
+    country_code = forms.ChoiceField(
+        choices=COUNTRY_CODE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control', 'placeholder': 'Code'})
+    )
+
     class Meta:
         model = Farmer
         fields = ['profile_picture','firstname','lastname', 'city', 'state', 'country','country_code','phone_number']
@@ -392,7 +397,6 @@ class FarmerProfilePhotoForm(forms.ModelForm):
             'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
             'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
             'lastname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}),
-            'country_code': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Code'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number'}),
 
         }
@@ -696,3 +700,17 @@ class AdminCreateForm(forms.Form):
         if cleaned.get('password') != cleaned.get('confirm_password'):
             raise ValidationError('Passwords do not match.')
         return cleaned
+
+
+class AdminEmailForm(forms.ModelForm):
+    class Meta:
+        model = AdminEmail
+        fields = ['subject', 'body']
+        widgets = {
+            'subject': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'Subject',
+            }),
+            'body': forms.Textarea(attrs={
+                'class': 'form-control', 'rows': 6, 'placeholder': 'Message',
+            }),
+        }

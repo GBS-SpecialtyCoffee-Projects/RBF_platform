@@ -3,6 +3,7 @@ from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from .forms import SignupForm, SigninForm, PasswordResetForm, FarmerForm, StoryForm
+from base.views.country_codes import COUNTRY_CODE_CHOICES
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
@@ -12,7 +13,9 @@ from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
 from django.contrib.sites.shortcuts import get_current_site
 from .tokens import account_activation_token
-from base.models import User, Farmer, Roaster, Language
+from base.models import User, Farmer, Roaster, Language, InteractionEventType
+from base.analytics import log_event
+from base.notifications import _display_name, notify_signup
 from django.utils import translation
 from django.conf import settings
 from django.http import JsonResponse
@@ -52,6 +55,7 @@ def signup_view(request):
         if form.is_valid():
             try:
                 user = form.save()
+                notify_signup(user)
                 login(request, user)
                 request.session['group'] = user.group
                 if user.group == 'farmer':
@@ -61,7 +65,11 @@ def signup_view(request):
             except IntegrityError:
                 form.add_error(None, 'An account with this email or username already exists. Please try again.')
     else:
-        form = SignupForm()
+        # Landing page role buttons link here with ?group=farmer|roaster.
+        group = request.GET.get('group')
+        valid_groups = dict(User.GROUP_CHOICES)
+        initial = {'group': group} if group in valid_groups else {}
+        form = SignupForm(initial=initial)
     return render(request, 'base/signup.html', {'form': form})
 
 
@@ -105,7 +113,10 @@ def farmer_details(request):
     else:
         story_form = StoryForm()
         farmer_form = FarmerForm(instance=farmer)
-    return render(request, 'base/farmer_signup.html', {'farmer_form': farmer_form, 'story_form': story_form})
+    return render(request, 'base/farmer_signup.html', {
+        'farmer_form': farmer_form, 'story_form': story_form,
+        'country_code_choices': COUNTRY_CODE_CHOICES,
+    })
 
 def roaster_details(request):
     try:
@@ -127,7 +138,10 @@ def roaster_details(request):
     else:
         form = RoasterForm(instance=roaster)
 
-    return render(request, 'base/roaster_signup.html', {'form': form})
+    return render(request, 'base/roaster_signup.html', {
+        'form': form,
+        'country_code_choices': COUNTRY_CODE_CHOICES,
+    })
 
 
 def signin_view(request):
@@ -144,6 +158,9 @@ def signin_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            log_event(
+                InteractionEventType.LOGIN, request=request, group=user.group,
+            )
             if user.group == 'farmer':
                 redirect_url = reverse('farmer_dashboard')
             elif user.group == 'roaster':
@@ -213,7 +230,7 @@ def verify_email(request):
             user = User.objects.get(email=email)
             mail_subject = 'Password reset verification'
             message = render_to_string('base/template_verify_email.html', {
-                'user': user,
+                'recipient_name': _display_name(user),
                 'domain': get_current_site(request).domain,
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'token': default_token_generator.make_token(user),

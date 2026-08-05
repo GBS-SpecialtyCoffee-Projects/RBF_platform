@@ -89,6 +89,16 @@ def _send(user, subject, template, context):
         )
 
 
+def notify_signup(user):
+    """Welcome a newly registered user and point them at their next step."""
+    _send(
+        user,
+        subject="Welcome to Coffee Circuit",
+        template='base/emails/welcome.html',
+        context={'recipient_name': _display_name(user), 'group': user.group},
+    )
+
+
 def notify_connection_event(connection, event):
     """Email notifications for the Connection lifecycle (created/accepted/declined)."""
     initiator = connection.initiator
@@ -191,6 +201,53 @@ def notify_meeting_event(meeting_request, event):
         )
     else:
         logger.warning("Unknown meeting event: %r", event)
+
+
+def notify_admin_message(admin_email):
+    """Send an admin-composed message to a single user.
+
+    Records the outcome on the ``AdminEmail`` row and returns whether the
+    send succeeded, so the caller can report a real result to the admin.
+    """
+    recipient = admin_email.recipient
+    if not recipient.email:
+        admin_email.error = 'Recipient has no email address.'
+        admin_email.save(update_fields=['delivered', 'error'])
+        logger.warning("Skipping admin email for user %s: no email", recipient.pk)
+        return False
+
+    try:
+        html_body = render_to_string(
+            'base/emails/admin_message.html',
+            {
+                'admin_email': admin_email,
+                'recipient_name': _display_name(recipient),
+            },
+        )
+        text_body = strip_tags(html_body)
+        message = EmailMultiAlternatives(
+            subject=admin_email.subject,
+            body=text_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[recipient.email],
+            # Replies reach the admin who wrote it, not the no-reply address.
+            reply_to=(
+                [admin_email.sent_by.email]
+                if admin_email.sent_by and admin_email.sent_by.email
+                else None
+            ),
+        )
+        message.attach_alternative(html_body, "text/html")
+        message.send()
+    except Exception as exc:
+        admin_email.error = str(exc)
+        admin_email.save(update_fields=['delivered', 'error'])
+        logger.exception("Failed to send admin email to %s", recipient.email)
+        return False
+
+    admin_email.delivered = True
+    admin_email.save(update_fields=['delivered', 'error'])
+    return True
 
 
 def notify_meeting_calendar_invite(meeting):

@@ -102,16 +102,27 @@
         <a href="{% url 'admin_meetings' %}" class="nav-link {% block nav_meetings %}{% endblock %}">
             <i class="fa-solid fa-video"></i> Meetings
         </a>
-        {% if request.user.is_superuser %}
+        <a href="{% url 'admin_emails' %}" class="nav-link {% block nav_emails %}{% endblock %}">
+            <i class="fa-solid fa-envelope"></i> Emails
+        </a>
+        <a href="{% url 'admin_pending_requests' %}" class="nav-link {% block nav_pending_requests %}{% endblock %}">
+            <i class="fa-solid fa-hourglass-half"></i> Pending Requests
+        </a>
         <a href="{% url 'admin_users' %}" class="nav-link {% block nav_admins %}{% endblock %}">
             <i class="fa-solid fa-user-shield"></i> Admins
         </a>
-        {% endif %}
-        {% if request.user.is_superuser %}
         <a href="{% url 'admin_audit_log' %}" class="nav-link {% block nav_audit %}{% endblock %}">
             <i class="fa-solid fa-clock-rotate-left"></i> Audit Log
         </a>
-        {% endif %}
+        <a href="{% url 'admin_interactions' %}" class="nav-link {% block nav_interactions %}{% endblock %}">
+            <i class="fa-solid fa-chart-line"></i> Interactions
+        </a>
+        <a href="{% url 'admin_engagement' %}" class="nav-link {% block nav_engagement %}{% endblock %}">
+            <i class="fa-solid fa-users-line"></i> Engagement
+        </a>
+        <a href="{% url 'admin_profile_history' %}" class="nav-link {% block nav_profile_history %}{% endblock %}">
+            <i class="fa-solid fa-clock-rotate-left"></i> Profile History
+        </a>
     </nav>
     <div class="sidebar-footer">
         <small>{{ request.user.email }}</small>

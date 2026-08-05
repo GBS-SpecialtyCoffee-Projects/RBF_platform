@@ -8,28 +8,28 @@
     <div style="margin-top: 150px" class="">
         <div class="text-center px-2" >
             <h1 class="landing-text" style="color: white; font-weight: bolder;">Re-humanizing specialty coffee <br>through personal connection. </h1>
-            <p class="mt-3" style="color: ghostwhite; font-size: 20px;">A shared space for coffee producers and buyers to see and be seen<br>on their own terms</p>
+            <p class="mt-3" style="color: ghostwhite; font-size: 20px;">A platform where producers and buyers tell their stories,<br> form direct, personal connections, and explore <br> potential sourcing relationships.</p>
         </div>
         <div class="text-center">
             <a style="background-color: #303C50; color: white;font-weight: bold;" class="btn mt-3 ml-3 px-4 py-2" href="{% url 'signup' %}">Start Now</a>
         </div>
         <div class="text-center">
-            <button style="color: white;font-weight: lighter;" type="button" class="btn mt-3 ml-3 px-4 py-2 ">learn more</button>
+            <a style="color: white;font-weight: lighter;" class="btn mt-3 ml-3 px-4 py-2" href="#about">learn more</a>
         </div>
 
     </div>
 
     </div>
 
-    <div style="background-color:#212529 ;">
+    <div id="about" style="background-color:#212529 ;">
         <div class="container" style="padding-top: 100px;padding-bottom: 60px; color: ghostwhite;">
             <div class="row" >
                 <div class="col-md-6 coll-info">
                     <h2 width="10px" style="font-weight:bold;" class="">What is The Coffee Circuit</h2>
                     <p width="50px" class="">Coffee producers are often excluded from participating in their supply chains beyond the local level; their stories are often articulated by others. The Coffee Circuit allows producers to be seen and heard on their own terms, without censorship or filters, enabling them to retain agency over their identity once their coffee leaves the farm. It allows roasters to connect with producers they might never meet otherwise, fostering personal relationships built on authenticity rather than curation.</p>
                     <div class="pt-4 ">
-                        <button style="background-color:#9DAD6F ;color: ghostwhite;font-weight: 500;" class="btn btn-lg">I Am A Producer</button>
-                        <button style="background-color:#503B31 ;color: ghostwhite;font-weight: 500;" class="btn btn-lg">I Am A Roaster</button>
+                        <a style="background-color:#9DAD6F ;color: ghostwhite;font-weight: 500;" class="btn btn-lg" href="{% url 'signup' %}?group=farmer">I Am A Producer</a>
+                        <a style="background-color:#503B31 ;color: ghostwhite;font-weight: 500;" class="btn btn-lg" href="{% url 'signup' %}?group=roaster">I Am A Roaster</a>
                     </div>
         
                 </div>
@@ -57,7 +57,7 @@
                 <div class="col-sm-4">
                     <div class="card  text-center rounded-lg info-card">
                         <img class="card-img-top"   src="{% static 'img/cardimg1.jpeg' %}" alt="Card image cap">
-                        <div class="card-body" style="height:200px">
+                        <div class="card-body" style="height:220px">
                           <h5 class="card-title font-weight-bold">What It Is</h5>
                           <p class="card-text">A place for producers to share their stories.<br>
                             A place for buyers to learn directly about producers.<br>
@@ -67,8 +67,8 @@
                 </div>
                  <div class="col-sm-4">
                     <div class="card  text-center border border-radius rounded-5 info-card" style="height: max-content;" >
-                        <img class="card-img-top" src="{% static 'img/tim-mossholder-YC6RVdoTtIk-unsplash.jpg.jpeg' %}" alt="Card image cap">
-                        <div class="card-body" style="height:200px">
+                        <img class="card-img-top" src="{% static 'img/tim-mossholder-YC6RVdoTtIk-unsplash.jpg' %}" alt="Card image cap">
+                        <div class="card-body" style="height:220px">
                           <h5 class="card-title font-weight-bold">What It Isn't</h5>
                           <p class="card-text">A profit making business.<br>
                             A trading platform to sell or buy coffee “right now”.<br>
@@ -80,7 +80,7 @@
                 <div class="col-sm-4">
                     <div class="card  text-center rounded-lg info-card" style="height: max-content;" >
                         <img class="card-img-top" src="{% static 'img/bernd-dittrich-qpB6Kl_ckQM-unsplash.jpg' %}" alt="Card image cap">
-                        <div class="card-body" style="height:200px">
+                        <div class="card-body" style="height:220px">
                           <h5 class="card-title font-weight-bold">How It Works</h5>
                           <p class="card-text">Producers and buyers create profiles to share their stories.<br>
                             They can find each other, make connections and communicate directly.<br>
