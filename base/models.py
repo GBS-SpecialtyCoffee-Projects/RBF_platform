@@ -1,7 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -640,7 +638,10 @@ class AuditLog(models.Model):
 class InteractionEventType(models.TextChoices):
     LOGIN = 'login', 'Logged in'
     PROFILE_VIEW = 'profile_view', 'Viewed profile'
+    STORY_VIEW = 'story_view', 'Viewed story'
     CONNECTION_REQUEST = 'connection_request', 'Sent connection request'
+    CONNECTION_ACCEPTED = 'connection_accepted', 'Accepted connection'
+    CONNECTION_DECLINED = 'connection_declined', 'Declined connection'
     MEETING_PROPOSED = 'meeting_proposed', 'Proposed meeting'
     MESSAGE_SENT = 'message_sent', 'Sent message'
     RESOURCE_VIEW = 'resource_view', 'Viewed resource'
@@ -994,51 +995,3 @@ class ForumMeeting(models.Model):
             .order_by('window__starts_at')
         )
 
-
-class InteractionEvent(models.Model):
-    """Directed analytics event capturing how roasters and farmers interact.
-
-    Distinct from ``AuditLog`` (an audit trail of who-did-what): this table
-    records the actor **and** who the action was aimed at, plus denormalized
-    context in ``metadata``, so engagement / funnel / match-quality analytics
-    can be queried cheaply and stay stable even if profiles change later.
-    """
-
-    class EventType(models.TextChoices):
-        VIEW_PROFILE = 'view_profile', 'Viewed profile'
-        VIEW_STORY = 'view_story', 'Viewed story'
-        SEND_MESSAGE = 'send_message', 'Sent message'
-        REQUEST_CONNECTION = 'request_connection', 'Requested connection'
-        ACCEPT_CONNECTION = 'accept_connection', 'Accepted connection'
-        DECLINE_CONNECTION = 'decline_connection', 'Declined connection'
-        REQUEST_MEETING = 'request_meeting', 'Proposed meeting'
-
-    actor = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='interaction_events',
-    )
-    target_user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='interaction_events_received',
-    )
-    event_type = models.CharField(max_length=32, choices=EventType.choices)
-    content_type = models.ForeignKey(
-        ContentType, on_delete=models.SET_NULL, null=True, blank=True,
-    )
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    target = GenericForeignKey('content_type', 'object_id')
-    metadata = models.JSONField(default=dict, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-
-    class Meta:
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['event_type', 'created_at']),
-            models.Index(fields=['target_user', 'event_type']),
-            models.Index(fields=['actor', 'event_type']),
-        ]
-
-    def __str__(self):
-        return (
-            f'{self.actor} — {self.get_event_type_display()} → {self.target_user}'
-        )

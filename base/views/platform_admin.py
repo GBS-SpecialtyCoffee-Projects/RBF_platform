@@ -2,7 +2,6 @@
 
 import csv
 from datetime import timedelta
-from datetime import timedelta
 from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -22,7 +21,6 @@ from base.models import (
     InteractionEvent, InteractionEventType, ProfileChange, ProfileChangeSource,
     AdminEmail,
 )
-from base import analytics_reports
 from base.notifications import notify_admin_message, notify_meeting_calendar_invite
 from base.profile_history import record_field_change, record_form_change
 from .forms import (
@@ -186,10 +184,10 @@ def admin_farmer_detail(request, user_id):
             form = FarmerForm(request.POST, request.FILES, instance=farmer)
             if form.is_valid():
                 form.save()
-            record_form_change(
-                form, user=farmer.user, source=ProfileChangeSource.ADMIN,
-                changed_by=request.user,
-            )
+                record_form_change(
+                    form, user=farmer.user, source=ProfileChangeSource.ADMIN,
+                    changed_by=request.user,
+                )
                 messages.success(request, f'Profile for {farmer.user.email} updated.')
                 return redirect('admin_farmer_detail', user_id=user_id)
     else:
@@ -801,54 +799,3 @@ def admin_audit_log(request):
         'current_filter': action_filter,
     })
 
-
-RANGE_OPTIONS = [('7', 'Last 7 days'), ('30', 'Last 30 days'),
-                 ('90', 'Last 90 days'), ('all', 'All time')]
-
-
-@admin_required
-def admin_analytics(request):
-    """Staff dashboard: how roasters and farmers interact (funnel, story
-    impact, match quality, engagement volume)."""
-    days = request.GET.get('days', '30')
-    valid = {value for value, _ in RANGE_OPTIONS}
-    if days not in valid:
-        days = '30'
-    start = None if days == 'all' else timezone.now() - timedelta(days=int(days))
-
-    funnel = analytics_reports.funnel(start=start)
-    story = analytics_reports.story_impact(start=start)
-    match = analytics_reports.match_quality(start=start)
-    volume = analytics_reports.engagement_volume(start=start)
-
-    charts = {
-        'funnel': {
-            'labels': [s['label'] for s in funnel['stages']],
-            'counts': [s['count'] for s in funnel['stages']],
-        },
-        'timeseries': {
-            'labels': [row['day'] for row in volume['timeseries']],
-            'counts': [row['n'] for row in volume['timeseries']],
-        },
-        'story': {
-            'labels': ['With stories', 'Without stories'],
-            'avg_views': [story['with_stories']['avg_views_per_farmer'],
-                          story['without_stories']['avg_views_per_farmer']],
-            'avg_active': [story['with_stories']['avg_active_per_farmer'],
-                           story['without_stories']['avg_active_per_farmer']],
-        },
-        'farmer_country': {
-            'labels': [c for c, _ in match['by_farmer_country'][:10]],
-            'counts': [n for _, n in match['by_farmer_country'][:10]],
-        },
-    }
-
-    return render(request, 'base/platform_admin/analytics.html', {
-        'days': days,
-        'range_options': RANGE_OPTIONS,
-        'funnel': funnel,
-        'story': story,
-        'match': match,
-        'volume': volume,
-        'charts': charts,
-    })

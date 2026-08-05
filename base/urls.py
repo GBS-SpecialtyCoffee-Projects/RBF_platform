@@ -19,7 +19,6 @@ urlpatterns = [
     path('platform-admin/interactions/', platform_admin.admin_interactions, name='admin_interactions'),
     path('platform-admin/engagement/', platform_admin.admin_engagement, name='admin_engagement'),
     path('platform-admin/profile-history/', platform_admin.admin_profile_history, name='admin_profile_history'),
-    path('platform-admin/analytics/', platform_admin.admin_analytics, name='admin_analytics'),
     path('platform-admin/resources/', platform_admin.admin_resources, name='admin_resources'),
     path('platform-admin/resources/create/', platform_admin.admin_resource_create, name='admin_resource_create'),
     path('platform-admin/resources/<int:resource_id>/edit/', platform_admin.admin_resource_edit, name='admin_resource_edit'),

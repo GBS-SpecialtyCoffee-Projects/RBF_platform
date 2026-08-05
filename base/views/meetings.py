@@ -3,10 +3,9 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 
-from base.analytics import record_event
-from base.models import Conversation, ForumMeeting, InteractionEventType, InteractionEvent, User
-from base.notifications import notify_forum_meeting_event
 from base.analytics import log_event
+from base.models import Conversation, ForumMeeting, InteractionEventType, User
+from base.notifications import notify_forum_meeting_event
 from base.views.chat import _accepted_connection_exists, _resolve_pair
 
 
