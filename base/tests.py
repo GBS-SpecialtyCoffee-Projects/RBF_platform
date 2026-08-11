@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 from base.analytics import log_event
+from base.consumers import ChatConsumer
 from base.models import (
     AdminEmail, Connection, Conversation, Farmer, FarmerPhoto, Forum,
     ForumMeeting, ForumSignup, ForumWindow, InteractionEvent,
@@ -933,6 +934,211 @@ class LogEventTests(TestCase):
         with self.assertLogs('base.analytics', level='ERROR'):
             log_event('x' * 100, user=self.roaster)
         self.assertFalse(InteractionEvent.objects.exists())
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    EMAIL_FROM='noreply@coffeecircuit.test',
+)
+class InteractionEventCallSiteTests(TestCase):
+    """Drive the real views and assert each event type reaches the table.
+
+    ``LogEventTests`` exercises the helper directly, which keeps passing even
+    when a call site is mis-wired or the table underneath has drifted — and
+    ``log_event`` swallows the resulting error, so nothing surfaces. These
+    tests close that gap by asserting on rows produced through the views.
+    """
+
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        self.farmer_user.set_password('pw')
+        self.farmer_user.save()
+        self.roaster_user = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        self.roaster_user.set_password('pw')
+        self.roaster_user.save()
+        self.farmer = Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+        Roaster.objects.create(
+            user=self.roaster_user, firstname='Roni', lastname='Roaster',
+            company_name='Beans & Co', is_details_filled=True,
+        )
+
+    def assertLogged(self, event_type, *, user=None, target_user=None):
+        events = InteractionEvent.objects.filter(event_type=event_type)
+        self.assertEqual(events.count(), 1, f'expected one {event_type} row')
+        event = events.get()
+        if user is not None:
+            self.assertEqual(event.user, user)
+        if target_user is not None:
+            self.assertEqual(event.target_user, target_user)
+        return event
+
+    def assertNotLogged(self, event_type):
+        self.assertFalse(
+            InteractionEvent.objects.filter(event_type=event_type).exists()
+        )
+
+    def test_login_is_logged(self):
+        self.client.post(
+            reverse('signin'), {'email': 'farmer@example.com', 'password': 'pw'},
+        )
+        event = self.assertLogged(
+            InteractionEventType.LOGIN, user=self.farmer_user,
+        )
+        self.assertEqual(event.metadata['group'], 'farmer')
+
+    def test_farmer_viewing_roaster_logs_profile_view(self):
+        self.client.login(email='farmer@example.com', password='pw')
+        self.client.get(reverse('roaster_profile', args=[self.roaster_user.id]))
+        event = self.assertLogged(
+            InteractionEventType.PROFILE_VIEW,
+            user=self.farmer_user, target_user=self.roaster_user,
+        )
+        self.assertEqual(event.metadata['target_group'], 'roaster')
+
+    def test_roaster_viewing_farmer_logs_profile_view(self):
+        self.client.login(email='roaster@example.com', password='pw')
+        self.client.get(reverse('farmer_profile', args=[self.farmer_user.id]))
+        event = self.assertLogged(
+            InteractionEventType.PROFILE_VIEW,
+            user=self.roaster_user, target_user=self.farmer_user,
+        )
+        self.assertEqual(event.metadata['target_group'], 'farmer')
+
+    def test_own_profile_view_is_not_logged(self):
+        self.client.login(email='roaster@example.com', password='pw')
+        self.client.get(reverse('roaster_profile', args=[self.roaster_user.id]))
+        self.assertNotLogged(InteractionEventType.PROFILE_VIEW)
+
+    def test_story_view_is_logged_with_counts(self):
+        Story.objects.create(
+            user=self.farmer_user, farmer=self.farmer, story_text='A tale',
+        )
+        self.client.login(email='roaster@example.com', password='pw')
+        self.client.get(reverse('farmer_profile', args=[self.farmer_user.id]))
+        event = self.assertLogged(
+            InteractionEventType.STORY_VIEW,
+            user=self.roaster_user, target_user=self.farmer_user,
+        )
+        self.assertEqual(event.metadata['story_count'], 1)
+        self.assertEqual(event.metadata['total_story_length'], len('A tale'))
+
+    def test_story_view_not_logged_for_farmer_without_stories(self):
+        self.client.login(email='roaster@example.com', password='pw')
+        self.client.get(reverse('farmer_profile', args=[self.farmer_user.id]))
+        self.assertNotLogged(InteractionEventType.STORY_VIEW)
+
+    def test_connection_request_is_logged(self):
+        self.client.login(email='roaster@example.com', password='pw')
+        self.client.post(
+            reverse('connection_farmers'),
+            {'user_id': self.farmer_user.id, 'message': 'Hi'},
+        )
+        connection = Connection.between(self.roaster_user, self.farmer_user)
+        event = self.assertLogged(
+            InteractionEventType.CONNECTION_REQUEST,
+            user=self.roaster_user, target_user=self.farmer_user,
+        )
+        self.assertEqual(event.metadata['connection_id'], connection.id)
+
+    def test_connection_accepted_is_logged(self):
+        connection = Connection.request(self.roaster_user, self.farmer_user)
+        self.client.login(email='farmer@example.com', password='pw')
+        self.client.post(
+            reverse('manage_connection_request', args=[connection.id, 'accept'])
+        )
+        event = self.assertLogged(
+            InteractionEventType.CONNECTION_ACCEPTED,
+            user=self.farmer_user, target_user=self.roaster_user,
+        )
+        self.assertEqual(event.metadata['connection_id'], connection.id)
+
+    def test_connection_declined_is_logged(self):
+        connection = Connection.request(self.roaster_user, self.farmer_user)
+        self.client.login(email='farmer@example.com', password='pw')
+        self.client.post(
+            reverse('manage_connection_request', args=[connection.id, 'reject'])
+        )
+        event = self.assertLogged(
+            InteractionEventType.CONNECTION_DECLINED,
+            user=self.farmer_user, target_user=self.roaster_user,
+        )
+        self.assertEqual(event.metadata['connection_id'], connection.id)
+
+    def test_meeting_proposed_is_logged(self):
+        Connection.request(self.roaster_user, self.farmer_user).accept()
+        Conversation.objects.create(
+            roaster=self.roaster_user, farmer=self.farmer_user,
+        )
+        forum = Forum.objects.create(title='Spring', status=Forum.PUBLISHED)
+        start = timezone.now() + timedelta(days=7)
+        window = ForumWindow.objects.create(
+            forum=forum, label='Morning',
+            starts_at=start, ends_at=start + timedelta(hours=2),
+        )
+        ForumSignup.objects.create(forum=forum, user=self.roaster_user)
+        ForumSignup.objects.create(forum=forum, user=self.farmer_user)
+
+        self.client.force_login(self.roaster_user)
+        self.client.post(
+            reverse('propose_meeting', args=[self.farmer_user.id]),
+            {'window_id': window.id},
+        )
+        meeting = ForumMeeting.objects.get()
+        event = self.assertLogged(
+            InteractionEventType.MEETING_PROPOSED,
+            user=self.roaster_user, target_user=self.farmer_user,
+        )
+        self.assertEqual(event.metadata['meeting_id'], meeting.id)
+
+    def test_resource_view_is_logged(self):
+        resource = Resource.objects.create(
+            title='Pricing basics', slug='pricing-basics',
+            body='...', is_published=True,
+        )
+        self.client.login(email='farmer@example.com', password='pw')
+        self.client.get(reverse('resource_detail', args=[resource.slug]))
+        event = self.assertLogged(
+            InteractionEventType.RESOURCE_VIEW, user=self.farmer_user,
+        )
+        self.assertEqual(event.metadata['resource_slug'], 'pricing-basics')
+
+    def test_message_sent_is_logged(self):
+        conversation = Conversation.objects.create(
+            roaster=self.roaster_user, farmer=self.farmer_user,
+        )
+        # The consumer method is wrapped in database_sync_to_async; reach the
+        # undecorated function so the write can be driven synchronously.
+        persist = ChatConsumer.__dict__['_persist_message'].func
+        persist(None, conversation.id, self.roaster_user.id, 'Hello')
+
+        event = self.assertLogged(
+            InteractionEventType.MESSAGE_SENT,
+            user=self.roaster_user, target_user=self.farmer_user,
+        )
+        self.assertEqual(event.metadata['conversation_id'], conversation.id)
+
+    def test_every_event_type_has_a_covering_test(self):
+        # Guards against a new InteractionEventType being added without an
+        # end-to-end test proving its call site actually writes a row.
+        covered = {
+            InteractionEventType.LOGIN,
+            InteractionEventType.PROFILE_VIEW,
+            InteractionEventType.STORY_VIEW,
+            InteractionEventType.CONNECTION_REQUEST,
+            InteractionEventType.CONNECTION_ACCEPTED,
+            InteractionEventType.CONNECTION_DECLINED,
+            InteractionEventType.MEETING_PROPOSED,
+            InteractionEventType.MESSAGE_SENT,
+            InteractionEventType.RESOURCE_VIEW,
+        }
+        self.assertEqual(set(InteractionEventType), covered)
 
 
 class AdminInteractionsTests(TestCase):
