@@ -1,4 +1,5 @@
 {% extends "base/platform_admin/base.html" %}
+{% load image_constraints %}
 {% block title_suffix %} — {% if resource %}Edit Resource{% else %}New Resource{% endif %}{% endblock %}
 {% block nav_resources %}active{% endblock %}
 
@@ -49,6 +50,7 @@
                 </div>
                 {% endif %}
                 {{ form.cover_image }}
+                {% image_upload_help 'cover' %}
                 {% if form.cover_image.errors %}<div class="text-danger small mt-1">{{ form.cover_image.errors|join:", " }}</div>{% endif %}
             </div>
 

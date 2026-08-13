@@ -2,6 +2,7 @@
 
 from django import forms
 from base.models import FarmerPhoto,Roaster, RoasterPhoto, User, Farmer, MeetingRequest,Story, Resource, Forum, ForumWindow, AdminEmail
+from base.validators import IMAGE_INPUT_ATTRS
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
@@ -36,7 +37,7 @@ HARVEST_CHOICES = (
 class FarmerPhotoForm(forms.ModelForm):
     photo = forms.ImageField(
         required=True,
-        widget=forms.FileInput(attrs={'class': 'form-control'}),
+        widget=forms.FileInput(attrs=IMAGE_INPUT_ATTRS),
     )
 
     class Meta:
@@ -112,7 +113,7 @@ class FarmerForm(forms.ModelForm):
             'quality_report_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'Quality Report Link','autocomplete':'off'}),
             'processing_method': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline', 'placeholder': 'Processing Method'}),
             'processing_description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Processing Description','autocomplete':'off'}),
-            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+            'profile_picture': forms.FileInput(attrs=IMAGE_INPUT_ATTRS),
             'preferred_communication_method': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Preferred Communication Method'}),
             'main_roles': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline'}),
             # 'farm_size_unit': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Farm Size Unit'}),
@@ -229,7 +230,7 @@ class RoasterForm(forms.ModelForm):
             'coffee_types_interested': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Coffee Types Interested'}),
             'min_lot_size': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Minimum lot size (kg)'}),
             'cup_scores_interested': forms.CheckboxSelectMultiple(attrs={'class': 'form-check form-check-inline'}),
-            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+            'profile_picture': forms.FileInput(attrs=IMAGE_INPUT_ATTRS),
         }
 
     def __init__(self, *args, **kwargs):
@@ -242,7 +243,7 @@ class RoasterPhotoForm(forms.ModelForm):
         model = RoasterPhoto
         fields = ['photo']
         widgets = {
-            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'photo': forms.ClearableFileInput(attrs=IMAGE_INPUT_ATTRS),
         }
 
 User = get_user_model()
@@ -391,7 +392,7 @@ class FarmerProfilePhotoForm(forms.ModelForm):
         model = Farmer
         fields = ['profile_picture','firstname','lastname', 'city', 'state', 'country','country_code','phone_number']
         widgets = {
-            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+            'profile_picture': forms.FileInput(attrs=IMAGE_INPUT_ATTRS),
             'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country'}),
             'state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'State'}),
             'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
@@ -407,7 +408,7 @@ class FarmerHeaderImageForm(forms.ModelForm):
         model = Farmer
         fields = ['header_image']
         widgets = {
-            'header_image': forms.FileInput(attrs={'class': 'form-control'}),
+            'header_image': forms.FileInput(attrs=IMAGE_INPUT_ATTRS),
         }
 
 
@@ -416,7 +417,7 @@ class RoasterHeaderImageForm(forms.ModelForm):
         model = Roaster
         fields = ['header_image']
         widgets = {
-            'header_image': forms.FileInput(attrs={'class': 'form-control'}),
+            'header_image': forms.FileInput(attrs=IMAGE_INPUT_ATTRS),
         }
 
 
@@ -428,7 +429,7 @@ class RoasterInfoForm(forms.ModelForm):
             'firstname': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
             'lastname': forms.TextInput(attrs={'class':'form-control','placeholder':'Last Name'}),
             'job_title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Job Title'}),
-            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+            'profile_picture': forms.FileInput(attrs=IMAGE_INPUT_ATTRS),
         }
 
 class RoasterBioForm(forms.ModelForm):
@@ -611,7 +612,7 @@ class ResourceForm(forms.ModelForm):
             'slug': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'auto-generated-if-blank'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Short summary'}),
             'body': forms.Textarea(attrs={'id': 'resource_body_editor', 'class': 'form-control'}),
-            'cover_image': forms.FileInput(attrs={'class': 'form-control'}),
+            'cover_image': forms.FileInput(attrs=IMAGE_INPUT_ATTRS),
             'is_published': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 

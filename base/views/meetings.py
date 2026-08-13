@@ -20,7 +20,7 @@ def propose_meeting(request, user_id):
 
     conversation, _ = Conversation.objects.get_or_create(roaster=roaster, farmer=farmer)
     window = (
-        ForumMeeting.proposable_windows(conversation)
+        ForumMeeting.proposable_windows(conversation, request.user)
         .filter(id=request.POST.get('window_id'))
         .first()
     )
@@ -54,9 +54,19 @@ def respond_meeting(request, meeting_id, action):
     if action in ('confirm', 'decline') and not is_proposer \
             and meeting.status == ForumMeeting.PROPOSED:
         if action == 'confirm':
+            # Confirming a meeting in a forum they had not joined signs them
+            # up for it, which is what the button promises.
+            joined = meeting.accept_signup(request.user)
             meeting.confirm()
             notify_forum_meeting_event(meeting, 'confirmed')
-            messages.success(request, "Meeting confirmed.")
+            if joined:
+                messages.success(
+                    request,
+                    f"Meeting confirmed. You are now signed up for "
+                    f"{meeting.forum.title}.",
+                )
+            else:
+                messages.success(request, "Meeting confirmed.")
         else:
             meeting.decline()
             notify_forum_meeting_event(meeting, 'declined')

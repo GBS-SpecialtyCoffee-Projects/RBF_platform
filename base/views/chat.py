@@ -61,10 +61,14 @@ def chat_thread(request, user_id):
 
     messages_qs = conversation.messages.select_related('sender').all()
     meetings = ForumMeeting.for_display(conversation)
-    proposable_windows = ForumMeeting.proposable_windows(conversation)
+    proposable_windows = ForumMeeting.proposable_windows(conversation, request.user)
     forum_to_join = None
     if not proposable_windows:
-        forum_to_join = Forum.soonest_to_join(request.user, other)
+        # Proposing now depends on the proposer's own signups, so nudge them
+        # towards a forum the other is already in, else the soonest upcoming.
+        forum_to_join = (
+            Forum.soonest_to_join(request.user, other) or Forum.next_upcoming()
+        )
     return render(request, 'base/chat_thread.html', {
         'conversation': conversation,
         'other': other,

@@ -1,14 +1,28 @@
+import shutil
+import tempfile
 from datetime import timedelta
+from io import BytesIO
 from smtplib import SMTPException
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core import mail
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+from django.template.defaultfilters import filesizeformat
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image as PILImage
 
 from django.core.exceptions import ValidationError
+
+from base.middleware.uploads import MAX_REQUEST_BODY_SIZE
+from base.validators import (
+    ALLOWED_IMAGE_FORMATS, IMAGE_ACCEPT, MAX_IMAGE_SIZE, MAX_IMAGE_SIZE_MB,
+    image_help_text, validate_uploaded_image,
+)
 
 from base.analytics import log_event
 from base.models import (
@@ -707,8 +721,15 @@ class ForumMeetingTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [self.farmer.email])
 
-    def test_propose_blocked_when_invitee_not_signed_up(self):
+    def test_propose_allowed_when_invitee_not_signed_up(self):
+        # The invitee joins by confirming, so their signup is not a
+        # precondition for proposing.
         ForumSignup.objects.filter(forum=self.forum, user=self.farmer).delete()
+        self._propose()
+        self.assertTrue(ForumMeeting.objects.exists())
+
+    def test_propose_blocked_when_proposer_not_signed_up(self):
+        ForumSignup.objects.filter(forum=self.forum, user=self.roaster).delete()
         self._propose()
         self.assertFalse(ForumMeeting.objects.exists())
 
@@ -721,7 +742,8 @@ class ForumMeetingTests(TestCase):
     def test_proposable_windows_excludes_live_meeting(self):
         self._propose()
         self.assertNotIn(
-            self.window, ForumMeeting.proposable_windows(self.conversation)
+            self.window,
+            ForumMeeting.proposable_windows(self.conversation, self.roaster),
         )
 
     def test_invitee_confirms(self):
@@ -793,7 +815,8 @@ class EndedForumHiddenTests(TestCase):
         ForumSignup.objects.create(forum=past.forum, user=self.roaster)
         ForumSignup.objects.create(forum=past.forum, user=self.farmer)
         self.assertNotIn(
-            past, ForumMeeting.proposable_windows(self.conversation)
+            past,
+            ForumMeeting.proposable_windows(self.conversation, self.roaster),
         )
 
     def test_for_display_hides_meetings_of_ended_forum(self):
@@ -1772,3 +1795,531 @@ class LandingPageCallToActionTests(TestCase):
     def test_signup_ignores_unknown_group(self):
         response = self.client.get(reverse('signup'), {'group': 'bogus'})
         self.assertIsNone(response.context['form'].initial.get('group'))
+
+
+class TempMediaRootMixin:
+    """Keep saved uploads out of the project's media/ directory."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._media_root = tempfile.mkdtemp()
+        cls._media_override = override_settings(MEDIA_ROOT=cls._media_root)
+        cls._media_override.enable()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._media_override.disable()
+        shutil.rmtree(cls._media_root, ignore_errors=True)
+        super().tearDownClass()
+
+
+class ImageConstraintTests(TempMediaRootMixin, TestCase):
+    """The stated upload rules and the enforced ones must not drift apart."""
+
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+
+    @staticmethod
+    def _image_upload(name='photo.jpg', fmt='JPEG', size=(10, 10), padding=0):
+        """Build an in-memory upload holding a real image of the given format."""
+        buffer = BytesIO()
+        PILImage.new('RGB', size).save(buffer, format=fmt)
+        if padding:
+            # Trailing bytes inflate the file without changing the format.
+            buffer.write(b'\0' * padding)
+        buffer.seek(0)
+        return SimpleUploadedFile(name, buffer.read())
+
+    def test_allowed_formats_pass(self):
+        for fmt, name in (('JPEG', 'a.jpg'), ('PNG', 'a.png'), ('WEBP', 'a.webp')):
+            with self.subTest(fmt=fmt):
+                validate_uploaded_image(self._image_upload(name, fmt))
+
+    def test_oversized_image_is_rejected(self):
+        upload = self._image_upload(padding=MAX_IMAGE_SIZE + 1)
+        with self.assertRaises(ValidationError) as ctx:
+            validate_uploaded_image(upload)
+        self.assertEqual(ctx.exception.code, 'image_too_large')
+
+    def test_disallowed_format_is_rejected(self):
+        upload = self._image_upload('a.gif', 'GIF')
+        with self.assertRaises(ValidationError) as ctx:
+            validate_uploaded_image(upload)
+        self.assertEqual(ctx.exception.code, 'image_format_not_allowed')
+
+    def test_stored_file_is_not_revalidated(self):
+        # Re-saving a profile must not re-download images from remote storage.
+        farmer = Farmer.objects.get(user=self.farmer_user)
+        self.assertIsNone(validate_uploaded_image(farmer.profile_picture))
+
+    def test_help_text_reports_the_enforced_limit(self):
+        help_text = image_help_text('header')
+        self.assertIn(str(MAX_IMAGE_SIZE_MB), help_text)
+        for label in ALLOWED_IMAGE_FORMATS.values():
+            self.assertIn(label, help_text)
+        self.assertIn('1200 x 300 px', help_text)
+
+    def test_oversized_upload_is_rejected_through_the_form(self):
+        from base.views.forms import FarmerHeaderImageForm
+        form = FarmerHeaderImageForm(
+            {}, {'header_image': self._image_upload(padding=MAX_IMAGE_SIZE + 1)},
+            instance=Farmer.objects.get(user=self.farmer_user),
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('header_image', form.errors)
+
+    def test_header_upload_failure_is_reported_not_silent(self):
+        self.client.force_login(self.farmer_user)
+        response = self.client.post(
+            reverse('update_header_image'),
+            {'header_image': self._image_upload(padding=MAX_IMAGE_SIZE + 1)},
+            follow=True,
+        )
+        reported = [str(m) for m in response.context['messages']]
+        self.assertTrue(reported, 'rejected upload redirected without telling the user')
+        # The message quotes the limit that is actually enforced.
+        self.assertIn(filesizeformat(MAX_IMAGE_SIZE), ' '.join(reported))
+
+    def test_farmer_dashboard_shows_the_rules(self):
+        self.client.force_login(self.farmer_user)
+        html = self.client.get(reverse('farmer_dashboard')).content.decode()
+        # Header, profile picture and gallery controls each carry their rules.
+        self.assertIn(image_help_text('header'), html)
+        self.assertIn(image_help_text('profile'), html)
+        self.assertIn(image_help_text('gallery'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+    def test_farmer_signup_shows_the_rules(self):
+        self.client.force_login(self.farmer_user)
+        html = self.client.get(reverse('farmer_details')).content.decode()
+        self.assertIn(image_help_text('profile'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+    def test_roaster_dashboard_shows_the_rules(self):
+        roaster_user = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        Roaster.objects.create(
+            user=roaster_user, firstname='Rita', lastname='Roaster',
+            is_details_filled=True,
+        )
+        self.client.force_login(roaster_user)
+        html = self.client.get(reverse('roaster_dashboard')).content.decode()
+        self.assertIn(image_help_text('header'), html)
+        self.assertIn(image_help_text('profile'), html)
+        self.assertIn(image_help_text('gallery'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+    def test_roaster_signup_shows_the_rules(self):
+        roaster_user = User.objects.create(
+            email='newroaster@example.com', group='roaster', username='newroaster',
+        )
+        Roaster.objects.create(user=roaster_user, firstname='Rex', lastname='Roaster')
+        self.client.force_login(roaster_user)
+        html = self.client.get(reverse('roaster_details')).content.decode()
+        self.assertIn(image_help_text('profile'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+    def test_farmer_profile_page_shows_the_rules(self):
+        self.client.force_login(self.farmer_user)
+        html = self.client.get(
+            reverse('farmer_profile', args=[self.farmer_user.id])
+        ).content.decode()
+        self.assertIn(image_help_text('header'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+    def test_standalone_photo_upload_page_shows_the_rules(self):
+        self.client.force_login(self.farmer_user)
+        html = self.client.get(reverse('upload_photo')).content.decode()
+        self.assertIn(image_help_text('gallery'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+    def test_admin_resource_form_shows_the_rules(self):
+        admin = User.objects.create(
+            email='admin@example.com', username='admin', is_staff=True,
+        )
+        self.client.force_login(admin)
+        html = self.client.get(reverse('admin_resource_create')).content.decode()
+        self.assertIn(image_help_text('cover'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+
+class OversizedUploadMiddlewareTests(TempMediaRootMixin, TestCase):
+    """A body too big to parse must redirect with a message, not 500."""
+
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='bigupload@example.com', group='farmer', username='biguploader',
+        )
+        Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+        self.client.force_login(self.farmer_user)
+
+    def _oversized_post(self, **extra):
+        payload = SimpleUploadedFile(
+            'huge.jpg', b'\0' * (MAX_REQUEST_BODY_SIZE + 1), content_type='image/jpeg',
+        )
+        return self.client.post(
+            reverse('update_header_image'), {'header_image': payload}, **extra
+        )
+
+    def test_oversized_body_redirects_with_a_message(self):
+        response = self._oversized_post(follow=True)
+        self.assertEqual(response.status_code, 200)
+        reported = [str(m) for m in response.context['messages']]
+        self.assertTrue(reported, 'oversized upload produced no explanation')
+        self.assertIn(f'{MAX_IMAGE_SIZE_MB} MB or smaller', ' '.join(reported))
+
+    def test_oversized_body_returns_to_the_page_it_came_from(self):
+        dashboard = reverse('farmer_dashboard')
+        response = self._oversized_post(HTTP_REFERER=f'http://testserver{dashboard}')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, f'http://testserver{dashboard}')
+
+    def test_offsite_referer_is_not_used_as_the_redirect_target(self):
+        response = self._oversized_post(HTTP_REFERER='https://evil.example.com/x')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/')
+
+    def test_upload_within_the_body_limit_reaches_the_view(self):
+        # Below the middleware ceiling, so per-image validation decides.
+        buffer = BytesIO()
+        PILImage.new('RGB', (10, 10)).save(buffer, format='JPEG')
+        buffer.seek(0)
+        response = self.client.post(
+            reverse('update_header_image'),
+            {'header_image': SimpleUploadedFile('ok.jpg', buffer.read())},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        farmer = Farmer.objects.get(user=self.farmer_user)
+        self.assertTrue(farmer.header_image)
+
+    def test_non_multipart_posts_are_untouched(self):
+        response = self.client.post(reverse('farmer_dashboard'), {'noop': '1'})
+        self.assertIn(response.status_code, (200, 302))
+
+
+class ExistingImageShownOnEditTests(TempMediaRootMixin, TestCase):
+    """An occupied image field must not look empty on an edit form."""
+
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='hasimage@example.com', group='farmer', username='hasimage',
+        )
+        self.farmer = Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+        self.client.force_login(self.farmer_user)
+
+    @staticmethod
+    def _image(name='current.jpg'):
+        buffer = BytesIO()
+        PILImage.new('RGB', (10, 10)).save(buffer, format='JPEG')
+        buffer.seek(0)
+        return SimpleUploadedFile(name, buffer.read(), content_type='image/jpeg')
+
+    def test_dashboard_shows_the_existing_profile_picture(self):
+        self.farmer.profile_picture = self._image('dp.jpg')
+        self.farmer.save()
+        html = self.client.get(reverse('farmer_dashboard')).content.decode()
+        self.assertIn('Current profile picture', html)
+        self.assertIn(self.farmer.profile_picture.url, html)
+
+    def test_dashboard_shows_the_existing_header_image(self):
+        self.farmer.header_image = self._image('header.jpg')
+        self.farmer.save()
+        html = self.client.get(reverse('farmer_dashboard')).content.decode()
+        self.assertIn('Current header image', html)
+        self.assertIn(self.farmer.header_image.url, html)
+
+    def test_empty_field_says_so_rather_than_showing_nothing(self):
+        html = self.client.get(reverse('farmer_dashboard')).content.decode()
+        self.assertIn('No profile picture yet', html)
+        self.assertIn('No header image yet', html)
+
+    def test_details_page_offers_to_replace_an_existing_picture(self):
+        self.farmer.profile_picture = self._image('dp.jpg')
+        self.farmer.save()
+        html = self.client.get(reverse('farmer_details')).content.decode()
+        self.assertIn('Replace Profile Photo', html)
+        self.assertIn('Current profile picture', html)
+
+    def test_details_page_says_upload_when_there_is_no_picture(self):
+        html = self.client.get(reverse('farmer_details')).content.decode()
+        self.assertIn('Upload Profile Photo', html)
+        self.assertNotIn('Replace Profile Photo', html)
+
+    def test_saving_without_choosing_a_file_keeps_the_current_picture(self):
+        self.farmer.profile_picture = self._image('dp.jpg')
+        self.farmer.save()
+        original = self.farmer.profile_picture.name
+        self.client.post(reverse('update_profile'), {
+            'firstname': 'Fiona', 'lastname': 'Farmer',
+            'country_code': 'United States (+1)', 'phone_number': '5551234',
+        })
+        self.farmer.refresh_from_db()
+        self.assertEqual(self.farmer.profile_picture.name, original)
+
+
+class ConnectionNamingTests(TestCase):
+    """Roasters are listed by the person, with the company as context."""
+
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='producer@example.com', group='farmer', username='producer',
+        )
+        Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+        self.roaster_user = User.objects.create(
+            email='buyer@example.com', group='roaster', username='buyer',
+        )
+        self.roaster = Roaster.objects.create(
+            user=self.roaster_user, firstname='Rita', lastname='Roaster',
+            job_title='Head of Sourcing', company_name='Acme Coffee Co',
+            city='Portland', country='United States of America',
+            is_details_filled=True,
+        )
+        self.client.force_login(self.farmer_user)
+
+    def test_discover_page_leads_with_the_person(self):
+        html = self.client.get(reverse('connection_roasters')).content.decode()
+        self.assertIn('<h4 class="mb-0">Rita Roaster</h4>', html)
+        # The company is kept, as supporting context rather than the headline.
+        self.assertIn('Head of Sourcing of Acme Coffee Co', html)
+        self.assertNotIn('<h4 class="mb-0">Acme Coffee Co</h4>', html)
+
+    def test_connections_list_names_the_person(self):
+        Connection.objects.create(
+            user_a=self.farmer_user, user_b=self.roaster_user,
+            initiator=self.farmer_user, status=Connection.ACTIVE,
+        )
+        html = self.client.get(reverse('farmer_connections')).content.decode()
+        self.assertIn('Rita Roaster', html)
+        self.assertNotIn('<strong>Acme Coffee Co</strong>', html)
+
+    def test_roaster_profile_pane_never_renders_a_blank_heading(self):
+        unnamed_user = User.objects.create(
+            email='nocompany@example.com', group='roaster', username='nocompany',
+        )
+        Roaster.objects.create(
+            user=unnamed_user, firstname='Rex', lastname='Roaster',
+            is_details_filled=True,
+        )
+        self.client.force_login(self.farmer_user)
+        html = self.client.get(
+            reverse('roaster_profile', args=[unnamed_user.id])
+        ).content.decode()
+        self.assertNotIn('<h2></h2>', html)
+        self.assertIn('<h2>Company</h2>', html)
+        # The hero still leads with the person, which is the point.
+        self.assertIn('Rex Roaster', html)
+
+    def test_display_name_falls_back_to_email_when_unnamed(self):
+        self.roaster.firstname = ''
+        self.roaster.lastname = ''
+        self.roaster.save()
+        self.assertEqual(self.roaster.display_name, 'buyer@example.com')
+
+    def test_display_name_copes_with_a_missing_half(self):
+        self.roaster.lastname = ''
+        self.roaster.save()
+        self.assertEqual(self.roaster.display_name, 'Rita')
+
+
+class ConnectionQueryCountTests(TestCase):
+    """Listing connections must not cost a query per row."""
+
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='qcfarmer@example.com', group='farmer', username='qcfarmer',
+        )
+        Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+
+    def _add_roaster_connection(self, index):
+        roaster_user = User.objects.create(
+            email=f'buyer{index}@example.com', group='roaster',
+            username=f'buyer{index}',
+        )
+        Roaster.objects.create(
+            user=roaster_user, firstname=f'Rita{index}', lastname='Roaster',
+            company_name=f'Acme {index}', is_details_filled=True,
+        )
+        Connection.objects.create(
+            user_a=self.farmer_user, user_b=roaster_user,
+            initiator=self.farmer_user, status=Connection.ACTIVE,
+        )
+
+    def test_query_count_does_not_grow_with_connections(self):
+        self.client.force_login(self.farmer_user)
+        url = reverse('farmer_connections')
+
+        self._add_roaster_connection(1)
+        with CaptureQueriesContext(connection) as one_row:
+            self.client.get(url)
+
+        for index in range(2, 7):
+            self._add_roaster_connection(index)
+        with CaptureQueriesContext(connection) as six_rows:
+            self.client.get(url)
+
+        self.assertEqual(
+            len(six_rows.captured_queries), len(one_row.captured_queries),
+            'connection rows are still costing one query each',
+        )
+
+    def test_all_connections_are_still_listed(self):
+        self.client.force_login(self.farmer_user)
+        for index in range(1, 4):
+            self._add_roaster_connection(index)
+        html = self.client.get(reverse('farmer_connections')).content.decode()
+        for index in range(1, 4):
+            self.assertIn(f'Rita{index} Roaster', html)
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    EMAIL_FROM='noreply@coffeecircuit.test',
+)
+class MeetingInviteSignsUpInviteeTests(TestCase):
+    """An invitee joins the forum by confirming, not before being invited."""
+
+    def setUp(self):
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        self.farmer = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        Connection.request(self.roaster, self.farmer).accept()
+        self.conversation = Conversation.objects.create(
+            roaster=self.roaster, farmer=self.farmer,
+        )
+        self.forum = Forum.objects.create(title='Spring Forum', status=Forum.PUBLISHED)
+        start = timezone.now() + timedelta(days=7)
+        self.window = ForumWindow.objects.create(
+            forum=self.forum, label='Morning',
+            starts_at=start, ends_at=start + timedelta(hours=2),
+        )
+        # Only the proposer has joined.
+        ForumSignup.objects.create(forum=self.forum, user=self.roaster)
+
+    def _propose(self):
+        self.client.force_login(self.roaster)
+        return self.client.post(
+            reverse('propose_meeting', args=[self.farmer.id]),
+            {'window_id': self.window.id},
+        )
+
+    def _confirm(self, meeting):
+        self.client.force_login(self.farmer)
+        return self.client.post(
+            reverse('respond_meeting', args=[meeting.id, 'confirm']), follow=True,
+        )
+
+    def _farmer_signed_up(self):
+        return ForumSignup.objects.filter(
+            forum=self.forum, user=self.farmer,
+        ).exists()
+
+    def test_window_is_offered_though_invitee_has_not_joined(self):
+        windows = ForumMeeting.proposable_windows(self.conversation, self.roaster)
+        self.assertIn(self.window, windows)
+
+    def test_invitee_signups_are_not_created_by_the_proposal_alone(self):
+        self._propose()
+        self.assertTrue(ForumMeeting.objects.exists())
+        self.assertFalse(
+            self._farmer_signed_up(),
+            'proposing must not enrol someone who has not agreed',
+        )
+
+    def test_confirming_signs_the_invitee_up(self):
+        self._propose()
+        meeting = ForumMeeting.objects.get()
+        self._confirm(meeting)
+        meeting.refresh_from_db()
+        self.assertEqual(meeting.status, ForumMeeting.CONFIRMED)
+        self.assertTrue(self._farmer_signed_up())
+
+    def test_declining_does_not_sign_the_invitee_up(self):
+        self._propose()
+        meeting = ForumMeeting.objects.get()
+        self.client.force_login(self.farmer)
+        self.client.post(reverse('respond_meeting', args=[meeting.id, 'decline']))
+        meeting.refresh_from_db()
+        self.assertEqual(meeting.status, ForumMeeting.DECLINED)
+        self.assertFalse(self._farmer_signed_up())
+
+    def test_confirming_does_not_enrol_into_a_closed_forum(self):
+        self._propose()
+        meeting = ForumMeeting.objects.get()
+        self.forum.status = Forum.CANCELLED
+        self.forum.save()
+        self._confirm(meeting)
+        meeting.refresh_from_db()
+        self.assertEqual(meeting.status, ForumMeeting.CONFIRMED)
+        self.assertFalse(self._farmer_signed_up())
+
+    def test_already_signed_up_invitee_is_unaffected(self):
+        ForumSignup.objects.create(forum=self.forum, user=self.farmer)
+        self._propose()
+        meeting = ForumMeeting.objects.get()
+        self._confirm(meeting)
+        self.assertEqual(
+            ForumSignup.objects.filter(forum=self.forum, user=self.farmer).count(), 1
+        )
+
+    def test_chat_labels_the_button_as_signing_up(self):
+        self._propose()
+        self.client.force_login(self.farmer)
+        html = self.client.get(
+            reverse('chat_thread', args=[self.roaster.id])
+        ).content.decode()
+        self.assertIn('Sign up &amp; confirm', html)
+        self.assertIn("You're not signed up for Spring Forum", html)
+
+    def test_chat_says_plain_confirm_once_signed_up(self):
+        ForumSignup.objects.create(forum=self.forum, user=self.farmer)
+        self._propose()
+        self.client.force_login(self.farmer)
+        html = self.client.get(
+            reverse('chat_thread', args=[self.roaster.id])
+        ).content.decode()
+        self.assertNotIn('Sign up &amp; confirm', html)
+        self.assertIn('>Confirm<', html)
+
+    def test_proposal_email_warns_about_the_signup(self):
+        self._propose()
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        self.assertIn('confirming this time signs you up', body.lower())

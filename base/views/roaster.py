@@ -102,6 +102,10 @@ def update_roaster_header_image(request):
         form = RoasterHeaderImageForm(request.POST, request.FILES, instance=roaster_profile)
         if form.is_valid():
             form.save()
+        else:
+            for field_errors in form.errors.values():
+                for error in field_errors:
+                    messages.error(request, error)
     return redirect('roaster_dashboard')
 
 
@@ -370,7 +374,13 @@ def connection_buckets(user):
     qs = (
         Connection.objects
         .filter(Q(user_a=user) | Q(user_b=user))
-        .select_related('user_a', 'user_b', 'initiator')
+        .select_related(
+            'user_a', 'user_b', 'initiator',
+            # Templates label every row from the other side's profile; without
+            # these each row costs an extra query.
+            'user_a__farmer_profile', 'user_a__roaster_profile',
+            'user_b__farmer_profile', 'user_b__roaster_profile',
+        )
     )
     incoming, sent, active = [], [], []
     for conn in qs:

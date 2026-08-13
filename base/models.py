@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django_countries import countries
 from rbf_platform.storage_backends import ProfileStorage,PhotoStorage, ProfileStorageRoaster,get_profile_storage, get_roaster_profile_storage, get_photo_storage
+from base.validators import validate_uploaded_image
 from PIL import Image
 from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
 
@@ -164,9 +165,9 @@ class Farmer(models.Model):
     processing_method = models.ManyToManyField(ProcessingMethod, blank=True)
     processing_description = models.TextField(blank=True, null=True)
     # profile_picture = models.ImageField(upload_to='farmer_profiles/', blank=True, null=True)
-    profile_picture = models.ImageField(storage=get_profile_storage,blank=True, null=True)
+    profile_picture = models.ImageField(storage=get_profile_storage,blank=True, null=True, validators=[validate_uploaded_image])
     bio = models.TextField(blank=True, null=True)
-    header_image = models.ImageField(storage=get_profile_storage, blank=True, null=True)
+    header_image = models.ImageField(storage=get_profile_storage, blank=True, null=True, validators=[validate_uploaded_image])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     affiliation = models.CharField(max_length=255, blank=True, null=True)
@@ -230,12 +231,22 @@ class Roaster(models.Model):
     origins_interested = models.TextField(blank=True, null=True)
     coffee_types_interested = models.TextField(blank=True, null=True)
     cup_scores_interested = models.ManyToManyField(CupScore, blank=True, related_name='interested_roasters')
-    profile_picture = models.ImageField(storage=get_roaster_profile_storage,blank=True, null=True)
+    profile_picture = models.ImageField(storage=get_roaster_profile_storage,blank=True, null=True, validators=[validate_uploaded_image])
     country_code = models.CharField(max_length=255, blank=True, null=True, default='United States (+1)')
     phone_number = models.CharField(max_length=255, blank=True, null=True)
-    header_image = models.ImageField(storage=get_roaster_profile_storage, blank=True, null=True)
+    header_image = models.ImageField(storage=get_roaster_profile_storage, blank=True, null=True, validators=[validate_uploaded_image])
     is_details_filled = models.BooleanField(default=False)
     sourcing_prefs_filled = models.BooleanField(default=False)
+
+    @property
+    def display_name(self):
+        """The person to address, falling back to the account email.
+
+        Roasters are listed by the individual, not the company - the company
+        is context, shown alongside.
+        """
+        name = f'{self.firstname or ""} {self.lastname or ""}'.strip()
+        return name or self.user.email
 
     def save(self, *args, **kwargs):
         try:
@@ -258,7 +269,7 @@ class Roaster(models.Model):
 class FarmerPhoto(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farmer_photos')
-    photo = models.ImageField(storage=get_photo_storage, blank=True, null=True)
+    photo = models.ImageField(storage=get_photo_storage, blank=True, null=True, validators=[validate_uploaded_image])
     #order = models.PositiveIntegerField(null=True, blank=True)
 
     # def __str__(self):
@@ -288,7 +299,7 @@ class FarmerPhoto(models.Model):
 class RoasterPhoto(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='roaster_photos')
-    photo = models.ImageField(storage=get_photo_storage, blank=True, null=True)
+    photo = models.ImageField(storage=get_photo_storage, blank=True, null=True, validators=[validate_uploaded_image])
 
     def __str__(self):
         return f"Photo {self.id} for {self.user.username}"
@@ -586,6 +597,7 @@ class Resource(models.Model):
     body = models.TextField()
     cover_image = models.ImageField(
         upload_to='resources/', blank=True, null=True,
+        validators=[validate_uploaded_image],
     )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -947,26 +959,43 @@ class ForumMeeting(models.Model):
         self.save(update_fields=['status', 'updated_at'])
 
     @classmethod
-    def proposable_windows(cls, conversation):
-        """Future windows the pair can meet in: from published forums *both* are
-        signed up for, minus windows already holding a live meeting in this
-        conversation. Past windows (and so ended forums) are excluded."""
-        roaster_forums = ForumSignup.objects.filter(
-            user=conversation.roaster, forum__status=Forum.PUBLISHED,
-        ).values_list('forum_id', flat=True)
-        shared_forum_ids = ForumSignup.objects.filter(
-            user=conversation.farmer, forum_id__in=roaster_forums,
+    def proposable_windows(cls, conversation, proposer):
+        """Future windows `proposer` can offer: from published forums *they*
+        are signed up for, minus windows already holding a live meeting in this
+        conversation. Past windows (and so ended forums) are excluded.
+
+        The invitee does not need to be signed up - confirming the meeting
+        signs them up for the forum (see ForumMeeting.accept_signup).
+        """
+        proposer_forum_ids = ForumSignup.objects.filter(
+            user=proposer, forum__status=Forum.PUBLISHED,
         ).values_list('forum_id', flat=True)
         taken = cls.objects.filter(
             conversation=conversation, status__in=cls.LIVE_STATUSES,
         ).values_list('window_id', flat=True)
         return (
             ForumWindow.objects.filter(
-                forum_id__in=shared_forum_ids, starts_at__gt=timezone.now(),
+                forum_id__in=proposer_forum_ids, starts_at__gt=timezone.now(),
             )
             .exclude(id__in=taken)
             .select_related('forum')
         )
+
+    def invitee_needs_signup(self):
+        """True if the invitee has yet to join the forum this meeting is in."""
+        return not self.forum.is_signed_up(self.invitee)
+
+    def accept_signup(self, user):
+        """Sign `user` up for this meeting's forum, if it still accepts joins.
+
+        Returns True if a signup was created. Called when an invitee confirms
+        a meeting in a forum they had not joined.
+        """
+        forum = self.forum
+        if not forum.is_open:
+            return False
+        _, created = ForumSignup.objects.get_or_create(forum=forum, user=user)
+        return created
 
     @classmethod
     def for_display(cls, conversation):

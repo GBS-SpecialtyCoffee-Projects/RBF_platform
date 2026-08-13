@@ -275,8 +275,9 @@ def update_profile(request):
             if 'farmer/' in referer:
                 return redirect('farmer_profile', user_id=request.user.id)
             return redirect('farmer_dashboard')
-    else:
-        return redirect('farmer_dashboard')
+        for field_errors in form.errors.values():
+            for error in field_errors:
+                messages.error(request, error)
 
     return redirect('farmer_dashboard')
 
@@ -293,6 +294,9 @@ def update_header_image(request):
             if 'farmer/' in referer:
                 return redirect('farmer_profile', user_id=request.user.id)
             return redirect('farmer_dashboard')
+        for field_errors in form.errors.values():
+            for error in field_errors:
+                messages.error(request, error)
     return redirect('farmer_dashboard')
 
 @require_POST

@@ -1,0 +1,18 @@
+{% comment %}
+Shows the image a field already holds, so an edit form makes clear that one
+exists and that picking a file replaces it. Django's FileInput renders no
+current value at all, which is why an occupied field looks empty.
+
+Usage:
+  {% include 'base/partials/current_image.html' with image=profile.profile_picture label='profile picture' %}
+Pass wide=True for banner-shaped images.
+{% endcomment %}
+{% if image %}
+<div class="d-flex align-items-center mb-2">
+    <img src="{{ image.url }}" alt="Current {{ label }}" class="rounded border me-2"
+         style="{% if wide %}width: 120px; height: 40px;{% else %}width: 48px; height: 48px;{% endif %} object-fit: cover;">
+    <span class="small text-muted">Current {{ label }} &mdash; choosing a file replaces it.</span>
+</div>
+{% else %}
+<div class="small text-muted mb-2">No {{ label }} yet.</div>
+{% endif %}

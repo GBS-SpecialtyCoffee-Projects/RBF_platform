@@ -28,7 +28,7 @@
                 {% for conn in incoming_connections %}
                     <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded border">
                         <div>
-                            <a href="{% url 'roaster_profile' conn.other_user.id %}"><strong>{{ conn.other_user.roaster_profile.company_name|default:conn.other_user.email }}</strong></a>
+                            <a href="{% url 'roaster_profile' conn.other_user.id %}"><strong>{{ conn.other_user.roaster_profile.display_name }}</strong></a>
                             {% if conn.message %}<div class="text-muted small">{{ conn.message|truncatewords:30 }}</div>{% endif %}
                         </div>
                         <div class="d-flex">
@@ -55,7 +55,7 @@
                 {% for conn in sent_connections %}
                     <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded border">
                         <div>
-                            <a href="{% url 'roaster_profile' conn.other_user.id %}"><strong>{{ conn.other_user.roaster_profile.company_name|default:conn.other_user.email }}</strong></a>
+                            <a href="{% url 'roaster_profile' conn.other_user.id %}"><strong>{{ conn.other_user.roaster_profile.display_name }}</strong></a>
                             <span class="badge bg-secondary ms-2">Pending</span>
                         </div>
                         <form method="post" action="{% url 'manage_connection_request' conn.id 'withdraw' %}">
@@ -76,7 +76,7 @@
                 {% for conn in active_connections %}
                     <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded border">
                         <div>
-                            <a href="{% url 'roaster_profile' conn.other_user.id %}"><strong>{{ conn.other_user.roaster_profile.company_name|default:conn.other_user.email }}</strong></a>
+                            <a href="{% url 'roaster_profile' conn.other_user.id %}"><strong>{{ conn.other_user.roaster_profile.display_name }}</strong></a>
                             <span class="badge bg-success ms-2">Connected</span>
                         </div>
                         <div class="d-flex">
