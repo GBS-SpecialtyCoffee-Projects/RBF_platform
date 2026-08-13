@@ -62,7 +62,7 @@
             <div class="col-md-8 mt-3">
                 <div class="px-4 py-2 rounded shadow-sm dashboard-pane scrollable" style="background-color: white; max-height: 70vh; overflow-y: auto;">
                     <div class="d-flex align-items-center">
-                        <h2>{{ roaster_profile.company_name }}</h2>
+                        <h2>{{ roaster_profile.company_name|default:"Company" }}</h2>
                     </div>
                     <div class="gap-3">
                         <span class="fw-light">Job Title: </span>
