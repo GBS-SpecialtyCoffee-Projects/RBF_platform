@@ -5,5 +5,8 @@
 <p style="margin:0 0 16px 0;">
     <strong>When:</strong> {{ window.starts_at|date:"M d, Y H:i" }} &ndash; {{ window.ends_at|date:"H:i" }}
 </p>
+{% if invitee_needs_signup %}
+<p style="margin:0 0 16px 0;">You're not signed up for {{ forum.title }} yet &mdash; confirming this time signs you up.</p>
+{% endif %}
 <p style="margin:0;">Open your chat to confirm or decline the time.</p>
 {% endblock %}

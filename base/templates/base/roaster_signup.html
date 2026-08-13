@@ -1,5 +1,6 @@
 {% extends 'base/main.html' %}
 {% load static %}
+{% load image_constraints %}
 {% block head %}
 <link href="{% static 'styles/farmer_signup.css' %}" rel="stylesheet">
 {% endblock %}
@@ -110,13 +111,15 @@
                                         </svg>
                                     </div>
                                     <div class="ps-3" style="flex-grow: 1;">
-                                        <p id="upload-label">Upload Profile Photo</p>
+                                        <p id="upload-label" class="mb-0">{% if form.instance.profile_picture %}Replace Profile Photo{% else %}Upload Profile Photo{% endif %}</p>
+                                        {% image_upload_help 'profile' %}
                                     </div>
                                 </div>
                             </div>
                             <div class="row mt-2">
                                 <div class="col">
-                                    <input type="file" id="id_profile_picture" name="profile_picture" style="display:none;" onchange="updateUploadLabel()">
+                                    <input type="file" id="id_profile_picture" name="profile_picture" {% image_file_attrs %} style="display:none;" onchange="updateUploadLabel()">
+                                    {% include 'base/partials/current_image.html' with image=form.instance.profile_picture label='profile picture' %}
                                 </div>
                             </div>
                     </div>
@@ -269,10 +272,15 @@
     function updateUploadLabel() {
         const input = document.getElementById('id_profile_picture');
         const label = document.getElementById('upload-label');
+        // Remember whether the label started as "Upload" or "Replace", so
+        // clearing a selection restores the right wording.
+        if (!label.dataset.defaultText) {
+            label.dataset.defaultText = label.textContent.trim();
+        }
         if (input.files.length > 0) {
             label.textContent = input.files[0].name;
         } else {
-            label.textContent = 'Upload Profile Photo';
+            label.textContent = label.dataset.defaultText;
         }
     }
 

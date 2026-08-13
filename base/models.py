@@ -1,12 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django_countries import countries
 from rbf_platform.storage_backends import ProfileStorage,PhotoStorage, ProfileStorageRoaster,get_profile_storage, get_roaster_profile_storage, get_photo_storage
+from base.validators import validate_uploaded_image
 from PIL import Image
 from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
 
@@ -166,9 +165,9 @@ class Farmer(models.Model):
     processing_method = models.ManyToManyField(ProcessingMethod, blank=True)
     processing_description = models.TextField(blank=True, null=True)
     # profile_picture = models.ImageField(upload_to='farmer_profiles/', blank=True, null=True)
-    profile_picture = models.ImageField(storage=get_profile_storage,blank=True, null=True)
+    profile_picture = models.ImageField(storage=get_profile_storage,blank=True, null=True, validators=[validate_uploaded_image])
     bio = models.TextField(blank=True, null=True)
-    header_image = models.ImageField(storage=get_profile_storage, blank=True, null=True)
+    header_image = models.ImageField(storage=get_profile_storage, blank=True, null=True, validators=[validate_uploaded_image])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     affiliation = models.CharField(max_length=255, blank=True, null=True)
@@ -232,12 +231,22 @@ class Roaster(models.Model):
     origins_interested = models.TextField(blank=True, null=True)
     coffee_types_interested = models.TextField(blank=True, null=True)
     cup_scores_interested = models.ManyToManyField(CupScore, blank=True, related_name='interested_roasters')
-    profile_picture = models.ImageField(storage=get_roaster_profile_storage,blank=True, null=True)
+    profile_picture = models.ImageField(storage=get_roaster_profile_storage,blank=True, null=True, validators=[validate_uploaded_image])
     country_code = models.CharField(max_length=255, blank=True, null=True, default='United States (+1)')
     phone_number = models.CharField(max_length=255, blank=True, null=True)
-    header_image = models.ImageField(storage=get_roaster_profile_storage, blank=True, null=True)
+    header_image = models.ImageField(storage=get_roaster_profile_storage, blank=True, null=True, validators=[validate_uploaded_image])
     is_details_filled = models.BooleanField(default=False)
     sourcing_prefs_filled = models.BooleanField(default=False)
+
+    @property
+    def display_name(self):
+        """The person to address, falling back to the account email.
+
+        Roasters are listed by the individual, not the company - the company
+        is context, shown alongside.
+        """
+        name = f'{self.firstname or ""} {self.lastname or ""}'.strip()
+        return name or self.user.email
 
     def save(self, *args, **kwargs):
         try:
@@ -260,7 +269,7 @@ class Roaster(models.Model):
 class FarmerPhoto(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farmer_photos')
-    photo = models.ImageField(storage=get_photo_storage, blank=True, null=True)
+    photo = models.ImageField(storage=get_photo_storage, blank=True, null=True, validators=[validate_uploaded_image])
     #order = models.PositiveIntegerField(null=True, blank=True)
 
     # def __str__(self):
@@ -290,7 +299,7 @@ class FarmerPhoto(models.Model):
 class RoasterPhoto(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='roaster_photos')
-    photo = models.ImageField(storage=get_photo_storage, blank=True, null=True)
+    photo = models.ImageField(storage=get_photo_storage, blank=True, null=True, validators=[validate_uploaded_image])
 
     def __str__(self):
         return f"Photo {self.id} for {self.user.username}"
@@ -588,6 +597,7 @@ class Resource(models.Model):
     body = models.TextField()
     cover_image = models.ImageField(
         upload_to='resources/', blank=True, null=True,
+        validators=[validate_uploaded_image],
     )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -635,6 +645,113 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f'{self.user} — {self.get_action_display()}'
+
+
+class InteractionEventType(models.TextChoices):
+    LOGIN = 'login', 'Logged in'
+    PROFILE_VIEW = 'profile_view', 'Viewed profile'
+    STORY_VIEW = 'story_view', 'Viewed story'
+    CONNECTION_REQUEST = 'connection_request', 'Sent connection request'
+    CONNECTION_ACCEPTED = 'connection_accepted', 'Accepted connection'
+    CONNECTION_DECLINED = 'connection_declined', 'Declined connection'
+    MEETING_PROPOSED = 'meeting_proposed', 'Proposed meeting'
+    MESSAGE_SENT = 'message_sent', 'Sent message'
+    RESOURCE_VIEW = 'resource_view', 'Viewed resource'
+
+
+class InteractionEvent(models.Model):
+    """Raw, append-only log of user interactions for research/analysis.
+
+    Kept intentionally unaggregated: one row per interaction, with a
+    free-form ``metadata`` JSON blob for event-specific context.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    event_type = models.CharField(
+        max_length=50, choices=InteractionEventType.choices, db_index=True,
+    )
+    target_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    path = models.CharField(max_length=255, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    session_key = models.CharField(max_length=40, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user} — {self.get_event_type_display()} @ {self.created_at:%Y-%m-%d %H:%M}'
+
+
+class ProfileChangeSource(models.TextChoices):
+    PROFILE_EDIT = 'profile_edit', 'Profile edit'
+    STORY = 'story', 'Story'
+    PHOTO = 'photo', 'Photo'
+    PICTURE = 'picture', 'Profile picture'
+    HEADER = 'header', 'Header image'
+    ADMIN = 'admin', 'Admin edit'
+
+
+class ProfileChange(models.Model):
+    """Append-only record of what changed on a farmer profile, and when.
+
+    ``changes`` holds ``{field: {"old": ..., "new": ...}}``. Photos are
+    recorded as counts only — files are never copied here.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='+',
+    )
+    source = models.CharField(
+        max_length=20, choices=ProfileChangeSource.choices, db_index=True,
+    )
+    changes = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user} — {self.get_source_display()} @ {self.created_at:%Y-%m-%d %H:%M}'
+
+    @property
+    def changed_fields(self):
+        return sorted(self.changes)
+
+
+class AdminEmail(models.Model):
+    """A one-off email a platform admin composed and sent to a single user."""
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='admin_emails_received',
+    )
+    sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+        related_name='admin_emails_sent',
+    )
+    subject = models.CharField(max_length=200)
+    body = models.TextField()
+    sent_at = models.DateTimeField(auto_now_add=True)
+    delivered = models.BooleanField(default=False)
+    error = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-sent_at']
+
+    def __str__(self):
+        return f'{self.recipient} — {self.subject}'
 
 
 class Forum(models.Model):
@@ -842,26 +959,43 @@ class ForumMeeting(models.Model):
         self.save(update_fields=['status', 'updated_at'])
 
     @classmethod
-    def proposable_windows(cls, conversation):
-        """Future windows the pair can meet in: from published forums *both* are
-        signed up for, minus windows already holding a live meeting in this
-        conversation. Past windows (and so ended forums) are excluded."""
-        roaster_forums = ForumSignup.objects.filter(
-            user=conversation.roaster, forum__status=Forum.PUBLISHED,
-        ).values_list('forum_id', flat=True)
-        shared_forum_ids = ForumSignup.objects.filter(
-            user=conversation.farmer, forum_id__in=roaster_forums,
+    def proposable_windows(cls, conversation, proposer):
+        """Future windows `proposer` can offer: from published forums *they*
+        are signed up for, minus windows already holding a live meeting in this
+        conversation. Past windows (and so ended forums) are excluded.
+
+        The invitee does not need to be signed up - confirming the meeting
+        signs them up for the forum (see ForumMeeting.accept_signup).
+        """
+        proposer_forum_ids = ForumSignup.objects.filter(
+            user=proposer, forum__status=Forum.PUBLISHED,
         ).values_list('forum_id', flat=True)
         taken = cls.objects.filter(
             conversation=conversation, status__in=cls.LIVE_STATUSES,
         ).values_list('window_id', flat=True)
         return (
             ForumWindow.objects.filter(
-                forum_id__in=shared_forum_ids, starts_at__gt=timezone.now(),
+                forum_id__in=proposer_forum_ids, starts_at__gt=timezone.now(),
             )
             .exclude(id__in=taken)
             .select_related('forum')
         )
+
+    def invitee_needs_signup(self):
+        """True if the invitee has yet to join the forum this meeting is in."""
+        return not self.forum.is_signed_up(self.invitee)
+
+    def accept_signup(self, user):
+        """Sign `user` up for this meeting's forum, if it still accepts joins.
+
+        Returns True if a signup was created. Called when an invitee confirms
+        a meeting in a forum they had not joined.
+        """
+        forum = self.forum
+        if not forum.is_open:
+            return False
+        _, created = ForumSignup.objects.get_or_create(forum=forum, user=user)
+        return created
 
     @classmethod
     def for_display(cls, conversation):
@@ -890,51 +1024,3 @@ class ForumMeeting(models.Model):
             .order_by('window__starts_at')
         )
 
-
-class InteractionEvent(models.Model):
-    """Directed analytics event capturing how roasters and farmers interact.
-
-    Distinct from ``AuditLog`` (an audit trail of who-did-what): this table
-    records the actor **and** who the action was aimed at, plus denormalized
-    context in ``metadata``, so engagement / funnel / match-quality analytics
-    can be queried cheaply and stay stable even if profiles change later.
-    """
-
-    class EventType(models.TextChoices):
-        VIEW_PROFILE = 'view_profile', 'Viewed profile'
-        VIEW_STORY = 'view_story', 'Viewed story'
-        SEND_MESSAGE = 'send_message', 'Sent message'
-        REQUEST_CONNECTION = 'request_connection', 'Requested connection'
-        ACCEPT_CONNECTION = 'accept_connection', 'Accepted connection'
-        DECLINE_CONNECTION = 'decline_connection', 'Declined connection'
-        REQUEST_MEETING = 'request_meeting', 'Proposed meeting'
-
-    actor = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='interaction_events',
-    )
-    target_user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='interaction_events_received',
-    )
-    event_type = models.CharField(max_length=32, choices=EventType.choices)
-    content_type = models.ForeignKey(
-        ContentType, on_delete=models.SET_NULL, null=True, blank=True,
-    )
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    target = GenericForeignKey('content_type', 'object_id')
-    metadata = models.JSONField(default=dict, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-
-    class Meta:
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['event_type', 'created_at']),
-            models.Index(fields=['target_user', 'event_type']),
-            models.Index(fields=['actor', 'event_type']),
-        ]
-
-    def __str__(self):
-        return (
-            f'{self.actor} — {self.get_event_type_display()} → {self.target_user}'
-        )

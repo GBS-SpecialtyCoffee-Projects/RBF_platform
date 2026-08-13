@@ -91,9 +91,7 @@ body {
     left: 30px; /* Adjust this value to move it horizontally */
 }
 
-.text-container h1 {
-    font-size: 15px; /* Adjust this value to make the text larger */
-    margin-bottom: 0px;
-    color: #E6E6EB;
-    text-align: left; /* Optional: Adjust alignment as needed */
+.text-container img {
+    max-width: 100%;
+    height: auto;
 }

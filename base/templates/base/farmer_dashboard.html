@@ -1,5 +1,6 @@
 {% extends 'base/main.html' %}
 {% load static %}
+{% load image_constraints %}
 
 {% block content %}
 
@@ -134,7 +135,7 @@
                     {% for conn in pending_requests %}
                     <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded"  style="background-color: #fafafa;" >
                         <div>
-                            <a href="{% url 'roaster_profile' conn.other_user.id %}"><strong>{{ conn.other_user.roaster_profile.company_name|default:conn.other_user.email }}</strong></a>
+                            <a href="{% url 'roaster_profile' conn.other_user.id %}"><strong>{{ conn.other_user.roaster_profile.display_name }}</strong></a>
                             {% if conn.message %}<p class="con_msg">{{ conn.message|truncatechars:50 }}</p>{% endif %}
                         </div>
                         <div class="d-flex">
@@ -254,7 +255,10 @@
                         {% if photo.photo %}
                         <div class="col-sm-4 mb-3" >
                             <img style="width: 150px;height: 150px;object-fit: cover;"   class="rounded" src="{{photo.photo.url}}" alt="..." >
-                            <a href="{% url 'delete_farmer_photo' photo.id %}" class="btn btn-danger btn-sm mt-2">Delete</a>
+                            <form method="post" action="{% url 'delete_farmer_photo' photo.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm mt-2">Delete</button>
+                            </form>
                         </div>
                         {% endif %}
                     {% endfor %}
@@ -339,11 +343,12 @@
                 <label for="email" class="form-label">Email</label>
                 <input type="email" class="form-control" id="email" value="{{ farmer_profile.user.email }}" disabled>
             </div>
-            <div class="input-group mb-3">
+            <div class="mb-3">
+                    <label class="form-label" for="{{ dp_form.profile_picture.id_for_label }}">Profile Picture</label>
+                    {% include 'base/partials/current_image.html' with image=farmer_profile.profile_picture label='profile picture' %}
                     {{ dp_form.profile_picture }}
-                    <!-- <input type="file" class="form-control" id="inputGroupFile02">
-                    <label class="input-group-text" for="inputGroupFile02">Upload</label> -->
-
+                    {% image_upload_help 'profile' %}
+                    {{ dp_form.profile_picture.errors }}
              </div>
              <div class="input-group mb-3">
                     {{ dp_form.firstname }}
@@ -452,8 +457,10 @@
         <form action="{% url 'upload_photo' %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="modal-body">
-            <div class="input-group mb-3">
+            <div class="mb-3">
                 {{ photo_form.photo }}
+                {% image_upload_help 'gallery' %}
+                {{ photo_form.photo.errors }}
         </div>
         </div>
         <div class="modal-footer">
@@ -551,8 +558,9 @@
         <div class="modal-body">
           <div class="mb-3">
             <label for="headerImageInput" class="form-label">Upload Header Image</label>
-            <input type="file" class="form-control" id="headerImageInput" name="header_image" accept="image/*" required>
-            <small class="text-muted">Recommended size: 1200x300px</small>
+            {% include 'base/partials/current_image.html' with image=farmer_profile.header_image label='header image' wide=True %}
+            <input type="file" class="form-control" id="headerImageInput" name="header_image" {% image_file_attrs %} required>
+            {% image_upload_help 'header' %}
           </div>
         </div>
         <div class="modal-footer">

@@ -1,0 +1,73 @@
+{% extends "base/platform_admin/base.html" %}
+{% block title_suffix %} — Pending Requests{% endblock %}
+{% block nav_pending_requests %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">Pending Requests</h4>
+    <span class="text-muted small">{{ connections.paginator.count }} awaiting a response</span>
+</div>
+
+<div class="card stat-card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Initiator</th>
+                        <th>Target</th>
+                        <th>Requested</th>
+                        <th>Waiting</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for connection in connections %}
+                    <tr>
+                        <td class="ps-3 small">
+                            {{ connection.initiator.email }}
+                            <span class="badge bg-light text-muted ms-1">{{ connection.initiator.group }}</span>
+                        </td>
+                        <td class="small">
+                            {{ connection.recipient.email }}
+                            <span class="badge bg-light text-muted ms-1">{{ connection.recipient.group }}</span>
+                        </td>
+                        <td class="small text-muted text-nowrap">{{ connection.created_at|date:"M d, Y H:i" }}</td>
+                        <td class="small text-nowrap">{{ connection.created_at|timesince }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-muted ps-3 py-4">No pending requests.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if connections.has_other_pages %}
+<nav class="mt-3">
+    <ul class="pagination pagination-sm justify-content-center mb-0">
+        {% if connections.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ connections.previous_page_number }}">Previous</a>
+        </li>
+        {% endif %}
+        {% for num in connections.paginator.page_range %}
+            {% if connections.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > connections.number|add:"-3" and num < connections.number|add:"3" %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+        {% if connections.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ connections.next_page_number }}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

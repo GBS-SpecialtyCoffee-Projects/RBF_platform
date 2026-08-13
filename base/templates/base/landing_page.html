@@ -14,22 +14,22 @@
             <a style="background-color: #303C50; color: white;font-weight: bold;" class="btn mt-3 ml-3 px-4 py-2" href="{% url 'signup' %}">Start Now</a>
         </div>
         <div class="text-center">
-            <button style="color: white;font-weight: lighter;" type="button" class="btn mt-3 ml-3 px-4 py-2 ">learn more</button>
+            <a style="color: white;font-weight: lighter;" class="btn mt-3 ml-3 px-4 py-2" href="#about">learn more</a>
         </div>
 
     </div>
 
     </div>
 
-    <div style="background-color:#212529 ;">
+    <div id="about" style="background-color:#212529 ;">
         <div class="container" style="padding-top: 100px;padding-bottom: 60px; color: ghostwhite;">
             <div class="row" >
                 <div class="col-md-6 coll-info">
                     <h2 width="10px" style="font-weight:bold;" class="">What is The Coffee Circuit</h2>
                     <p width="50px" class="">Coffee producers are often excluded from participating in their supply chains beyond the local level; their stories are often articulated by others. The Coffee Circuit allows producers to be seen and heard on their own terms, without censorship or filters, enabling them to retain agency over their identity once their coffee leaves the farm. It allows roasters to connect with producers they might never meet otherwise, fostering personal relationships built on authenticity rather than curation.</p>
                     <div class="pt-4 ">
-                        <button style="background-color:#9DAD6F ;color: ghostwhite;font-weight: 500;" class="btn btn-lg">I Am A Producer</button>
-                        <button style="background-color:#503B31 ;color: ghostwhite;font-weight: 500;" class="btn btn-lg">I Am A Roaster</button>
+                        <a style="background-color:#9DAD6F ;color: ghostwhite;font-weight: 500;" class="btn btn-lg" href="{% url 'signup' %}?group=farmer">I Am A Producer</a>
+                        <a style="background-color:#503B31 ;color: ghostwhite;font-weight: 500;" class="btn btn-lg" href="{% url 'signup' %}?group=roaster">I Am A Roaster</a>
                     </div>
         
                 </div>

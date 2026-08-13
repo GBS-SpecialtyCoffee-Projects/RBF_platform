@@ -1,0 +1,6 @@
+{% extends 'base/emails/_base_email.html' %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hi {{ recipient_name }},</p>
+<div style="margin:0 0 16px 0;">{{ admin_email.body|linebreaks }}</div>
+<p style="margin:0;">— The Coffee Circuit team</p>
+{% endblock %}

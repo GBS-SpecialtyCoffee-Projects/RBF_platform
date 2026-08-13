@@ -1,18 +1,35 @@
+import shutil
+import tempfile
 from datetime import timedelta
+from io import BytesIO
+from smtplib import SMTPException
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core import mail
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+from django.template.defaultfilters import filesizeformat
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image as PILImage
 
 from django.core.exceptions import ValidationError
 
-from base.analytics import record_event, record_view
-from base import analytics_reports
+from base.middleware.uploads import MAX_REQUEST_BODY_SIZE
+from base.validators import (
+    ALLOWED_IMAGE_FORMATS, IMAGE_ACCEPT, MAX_IMAGE_SIZE, MAX_IMAGE_SIZE_MB,
+    image_help_text, validate_uploaded_image,
+)
+
+from base.analytics import log_event
 from base.models import (
-    Connection, Conversation, Farmer, Forum, ForumMeeting, ForumSignup,
-    ForumWindow, InteractionEvent, MeetingRequest, Message, Roaster, Story,
+    AdminEmail, Connection, Conversation, Farmer, FarmerPhoto, Forum,
+    ForumMeeting, ForumSignup, ForumWindow, InteractionEvent,
+    InteractionEventType, Language, MeetingRequest, Message, ProfileChange,
+    ProfileChangeSource, Resource, Roaster, Story,
 )
 from base.notifications import notify_meeting_event
 
@@ -704,8 +721,15 @@ class ForumMeetingTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [self.farmer.email])
 
-    def test_propose_blocked_when_invitee_not_signed_up(self):
+    def test_propose_allowed_when_invitee_not_signed_up(self):
+        # The invitee joins by confirming, so their signup is not a
+        # precondition for proposing.
         ForumSignup.objects.filter(forum=self.forum, user=self.farmer).delete()
+        self._propose()
+        self.assertTrue(ForumMeeting.objects.exists())
+
+    def test_propose_blocked_when_proposer_not_signed_up(self):
+        ForumSignup.objects.filter(forum=self.forum, user=self.roaster).delete()
         self._propose()
         self.assertFalse(ForumMeeting.objects.exists())
 
@@ -718,7 +742,8 @@ class ForumMeetingTests(TestCase):
     def test_proposable_windows_excludes_live_meeting(self):
         self._propose()
         self.assertNotIn(
-            self.window, ForumMeeting.proposable_windows(self.conversation)
+            self.window,
+            ForumMeeting.proposable_windows(self.conversation, self.roaster),
         )
 
     def test_invitee_confirms(self):
@@ -790,7 +815,8 @@ class EndedForumHiddenTests(TestCase):
         ForumSignup.objects.create(forum=past.forum, user=self.roaster)
         ForumSignup.objects.create(forum=past.forum, user=self.farmer)
         self.assertNotIn(
-            past, ForumMeeting.proposable_windows(self.conversation)
+            past,
+            ForumMeeting.proposable_windows(self.conversation, self.roaster),
         )
 
     def test_for_display_hides_meetings_of_ended_forum(self):
@@ -904,173 +930,681 @@ class AdminMeetingsTests(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
 
-class AnalyticsCaptureTests(TestCase):
+class LogEventTests(TestCase):
     def setUp(self):
-        self.roaster_user = User.objects.create(
-            email='roaster@example.com', group='roaster', username='roasteruser'
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
         )
-        self.farmer_user = User.objects.create(
-            email='farmer@example.com', group='farmer', username='farmeruser'
-        )
-
-    def test_record_event_stores_roles_and_target(self):
-        conn = Connection.request(self.roaster_user, self.farmer_user)
-        event = record_event(
-            self.roaster_user, InteractionEvent.EventType.REQUEST_CONNECTION,
-            target=conn, target_user=self.farmer_user,
-        )
-        self.assertEqual(event.actor, self.roaster_user)
-        self.assertEqual(event.target_user, self.farmer_user)
-        self.assertEqual(event.target, conn)
-        self.assertEqual(event.metadata['actor_role'], 'roaster')
-        self.assertEqual(event.metadata['target_role'], 'farmer')
-
-    def test_record_event_infers_target_user_from_target(self):
-        conn = Connection.request(self.roaster_user, self.farmer_user)
-        event = record_event(
-            self.roaster_user, InteractionEvent.EventType.REQUEST_CONNECTION,
-            target=conn,
-        )
-        # Connection exposes ``recipient``; target_user should be inferred.
-        self.assertEqual(event.target_user, self.farmer_user)
-
-    def test_record_view_dedupes_same_day(self):
-        first = record_view(
-            self.roaster_user, InteractionEvent.EventType.VIEW_PROFILE,
-            self.farmer_user,
-        )
-        second = record_view(
-            self.roaster_user, InteractionEvent.EventType.VIEW_PROFILE,
-            self.farmer_user,
-        )
-        self.assertIsNotNone(first)
-        self.assertIsNone(second)
-        self.assertEqual(
-            InteractionEvent.objects.filter(
-                event_type=InteractionEvent.EventType.VIEW_PROFILE
-            ).count(),
-            1,
+        self.farmer = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
         )
 
-    def test_record_view_skips_self_view(self):
-        event = record_view(
-            self.roaster_user, InteractionEvent.EventType.VIEW_PROFILE,
-            self.roaster_user,
+    def test_log_event_records_row_with_metadata(self):
+        log_event(
+            InteractionEventType.PROFILE_VIEW, user=self.roaster,
+            target_user=self.farmer, source='test',
         )
-        self.assertIsNone(event)
+        event = InteractionEvent.objects.get()
+        self.assertEqual(event.event_type, InteractionEventType.PROFILE_VIEW)
+        self.assertEqual(event.user, self.roaster)
+        self.assertEqual(event.target_user, self.farmer)
+        self.assertEqual(event.metadata, {'source': 'test'})
+
+    def test_log_event_swallows_errors(self):
+        # An over-long event_type violates the column, but logging must never
+        # raise into the request flow — it is caught and logged instead.
+        with self.assertLogs('base.analytics', level='ERROR'):
+            log_event('x' * 100, user=self.roaster)
         self.assertFalse(InteractionEvent.objects.exists())
 
-    def test_record_event_never_raises(self):
-        # An unsaved target_user can't be used as a FK; the write fails but is
-        # swallowed so the caller's request is never broken.
-        result = record_event(
-            self.roaster_user, InteractionEvent.EventType.SEND_MESSAGE,
-            target_user=User(email='ghost@example.com', username='ghost'),
-        )
-        self.assertIsNone(result)
 
-
-class AnalyticsReportsTests(TestCase):
+class AdminInteractionsTests(TestCase):
     def setUp(self):
-        self.roaster_user = User.objects.create(
-            email='roaster@example.com', group='roaster', username='roasteruser'
+        self.superadmin = User.objects.create(
+            email='super@example.com', username='super',
+            is_staff=True, is_superuser=True,
         )
-        Roaster.objects.create(user=self.roaster_user, company_name='Acme', country='Kenya')
-
-        self.farmer_with = User.objects.create(
-            email='fw@example.com', group='farmer', username='fw'
-        )
-        fw_profile = Farmer.objects.create(
-            user=self.farmer_with, firstname='Ada', lastname='Lima',
-            farm_name='Sunrise', country='Colombia',
-        )
-        Story.objects.create(
-            user=self.farmer_with, farmer=fw_profile, story_text='A rich story.'
-        )
-
-        self.farmer_without = User.objects.create(
-            email='fo@example.com', group='farmer', username='fo'
-        )
-        Farmer.objects.create(
-            user=self.farmer_without, firstname='Bob', lastname='Diaz',
-            farm_name='Hilltop', country='Brazil',
-        )
-
-        # Roaster views the storied farmer, then connects with them (accepted).
-        record_view(
-            self.roaster_user, InteractionEvent.EventType.VIEW_PROFILE,
-            self.farmer_with,
-        )
-        active = Connection.request(self.roaster_user, self.farmer_with)
-        active.accept()
-        # A pending, unaccepted request to the other farmer.
-        Connection.request(self.roaster_user, self.farmer_without)
-
-        conv = Conversation.objects.create(
-            roaster=self.roaster_user, farmer=self.farmer_with
-        )
-        Message.objects.create(conversation=conv, sender=self.roaster_user, body='hi')
-
-    def test_funnel_stage_counts(self):
-        stages = {s['key']: s['count'] for s in analytics_reports.funnel()['stages']}
-        self.assertEqual(stages['profile_views'], 1)
-        self.assertEqual(stages['messages'], 1)
-        self.assertEqual(stages['requests'], 2)
-        self.assertEqual(stages['active'], 1)
-
-    def test_story_impact_separates_groups(self):
-        report = analytics_reports.story_impact()
-        self.assertEqual(report['with_stories']['farmers'], 1)
-        self.assertEqual(report['without_stories']['farmers'], 1)
-        # The storied farmer got the view and the active connection.
-        self.assertEqual(report['with_stories']['profile_views'], 1)
-        self.assertEqual(report['with_stories']['active_connections'], 1)
-        self.assertEqual(report['without_stories']['active_connections'], 0)
-
-    def test_match_quality_buckets_by_country(self):
-        report = analytics_reports.match_quality()
-        self.assertEqual(report['active_total'], 1)
-        self.assertEqual(dict(report['by_farmer_country']).get('Colombia'), 1)
-        self.assertEqual(dict(report['by_roaster_country']).get('Kenya'), 1)
-        self.assertEqual(report['initiation'].get('roaster'), 1)
-
-    def test_engagement_volume_totals(self):
-        report = analytics_reports.engagement_volume()
-        self.assertEqual(report['connection_requests'], 2)
-        self.assertEqual(report['active_connections'], 1)
-        self.assertEqual(report['messages'], 1)
-        self.assertEqual(
-            report['events_by_type'].get(InteractionEvent.EventType.VIEW_PROFILE), 1
-        )
-
-
-class AnalyticsDashboardViewTests(TestCase):
-    def setUp(self):
         self.staff = User.objects.create(
-            email='staff@example.com', username='staff', is_staff=True
+            email='staff@example.com', username='staff', is_staff=True,
         )
-        self.member = User.objects.create(
-            email='member@example.com', username='member', group='farmer'
+        self.viewer = User.objects.create(
+            email='viewer@example.com', group='roaster', username='viewer',
+        )
+        InteractionEvent.objects.create(
+            event_type=InteractionEventType.LOGIN, user=self.viewer,
+        )
+        InteractionEvent.objects.create(
+            event_type=InteractionEventType.RESOURCE_VIEW, user=self.viewer,
         )
 
-    def test_staff_can_load_dashboard(self):
+    def test_staff_admin_sees_events(self):
         self.client.force_login(self.staff)
-        resp = self.client.get(reverse('admin_analytics'))
+        resp = self.client.get(reverse('admin_interactions'))
         self.assertEqual(resp.status_code, 200)
-        for key in ('funnel', 'story', 'match', 'volume', 'charts'):
-            self.assertIn(key, resp.context)
+        self.assertEqual(resp.context['events'].paginator.count, 2)
 
-    def test_range_param_is_validated(self):
+    def test_event_type_filter(self):
         self.client.force_login(self.staff)
-        resp = self.client.get(reverse('admin_analytics'), {'days': 'bogus'})
+        resp = self.client.get(
+            reverse('admin_interactions'),
+            {'event_type': InteractionEventType.LOGIN},
+        )
+        self.assertEqual(resp.context['events'].paginator.count, 1)
+
+    def test_csv_export(self):
+        self.client.force_login(self.staff)
+        resp = self.client.get(reverse('admin_interactions'), {'export': 'csv'})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['days'], '30')
+        self.assertEqual(resp['Content-Type'], 'text/csv')
+        body = resp.content.decode()
+        self.assertIn('event_type', body)
+        self.assertIn(InteractionEventType.LOGIN, body)
 
     def test_non_staff_redirected(self):
-        self.client.force_login(self.member)
-        resp = self.client.get(reverse('admin_analytics'))
+        self.client.force_login(self.viewer)
+        resp = self.client.get(reverse('admin_interactions'))
+        self.assertEqual(resp.status_code, 302)
+
+
+class AdminStaffAccessTests(TestCase):
+    """Every platform-admin page is open to any staff admin, not just superusers."""
+
+    STAFF_PAGES = [
+        'admin_dashboard', 'admin_farmers', 'admin_roasters', 'admin_users',
+        'admin_create', 'admin_audit_log', 'admin_pending_requests',
+        'admin_interactions', 'admin_resources', 'admin_forums', 'admin_meetings',
+    ]
+
+    def setUp(self):
+        self.staff = User.objects.create(
+            email='staff@example.com', username='staff', is_staff=True,
+        )
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+
+    def test_staff_can_open_every_admin_page(self):
+        self.client.force_login(self.staff)
+        for name in self.STAFF_PAGES:
+            with self.subTest(page=name):
+                resp = self.client.get(reverse(name))
+                self.assertEqual(resp.status_code, 200)
+
+    def test_non_staff_redirected_from_every_admin_page(self):
+        self.client.force_login(self.roaster)
+        for name in self.STAFF_PAGES:
+            with self.subTest(page=name):
+                resp = self.client.get(reverse(name))
+                self.assertEqual(resp.status_code, 302)
+
+    def test_staff_can_toggle_another_admin(self):
+        other = User.objects.create(
+            email='other@example.com', username='other', is_staff=True,
+        )
+        self.client.force_login(self.staff)
+        self.client.post(reverse('admin_toggle', args=[other.id]))
+        other.refresh_from_db()
+        self.assertFalse(other.is_staff)
+
+    def test_superuser_accounts_stay_protected_from_toggle(self):
+        superuser = User.objects.create(
+            email='super@example.com', username='super',
+            is_staff=True, is_superuser=True,
+        )
+        self.client.force_login(self.staff)
+        self.client.post(reverse('admin_toggle', args=[superuser.id]))
+        superuser.refresh_from_db()
+        self.assertTrue(superuser.is_staff)
+
+
+class AdminPendingRequestsTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create(
+            email='staff@example.com', username='staff', is_staff=True,
+        )
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+
+    def _farmer(self, name):
+        return User.objects.create(
+            email=f'{name}@example.com', group='farmer', username=name,
+        )
+
+    def _page(self):
+        self.client.force_login(self.staff)
+        return self.client.get(reverse('admin_pending_requests'))
+
+    def test_lists_only_pending_connections(self):
+        Connection.request(self.roaster, self._farmer('waiting'))
+        Connection.request(self.roaster, self._farmer('accepted')).accept()
+        Connection.objects.create(
+            user_a=self.roaster, user_b=self._farmer('declined'),
+            initiator=self.roaster, status=Connection.DECLINED,
+        )
+
+        resp = self._page()
+        self.assertEqual(resp.status_code, 200)
+        rows = resp.context['connections']
+        self.assertEqual(rows.paginator.count, 1)
+        self.assertEqual(rows[0].recipient.email, 'waiting@example.com')
+
+    def test_shows_initiator_and_target(self):
+        farmer = self._farmer('target')
+        connection = Connection.request(farmer, self.roaster)
+
+        row = self._page().context['connections'][0]
+        self.assertEqual(row.initiator, farmer)
+        self.assertEqual(row.recipient, self.roaster)
+        self.assertEqual(row.id, connection.id)
+
+    def test_longest_waiting_listed_first(self):
+        newest = Connection.request(self.roaster, self._farmer('newest'))
+        oldest = Connection.request(self.roaster, self._farmer('oldest'))
+        # created_at is auto_now_add, so rewrite it to age the row.
+        Connection.objects.filter(id=oldest.id).update(
+            created_at=timezone.now() - timedelta(days=10),
+        )
+
+        rows = self._page().context['connections']
+        self.assertEqual([row.id for row in rows], [oldest.id, newest.id])
+
+    def test_non_staff_redirected(self):
+        self.client.force_login(self.roaster)
+        resp = self.client.get(reverse('admin_pending_requests'))
+        self.assertEqual(resp.status_code, 302)
+
+
+class AdminEngagementTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create(
+            email='staff@example.com', username='staff', is_staff=True,
+        )
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        Roaster.objects.create(
+            user=self.roaster, firstname='Roni', lastname='Roaster',
+            company_name='Beans & Co', is_details_filled=True,
+        )
+
+    def _farmer(self, name):
+        user = User.objects.create(
+            email=f'{name}@example.com', group='farmer', username=name,
+        )
+        Farmer.objects.create(
+            user=user, firstname=name.title(), lastname='Farmer',
+            is_details_filled=True,
+        )
+        return user
+
+    def _rows(self, **params):
+        self.client.force_login(self.staff)
+        resp = self.client.get(reverse('admin_engagement'), params)
+        self.assertEqual(resp.status_code, 200)
+        return {row.email: row for row in resp.context['users']}
+
+    def test_counts_requests_sent_and_received(self):
+        farmer = self._farmer('ada')
+        Connection.request(self.roaster, farmer)
+
+        rows = self._rows()
+        self.assertEqual(rows['roaster@example.com'].requests_sent, 1)
+        self.assertEqual(rows['roaster@example.com'].connections_received, 0)
+        self.assertEqual(rows['ada@example.com'].connections_received, 1)
+        self.assertEqual(rows['ada@example.com'].requests_sent, 0)
+
+    def test_received_counts_both_sides_of_the_pair(self):
+        """user_a/user_b ordering is by id, so the recipient may sit on
+        either side — both must be counted."""
+        low, high = self._farmer('aaa'), self._farmer('zzz')
+        Connection.request(low, self.roaster)
+        Connection.request(high, self.roaster)
+
+        rows = self._rows()
+        self.assertEqual(rows['roaster@example.com'].connections_received, 2)
+
+    def test_unaccepted_excludes_answered_requests(self):
+        Connection.request(self.roaster, self._farmer('waiting'))
+        Connection.request(self.roaster, self._farmer('accepted')).accept()
+        Connection.request(self.roaster, self._farmer('declined')).decline()
+
+        rows = self._rows()
+        self.assertEqual(rows['waiting@example.com'].connections_unaccepted, 1)
+        self.assertEqual(rows['accepted@example.com'].connections_unaccepted, 0)
+        self.assertEqual(rows['declined@example.com'].connections_unaccepted, 0)
+        # Answered requests still count as received.
+        self.assertEqual(rows['declined@example.com'].connections_received, 1)
+
+    def test_meeting_counts_by_status(self):
+        farmer = self._farmer('meeter')
+        conversation = Conversation.objects.create(
+            roaster=self.roaster, farmer=farmer,
+        )
+        forum = Forum.objects.create(title='Harvest', status=Forum.PUBLISHED)
+        window = ForumWindow.objects.create(
+            forum=forum,
+            starts_at=timezone.now() + timedelta(days=1),
+            ends_at=timezone.now() + timedelta(days=1, hours=1),
+        )
+        other = ForumWindow.objects.create(
+            forum=forum,
+            starts_at=timezone.now() + timedelta(days=1, hours=2),
+            ends_at=timezone.now() + timedelta(days=1, hours=3),
+        )
+        ForumMeeting.objects.create(
+            conversation=conversation, window=window,
+            proposed_by=self.roaster, status=ForumMeeting.CONFIRMED,
+        )
+        ForumMeeting.objects.create(
+            conversation=conversation, window=other,
+            proposed_by=self.roaster, status=ForumMeeting.PROPOSED,
+        )
+
+        rows = self._rows()
+        for email in ('roaster@example.com', 'meeter@example.com'):
+            self.assertEqual(rows[email].meetings_scheduled, 1)
+            self.assertEqual(rows[email].meetings_pending, 1)
+
+    def test_user_with_no_activity_shows_zeros(self):
+        self._farmer('quiet')
+
+        row = self._rows()['quiet@example.com']
+        self.assertEqual(row.connections_received, 0)
+        self.assertEqual(row.connections_unaccepted, 0)
+        self.assertEqual(row.requests_sent, 0)
+        self.assertEqual(row.meetings_scheduled, 0)
+        self.assertEqual(row.meetings_pending, 0)
+        self.assertIsNone(row.last_activity)
+
+    def test_staff_excluded_from_listing(self):
+        self.assertNotIn('staff@example.com', self._rows())
+
+    def test_idle_filter_selects_dormant_and_never_active(self):
+        active = self._farmer('active')
+        stale = self._farmer('stale')
+        self._farmer('never')
+        log_event(InteractionEventType.LOGIN, user=active)
+        log_event(InteractionEventType.LOGIN, user=stale)
+        InteractionEvent.objects.filter(user=stale).update(
+            created_at=timezone.now() - timedelta(days=60),
+        )
+
+        emails = self._rows(idle='30').keys()
+        self.assertIn('stale@example.com', emails)
+        self.assertIn('never@example.com', emails)
+        self.assertNotIn('active@example.com', emails)
+
+    def test_blocking_filter_shows_only_users_sitting_on_requests(self):
+        Connection.request(self.roaster, self._farmer('blocking'))
+        self._farmer('clear')
+
+        emails = self._rows(blocking='1').keys()
+        self.assertEqual(set(emails), {'blocking@example.com'})
+
+    def test_default_sort_puts_never_active_first(self):
+        recent = self._farmer('recent')
+        self._farmer('nothing')
+        log_event(InteractionEventType.LOGIN, user=recent)
+
+        emails = list(self._rows().keys())
+        self.assertLess(
+            emails.index('nothing@example.com'),
+            emails.index('recent@example.com'),
+        )
+
+    def test_csv_export_returns_a_row_per_user(self):
+        Connection.request(self.roaster, self._farmer('ada'))
+        self.client.force_login(self.staff)
+
+        resp = self.client.get(reverse('admin_engagement'), {'export': 'csv'})
+        self.assertEqual(resp['Content-Type'], 'text/csv')
+        lines = resp.content.decode().strip().splitlines()
+        self.assertEqual(lines[0].split(',')[0], 'email')
+        self.assertEqual(len(lines), 3)  # header + roaster + farmer
+
+    def test_non_staff_redirected(self):
+        self.client.force_login(self.roaster)
+        resp = self.client.get(reverse('admin_engagement'))
+        self.assertEqual(resp.status_code, 302)
+
+
+class ProfileHistoryTests(TestCase):
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        self.farmer = Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            farm_name='Old Farm', is_details_filled=True,
+        )
+        self.language = Language.objects.create(name='English')
+        self.client.force_login(self.farmer_user)
+
+    def _edit_profile(self, **overrides):
+        data = {
+            'main_form': '1',
+            'farm_name': 'New Farm',
+            'country': 'Kenya',
+            'state': '',
+            'city': '',
+            'farm_size': '',
+            'annual_production': '',
+            'cultivars': '',
+            'source_of_cup_scores': '',
+            'quality_report_link': '',
+            'processing_description': '',
+            'preferred_communication_method': '',
+            'member_organization_name': '',
+        }
+        data.update(overrides)
+        return self.client.post(reverse('edit_farmer_details'), data)
+
+    def test_profile_edit_records_old_and_new(self):
+        self._edit_profile()
+
+        change = ProfileChange.objects.get()
+        self.assertEqual(change.user, self.farmer_user)
+        self.assertEqual(change.changed_by, self.farmer_user)
+        self.assertEqual(change.source, ProfileChangeSource.PROFILE_EDIT)
+        self.assertEqual(change.changes['farm_name']['old'], 'Old Farm')
+        self.assertEqual(change.changes['farm_name']['new'], 'New Farm')
+
+    def test_unchanged_save_records_nothing(self):
+        self._edit_profile(
+            farm_name='Old Farm', country='United States of America',
+        )
+        self.assertEqual(ProfileChange.objects.count(), 0)
+
+    def test_story_edit_preserves_previous_text(self):
+        story = Story.objects.create(
+            user=self.farmer_user, farmer=self.farmer,
+            language=self.language, story_text='First version',
+        )
+        self.client.post(reverse('update_story'), {
+            'language': self.language.id, 'story_text': 'Second version',
+        })
+
+        change = ProfileChange.objects.get(source=ProfileChangeSource.STORY)
+        self.assertEqual(change.changes['story_text']['old'], 'First version')
+        self.assertEqual(change.changes['story_text']['new'], 'Second version')
+        story.refresh_from_db()
+        self.assertEqual(story.story_text, 'Second version')
+
+    def test_long_values_are_truncated(self):
+        Story.objects.create(
+            user=self.farmer_user, farmer=self.farmer,
+            language=self.language, story_text='x',
+        )
+        self.client.post(reverse('update_story'), {
+            'language': self.language.id, 'story_text': 'y' * 12000,
+        })
+
+        change = ProfileChange.objects.get(source=ProfileChangeSource.STORY)
+        stored = change.changes['story_text']['new']
+        self.assertTrue(stored.endswith('…[truncated]'))
+        self.assertLess(len(stored), 12000)
+
+    def test_recorder_failure_never_breaks_the_save(self):
+        with patch(
+            'base.profile_history.ProfileChange.objects.create',
+            side_effect=RuntimeError('history table is down'),
+        ):
+            resp = self._edit_profile()
+
+        self.assertEqual(resp.status_code, 302)
+        self.farmer.refresh_from_db()
+        self.assertEqual(self.farmer.farm_name, 'New Farm')
+        self.assertEqual(ProfileChange.objects.count(), 0)
+
+    def test_photo_delete_records_count_drop(self):
+        photo = FarmerPhoto.objects.create(user=self.farmer_user, photo='a.jpg')
+        FarmerPhoto.objects.create(user=self.farmer_user, photo='b.jpg')
+
+        resp = self.client.post(
+            reverse('delete_farmer_photo', args=[photo.id])
+        )
+
+        self.assertEqual(resp.status_code, 302)
+        change = ProfileChange.objects.get(source=ProfileChangeSource.PHOTO)
+        self.assertEqual(change.changes['photos'], {'old': 2, 'new': 1})
+
+    def test_photo_delete_rejects_get(self):
+        photo = FarmerPhoto.objects.create(user=self.farmer_user, photo='a.jpg')
+
+        resp = self.client.get(reverse('delete_farmer_photo', args=[photo.id]))
+
+        self.assertEqual(resp.status_code, 405)
+        self.assertTrue(FarmerPhoto.objects.filter(id=photo.id).exists())
+        self.assertFalse(ProfileChange.objects.exists())
+
+    def test_admin_edit_attributes_the_staff_user(self):
+        staff = User.objects.create(
+            email='staff@example.com', username='staff', is_staff=True,
+        )
+        Story.objects.create(
+            user=self.farmer_user, farmer=self.farmer,
+            language=self.language, story_text='Farmer wrote this',
+        )
+        self.client.force_login(staff)
+        self.client.post(reverse('admin_farmer_detail', args=[self.farmer_user.id]), {
+            'form_type': 'story',
+            'language_id': self.language.id,
+            'story_text': 'Admin rewrote this',
+        })
+
+        change = ProfileChange.objects.get(source=ProfileChangeSource.ADMIN)
+        self.assertEqual(change.user, self.farmer_user)
+        self.assertEqual(change.changed_by, staff)
+        self.assertEqual(change.changes['story_text']['old'], 'Farmer wrote this')
+
+
+class AdminProfileHistoryPageTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create(
+            email='staff@example.com', username='staff', is_staff=True,
+        )
+        self.farmer_user = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        self.roaster_user = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        ProfileChange.objects.create(
+            user=self.farmer_user, changed_by=self.farmer_user,
+            source=ProfileChangeSource.PROFILE_EDIT,
+            changes={'farm_name': {'old': 'A', 'new': 'B'},
+                     'city': {'old': '', 'new': 'Nyeri'}},
+        )
+        ProfileChange.objects.create(
+            user=self.farmer_user, changed_by=self.farmer_user,
+            source=ProfileChangeSource.PHOTO,
+            changes={'photos': {'old': 1, 'new': 2}},
+        )
+        ProfileChange.objects.create(
+            user=self.roaster_user, changed_by=self.roaster_user,
+            source=ProfileChangeSource.PROFILE_EDIT,
+            changes={'company_name': {'old': 'X', 'new': 'Y'}},
+        )
+
+    def _page(self, **params):
+        self.client.force_login(self.staff)
+        return self.client.get(reverse('admin_profile_history'), params)
+
+    def test_lists_farmer_changes_only(self):
+        rows = self._page().context['changes']
+        self.assertEqual(rows.paginator.count, 2)
+        self.assertTrue(all(r.user == self.farmer_user for r in rows))
+
+    def test_source_filter(self):
+        rows = self._page(source=ProfileChangeSource.PHOTO).context['changes']
+        self.assertEqual(rows.paginator.count, 1)
+        self.assertEqual(rows[0].changes['photos'], {'old': 1, 'new': 2})
+
+    def test_csv_flattens_one_row_per_field(self):
+        self.client.force_login(self.staff)
+        resp = self.client.get(
+            reverse('admin_profile_history'), {'export': 'csv'}
+        )
+
+        self.assertEqual(resp['Content-Type'], 'text/csv')
+        lines = resp.content.decode().strip().splitlines()
+        # header + photos + farm_name + city (roaster row excluded)
+        self.assertEqual(len(lines), 4)
+        self.assertEqual(lines[0].split(',')[4], 'field')
+
+    def test_non_staff_redirected(self):
+        self.client.force_login(self.farmer_user)
+        resp = self.client.get(reverse('admin_profile_history'))
+        self.assertEqual(resp.status_code, 302)
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    EMAIL_FROM='noreply@coffeecircuit.test',
+)
+class AdminEmailTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create(
+            email='admin@example.com', username='admin', is_staff=True,
+        )
+        self.farmer = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        Farmer.objects.create(
+            user=self.farmer, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        Roaster.objects.create(
+            user=self.roaster, firstname='Roni', lastname='Roaster',
+            company_name='Roni Coffee', is_details_filled=True,
+        )
+
+    def test_pages_render_compose_form(self):
+        self.client.force_login(self.admin)
+        for url in (
+            reverse('admin_emails'),
+            reverse('admin_farmer_detail', args=[self.farmer.id]),
+            reverse('admin_roaster_detail', args=[self.roaster.id]),
+        ):
+            with self.subTest(url=url):
+                resp = self.client.get(url)
+                self.assertEqual(resp.status_code, 200)
+                self.assertContains(resp, 'name="subject"')
+                self.assertContains(resp, 'name="body"')
+
+    def test_roaster_detail_renders_without_company_name(self):
+        """company_name is nullable, so the avatar initial must tolerate None."""
+        user = User.objects.create(
+            email='nocompany@example.com', group='roaster', username='nocompany',
+        )
+        Roaster.objects.create(
+            user=user, firstname='No', lastname='Company', is_details_filled=True,
+        )
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('admin_roaster_detail', args=[user.id]))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_send_from_farmer_detail(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse('admin_farmer_detail', args=[self.farmer.id]),
+            {'form_type': 'email', 'subject': 'Welcome', 'body': 'Hello there'},
+        )
+        self.assertEqual(resp.status_code, 302)
+        record = AdminEmail.objects.get()
+        self.assertEqual(record.recipient, self.farmer)
+        self.assertEqual(record.sent_by, self.admin)
+        self.assertTrue(record.delivered)
+        self.assertEqual(record.error, '')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.farmer.email])
+        self.assertEqual(mail.outbox[0].subject, 'Welcome')
+        self.assertIn('Hello there', mail.outbox[0].body)
+        self.assertEqual(mail.outbox[0].reply_to, [self.admin.email])
+
+    def test_send_from_roaster_detail(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse('admin_roaster_detail', args=[self.roaster.id]),
+            {'form_type': 'email', 'subject': 'Hi', 'body': 'A message'},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(AdminEmail.objects.get().recipient, self.roaster)
+        self.assertEqual(mail.outbox[0].to, [self.roaster.email])
+
+    def test_send_from_emails_page(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse('admin_emails'),
+            {
+                'recipient': self.farmer.id,
+                'subject': 'Broadcast',
+                'body': 'Body text',
+            },
+        )
+        self.assertEqual(resp.status_code, 302)
+        record = AdminEmail.objects.get()
+        self.assertEqual(record.recipient, self.farmer)
+        self.assertTrue(record.delivered)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_blank_fields_send_nothing(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse('admin_farmer_detail', args=[self.farmer.id]),
+            {'form_type': 'email', 'subject': '   ', 'body': ''},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(AdminEmail.objects.exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_invalid_email_does_not_touch_profile(self):
+        self.client.force_login(self.admin)
+        self.client.post(
+            reverse('admin_farmer_detail', args=[self.farmer.id]),
+            {'form_type': 'email', 'subject': '', 'body': ''},
+        )
+        farmer = Farmer.objects.get(user=self.farmer)
+        self.assertEqual(farmer.firstname, 'Fiona')
+
+    def test_requires_staff(self):
+        self.client.force_login(self.farmer)
+        resp = self.client.post(
+            reverse('admin_emails'),
+            {'recipient': self.farmer.id, 'subject': 'Hi', 'body': 'Nope'},
+        )
         self.assertEqual(resp.status_code, 302)
         self.assertIn(reverse('admin_login'), resp.url)
+        self.assertFalse(AdminEmail.objects.exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_staff_recipients_not_selectable(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse('admin_emails'),
+            {'recipient': self.admin.id, 'subject': 'Hi', 'body': 'Nope'},
+        )
+        self.assertEqual(resp.status_code, 404)
+        self.assertFalse(AdminEmail.objects.exists())
+
+    def test_send_failure_is_recorded(self):
+        self.client.force_login(self.admin)
+        with patch(
+            'base.notifications.EmailMultiAlternatives.send',
+            side_effect=SMTPException('smtp is down'),
+        ):
+            resp = self.client.post(
+                reverse('admin_farmer_detail', args=[self.farmer.id]),
+                {'form_type': 'email', 'subject': 'Oops', 'body': 'Body'},
+            )
+        self.assertEqual(resp.status_code, 302)
+        record = AdminEmail.objects.get()
+        self.assertFalse(record.delivered)
+        self.assertIn('smtp is down', record.error)
 
 
 class CountryCodeChoiceTests(TestCase):
@@ -1206,3 +1740,586 @@ class ConnectionMessageBadgeTests(TestCase):
         self.assertIn('CONNECTIONS\n', html)
         # Both badges present with their counts.
         self.assertEqual(html.count('<span class="badge bg-danger">1</span>'), 2)
+
+
+class PublicResourceAccessTests(TestCase):
+    """Resources are linked from the home page and must be public."""
+
+    def setUp(self):
+        self.resource = Resource.objects.create(
+            title='Washed Process Basics',
+            slug='washed-process-basics',
+            body='Body text.',
+            is_published=True,
+        )
+
+    def test_resource_list_anonymous(self):
+        response = self.client.get(reverse('resource_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Washed Process Basics')
+
+    def test_resource_detail_anonymous(self):
+        response = self.client.get(
+            reverse('resource_detail', args=[self.resource.slug])
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_unpublished_resource_hidden(self):
+        draft = Resource.objects.create(
+            title='Draft', slug='draft', body='x', is_published=False,
+        )
+        response = self.client.get(
+            reverse('resource_detail', args=[draft.slug])
+        )
+        self.assertEqual(response.status_code, 404)
+
+
+class LandingPageCallToActionTests(TestCase):
+    """Hero and role buttons on the landing page point somewhere."""
+
+    def test_learn_more_anchors_to_about_section(self):
+        html = self.client.get(reverse('landing_page')).content.decode()
+        self.assertIn('href="#about"', html)
+        self.assertIn('id="about"', html)
+
+    def test_role_buttons_link_to_signup_with_group(self):
+        html = self.client.get(reverse('landing_page')).content.decode()
+        signup_url = reverse('signup')
+        self.assertIn(f'{signup_url}?group=farmer', html)
+        self.assertIn(f'{signup_url}?group=roaster', html)
+
+    def test_signup_preselects_group_from_query(self):
+        response = self.client.get(reverse('signup'), {'group': 'roaster'})
+        self.assertEqual(response.context['form'].initial.get('group'), 'roaster')
+
+    def test_signup_ignores_unknown_group(self):
+        response = self.client.get(reverse('signup'), {'group': 'bogus'})
+        self.assertIsNone(response.context['form'].initial.get('group'))
+
+
+class TempMediaRootMixin:
+    """Keep saved uploads out of the project's media/ directory."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._media_root = tempfile.mkdtemp()
+        cls._media_override = override_settings(MEDIA_ROOT=cls._media_root)
+        cls._media_override.enable()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._media_override.disable()
+        shutil.rmtree(cls._media_root, ignore_errors=True)
+        super().tearDownClass()
+
+
+class ImageConstraintTests(TempMediaRootMixin, TestCase):
+    """The stated upload rules and the enforced ones must not drift apart."""
+
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+
+    @staticmethod
+    def _image_upload(name='photo.jpg', fmt='JPEG', size=(10, 10), padding=0):
+        """Build an in-memory upload holding a real image of the given format."""
+        buffer = BytesIO()
+        PILImage.new('RGB', size).save(buffer, format=fmt)
+        if padding:
+            # Trailing bytes inflate the file without changing the format.
+            buffer.write(b'\0' * padding)
+        buffer.seek(0)
+        return SimpleUploadedFile(name, buffer.read())
+
+    def test_allowed_formats_pass(self):
+        for fmt, name in (('JPEG', 'a.jpg'), ('PNG', 'a.png'), ('WEBP', 'a.webp')):
+            with self.subTest(fmt=fmt):
+                validate_uploaded_image(self._image_upload(name, fmt))
+
+    def test_oversized_image_is_rejected(self):
+        upload = self._image_upload(padding=MAX_IMAGE_SIZE + 1)
+        with self.assertRaises(ValidationError) as ctx:
+            validate_uploaded_image(upload)
+        self.assertEqual(ctx.exception.code, 'image_too_large')
+
+    def test_disallowed_format_is_rejected(self):
+        upload = self._image_upload('a.gif', 'GIF')
+        with self.assertRaises(ValidationError) as ctx:
+            validate_uploaded_image(upload)
+        self.assertEqual(ctx.exception.code, 'image_format_not_allowed')
+
+    def test_stored_file_is_not_revalidated(self):
+        # Re-saving a profile must not re-download images from remote storage.
+        farmer = Farmer.objects.get(user=self.farmer_user)
+        self.assertIsNone(validate_uploaded_image(farmer.profile_picture))
+
+    def test_help_text_reports_the_enforced_limit(self):
+        help_text = image_help_text('header')
+        self.assertIn(str(MAX_IMAGE_SIZE_MB), help_text)
+        for label in ALLOWED_IMAGE_FORMATS.values():
+            self.assertIn(label, help_text)
+        self.assertIn('1200 x 300 px', help_text)
+
+    def test_oversized_upload_is_rejected_through_the_form(self):
+        from base.views.forms import FarmerHeaderImageForm
+        form = FarmerHeaderImageForm(
+            {}, {'header_image': self._image_upload(padding=MAX_IMAGE_SIZE + 1)},
+            instance=Farmer.objects.get(user=self.farmer_user),
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('header_image', form.errors)
+
+    def test_header_upload_failure_is_reported_not_silent(self):
+        self.client.force_login(self.farmer_user)
+        response = self.client.post(
+            reverse('update_header_image'),
+            {'header_image': self._image_upload(padding=MAX_IMAGE_SIZE + 1)},
+            follow=True,
+        )
+        reported = [str(m) for m in response.context['messages']]
+        self.assertTrue(reported, 'rejected upload redirected without telling the user')
+        # The message quotes the limit that is actually enforced.
+        self.assertIn(filesizeformat(MAX_IMAGE_SIZE), ' '.join(reported))
+
+    def test_farmer_dashboard_shows_the_rules(self):
+        self.client.force_login(self.farmer_user)
+        html = self.client.get(reverse('farmer_dashboard')).content.decode()
+        # Header, profile picture and gallery controls each carry their rules.
+        self.assertIn(image_help_text('header'), html)
+        self.assertIn(image_help_text('profile'), html)
+        self.assertIn(image_help_text('gallery'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+    def test_farmer_signup_shows_the_rules(self):
+        self.client.force_login(self.farmer_user)
+        html = self.client.get(reverse('farmer_details')).content.decode()
+        self.assertIn(image_help_text('profile'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+    def test_roaster_dashboard_shows_the_rules(self):
+        roaster_user = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        Roaster.objects.create(
+            user=roaster_user, firstname='Rita', lastname='Roaster',
+            is_details_filled=True,
+        )
+        self.client.force_login(roaster_user)
+        html = self.client.get(reverse('roaster_dashboard')).content.decode()
+        self.assertIn(image_help_text('header'), html)
+        self.assertIn(image_help_text('profile'), html)
+        self.assertIn(image_help_text('gallery'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+    def test_roaster_signup_shows_the_rules(self):
+        roaster_user = User.objects.create(
+            email='newroaster@example.com', group='roaster', username='newroaster',
+        )
+        Roaster.objects.create(user=roaster_user, firstname='Rex', lastname='Roaster')
+        self.client.force_login(roaster_user)
+        html = self.client.get(reverse('roaster_details')).content.decode()
+        self.assertIn(image_help_text('profile'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+    def test_farmer_profile_page_shows_the_rules(self):
+        self.client.force_login(self.farmer_user)
+        html = self.client.get(
+            reverse('farmer_profile', args=[self.farmer_user.id])
+        ).content.decode()
+        self.assertIn(image_help_text('header'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+    def test_standalone_photo_upload_page_shows_the_rules(self):
+        self.client.force_login(self.farmer_user)
+        html = self.client.get(reverse('upload_photo')).content.decode()
+        self.assertIn(image_help_text('gallery'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+    def test_admin_resource_form_shows_the_rules(self):
+        admin = User.objects.create(
+            email='admin@example.com', username='admin', is_staff=True,
+        )
+        self.client.force_login(admin)
+        html = self.client.get(reverse('admin_resource_create')).content.decode()
+        self.assertIn(image_help_text('cover'), html)
+        self.assertIn(IMAGE_ACCEPT, html)
+        # The browser-side guard reads its limit from this attribute.
+        self.assertIn(f'data-max-size="{MAX_IMAGE_SIZE}"', html)
+
+
+class OversizedUploadMiddlewareTests(TempMediaRootMixin, TestCase):
+    """A body too big to parse must redirect with a message, not 500."""
+
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='bigupload@example.com', group='farmer', username='biguploader',
+        )
+        Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+        self.client.force_login(self.farmer_user)
+
+    def _oversized_post(self, **extra):
+        payload = SimpleUploadedFile(
+            'huge.jpg', b'\0' * (MAX_REQUEST_BODY_SIZE + 1), content_type='image/jpeg',
+        )
+        return self.client.post(
+            reverse('update_header_image'), {'header_image': payload}, **extra
+        )
+
+    def test_oversized_body_redirects_with_a_message(self):
+        response = self._oversized_post(follow=True)
+        self.assertEqual(response.status_code, 200)
+        reported = [str(m) for m in response.context['messages']]
+        self.assertTrue(reported, 'oversized upload produced no explanation')
+        self.assertIn(f'{MAX_IMAGE_SIZE_MB} MB or smaller', ' '.join(reported))
+
+    def test_oversized_body_returns_to_the_page_it_came_from(self):
+        dashboard = reverse('farmer_dashboard')
+        response = self._oversized_post(HTTP_REFERER=f'http://testserver{dashboard}')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, f'http://testserver{dashboard}')
+
+    def test_offsite_referer_is_not_used_as_the_redirect_target(self):
+        response = self._oversized_post(HTTP_REFERER='https://evil.example.com/x')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/')
+
+    def test_upload_within_the_body_limit_reaches_the_view(self):
+        # Below the middleware ceiling, so per-image validation decides.
+        buffer = BytesIO()
+        PILImage.new('RGB', (10, 10)).save(buffer, format='JPEG')
+        buffer.seek(0)
+        response = self.client.post(
+            reverse('update_header_image'),
+            {'header_image': SimpleUploadedFile('ok.jpg', buffer.read())},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        farmer = Farmer.objects.get(user=self.farmer_user)
+        self.assertTrue(farmer.header_image)
+
+    def test_non_multipart_posts_are_untouched(self):
+        response = self.client.post(reverse('farmer_dashboard'), {'noop': '1'})
+        self.assertIn(response.status_code, (200, 302))
+
+
+class ExistingImageShownOnEditTests(TempMediaRootMixin, TestCase):
+    """An occupied image field must not look empty on an edit form."""
+
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='hasimage@example.com', group='farmer', username='hasimage',
+        )
+        self.farmer = Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+        self.client.force_login(self.farmer_user)
+
+    @staticmethod
+    def _image(name='current.jpg'):
+        buffer = BytesIO()
+        PILImage.new('RGB', (10, 10)).save(buffer, format='JPEG')
+        buffer.seek(0)
+        return SimpleUploadedFile(name, buffer.read(), content_type='image/jpeg')
+
+    def test_dashboard_shows_the_existing_profile_picture(self):
+        self.farmer.profile_picture = self._image('dp.jpg')
+        self.farmer.save()
+        html = self.client.get(reverse('farmer_dashboard')).content.decode()
+        self.assertIn('Current profile picture', html)
+        self.assertIn(self.farmer.profile_picture.url, html)
+
+    def test_dashboard_shows_the_existing_header_image(self):
+        self.farmer.header_image = self._image('header.jpg')
+        self.farmer.save()
+        html = self.client.get(reverse('farmer_dashboard')).content.decode()
+        self.assertIn('Current header image', html)
+        self.assertIn(self.farmer.header_image.url, html)
+
+    def test_empty_field_says_so_rather_than_showing_nothing(self):
+        html = self.client.get(reverse('farmer_dashboard')).content.decode()
+        self.assertIn('No profile picture yet', html)
+        self.assertIn('No header image yet', html)
+
+    def test_details_page_offers_to_replace_an_existing_picture(self):
+        self.farmer.profile_picture = self._image('dp.jpg')
+        self.farmer.save()
+        html = self.client.get(reverse('farmer_details')).content.decode()
+        self.assertIn('Replace Profile Photo', html)
+        self.assertIn('Current profile picture', html)
+
+    def test_details_page_says_upload_when_there_is_no_picture(self):
+        html = self.client.get(reverse('farmer_details')).content.decode()
+        self.assertIn('Upload Profile Photo', html)
+        self.assertNotIn('Replace Profile Photo', html)
+
+    def test_saving_without_choosing_a_file_keeps_the_current_picture(self):
+        self.farmer.profile_picture = self._image('dp.jpg')
+        self.farmer.save()
+        original = self.farmer.profile_picture.name
+        self.client.post(reverse('update_profile'), {
+            'firstname': 'Fiona', 'lastname': 'Farmer',
+            'country_code': 'United States (+1)', 'phone_number': '5551234',
+        })
+        self.farmer.refresh_from_db()
+        self.assertEqual(self.farmer.profile_picture.name, original)
+
+
+class ConnectionNamingTests(TestCase):
+    """Roasters are listed by the person, with the company as context."""
+
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='producer@example.com', group='farmer', username='producer',
+        )
+        Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+        self.roaster_user = User.objects.create(
+            email='buyer@example.com', group='roaster', username='buyer',
+        )
+        self.roaster = Roaster.objects.create(
+            user=self.roaster_user, firstname='Rita', lastname='Roaster',
+            job_title='Head of Sourcing', company_name='Acme Coffee Co',
+            city='Portland', country='United States of America',
+            is_details_filled=True,
+        )
+        self.client.force_login(self.farmer_user)
+
+    def test_discover_page_leads_with_the_person(self):
+        html = self.client.get(reverse('connection_roasters')).content.decode()
+        self.assertIn('<h4 class="mb-0">Rita Roaster</h4>', html)
+        # The company is kept, as supporting context rather than the headline.
+        self.assertIn('Head of Sourcing of Acme Coffee Co', html)
+        self.assertNotIn('<h4 class="mb-0">Acme Coffee Co</h4>', html)
+
+    def test_connections_list_names_the_person(self):
+        Connection.objects.create(
+            user_a=self.farmer_user, user_b=self.roaster_user,
+            initiator=self.farmer_user, status=Connection.ACTIVE,
+        )
+        html = self.client.get(reverse('farmer_connections')).content.decode()
+        self.assertIn('Rita Roaster', html)
+        self.assertNotIn('<strong>Acme Coffee Co</strong>', html)
+
+    def test_roaster_profile_pane_never_renders_a_blank_heading(self):
+        unnamed_user = User.objects.create(
+            email='nocompany@example.com', group='roaster', username='nocompany',
+        )
+        Roaster.objects.create(
+            user=unnamed_user, firstname='Rex', lastname='Roaster',
+            is_details_filled=True,
+        )
+        self.client.force_login(self.farmer_user)
+        html = self.client.get(
+            reverse('roaster_profile', args=[unnamed_user.id])
+        ).content.decode()
+        self.assertNotIn('<h2></h2>', html)
+        self.assertIn('<h2>Company</h2>', html)
+        # The hero still leads with the person, which is the point.
+        self.assertIn('Rex Roaster', html)
+
+    def test_display_name_falls_back_to_email_when_unnamed(self):
+        self.roaster.firstname = ''
+        self.roaster.lastname = ''
+        self.roaster.save()
+        self.assertEqual(self.roaster.display_name, 'buyer@example.com')
+
+    def test_display_name_copes_with_a_missing_half(self):
+        self.roaster.lastname = ''
+        self.roaster.save()
+        self.assertEqual(self.roaster.display_name, 'Rita')
+
+
+class ConnectionQueryCountTests(TestCase):
+    """Listing connections must not cost a query per row."""
+
+    def setUp(self):
+        self.farmer_user = User.objects.create(
+            email='qcfarmer@example.com', group='farmer', username='qcfarmer',
+        )
+        Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+
+    def _add_roaster_connection(self, index):
+        roaster_user = User.objects.create(
+            email=f'buyer{index}@example.com', group='roaster',
+            username=f'buyer{index}',
+        )
+        Roaster.objects.create(
+            user=roaster_user, firstname=f'Rita{index}', lastname='Roaster',
+            company_name=f'Acme {index}', is_details_filled=True,
+        )
+        Connection.objects.create(
+            user_a=self.farmer_user, user_b=roaster_user,
+            initiator=self.farmer_user, status=Connection.ACTIVE,
+        )
+
+    def test_query_count_does_not_grow_with_connections(self):
+        self.client.force_login(self.farmer_user)
+        url = reverse('farmer_connections')
+
+        self._add_roaster_connection(1)
+        with CaptureQueriesContext(connection) as one_row:
+            self.client.get(url)
+
+        for index in range(2, 7):
+            self._add_roaster_connection(index)
+        with CaptureQueriesContext(connection) as six_rows:
+            self.client.get(url)
+
+        self.assertEqual(
+            len(six_rows.captured_queries), len(one_row.captured_queries),
+            'connection rows are still costing one query each',
+        )
+
+    def test_all_connections_are_still_listed(self):
+        self.client.force_login(self.farmer_user)
+        for index in range(1, 4):
+            self._add_roaster_connection(index)
+        html = self.client.get(reverse('farmer_connections')).content.decode()
+        for index in range(1, 4):
+            self.assertIn(f'Rita{index} Roaster', html)
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    EMAIL_FROM='noreply@coffeecircuit.test',
+)
+class MeetingInviteSignsUpInviteeTests(TestCase):
+    """An invitee joins the forum by confirming, not before being invited."""
+
+    def setUp(self):
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        self.farmer = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        Connection.request(self.roaster, self.farmer).accept()
+        self.conversation = Conversation.objects.create(
+            roaster=self.roaster, farmer=self.farmer,
+        )
+        self.forum = Forum.objects.create(title='Spring Forum', status=Forum.PUBLISHED)
+        start = timezone.now() + timedelta(days=7)
+        self.window = ForumWindow.objects.create(
+            forum=self.forum, label='Morning',
+            starts_at=start, ends_at=start + timedelta(hours=2),
+        )
+        # Only the proposer has joined.
+        ForumSignup.objects.create(forum=self.forum, user=self.roaster)
+
+    def _propose(self):
+        self.client.force_login(self.roaster)
+        return self.client.post(
+            reverse('propose_meeting', args=[self.farmer.id]),
+            {'window_id': self.window.id},
+        )
+
+    def _confirm(self, meeting):
+        self.client.force_login(self.farmer)
+        return self.client.post(
+            reverse('respond_meeting', args=[meeting.id, 'confirm']), follow=True,
+        )
+
+    def _farmer_signed_up(self):
+        return ForumSignup.objects.filter(
+            forum=self.forum, user=self.farmer,
+        ).exists()
+
+    def test_window_is_offered_though_invitee_has_not_joined(self):
+        windows = ForumMeeting.proposable_windows(self.conversation, self.roaster)
+        self.assertIn(self.window, windows)
+
+    def test_invitee_signups_are_not_created_by_the_proposal_alone(self):
+        self._propose()
+        self.assertTrue(ForumMeeting.objects.exists())
+        self.assertFalse(
+            self._farmer_signed_up(),
+            'proposing must not enrol someone who has not agreed',
+        )
+
+    def test_confirming_signs_the_invitee_up(self):
+        self._propose()
+        meeting = ForumMeeting.objects.get()
+        self._confirm(meeting)
+        meeting.refresh_from_db()
+        self.assertEqual(meeting.status, ForumMeeting.CONFIRMED)
+        self.assertTrue(self._farmer_signed_up())
+
+    def test_declining_does_not_sign_the_invitee_up(self):
+        self._propose()
+        meeting = ForumMeeting.objects.get()
+        self.client.force_login(self.farmer)
+        self.client.post(reverse('respond_meeting', args=[meeting.id, 'decline']))
+        meeting.refresh_from_db()
+        self.assertEqual(meeting.status, ForumMeeting.DECLINED)
+        self.assertFalse(self._farmer_signed_up())
+
+    def test_confirming_does_not_enrol_into_a_closed_forum(self):
+        self._propose()
+        meeting = ForumMeeting.objects.get()
+        self.forum.status = Forum.CANCELLED
+        self.forum.save()
+        self._confirm(meeting)
+        meeting.refresh_from_db()
+        self.assertEqual(meeting.status, ForumMeeting.CONFIRMED)
+        self.assertFalse(self._farmer_signed_up())
+
+    def test_already_signed_up_invitee_is_unaffected(self):
+        ForumSignup.objects.create(forum=self.forum, user=self.farmer)
+        self._propose()
+        meeting = ForumMeeting.objects.get()
+        self._confirm(meeting)
+        self.assertEqual(
+            ForumSignup.objects.filter(forum=self.forum, user=self.farmer).count(), 1
+        )
+
+    def test_chat_labels_the_button_as_signing_up(self):
+        self._propose()
+        self.client.force_login(self.farmer)
+        html = self.client.get(
+            reverse('chat_thread', args=[self.roaster.id])
+        ).content.decode()
+        self.assertIn('Sign up &amp; confirm', html)
+        self.assertIn("You're not signed up for Spring Forum", html)
+
+    def test_chat_says_plain_confirm_once_signed_up(self):
+        ForumSignup.objects.create(forum=self.forum, user=self.farmer)
+        self._propose()
+        self.client.force_login(self.farmer)
+        html = self.client.get(
+            reverse('chat_thread', args=[self.roaster.id])
+        ).content.decode()
+        self.assertNotIn('Sign up &amp; confirm', html)
+        self.assertIn('>Confirm<', html)
+
+    def test_proposal_email_warns_about_the_signup(self):
+        self._propose()
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        self.assertIn('confirming this time signs you up', body.lower())

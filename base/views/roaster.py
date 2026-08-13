@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm, RoasterHeaderImageForm
-from base.models import Farmer, Language, MeetingRequest, Connection, RoasterPhoto,Roaster, FarmerPhoto, BuyerFunctions,Story,Season,ProcessingMethod,CupScore,Forum, InteractionEvent
+from base.models import Farmer, Language, MeetingRequest, Connection, RoasterPhoto,Roaster, FarmerPhoto, BuyerFunctions,Story,Season,ProcessingMethod,CupScore,Forum
 from base.notifications import notify_meeting_event, notify_connection_event
-from base.analytics import record_event, record_view
+from base.models import InteractionEventType
+from base.analytics import log_event
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib import messages
@@ -101,6 +102,10 @@ def update_roaster_header_image(request):
         form = RoasterHeaderImageForm(request.POST, request.FILES, instance=roaster_profile)
         if form.is_valid():
             form.save()
+        else:
+            for field_errors in form.errors.values():
+                for error in field_errors:
+                    messages.error(request, error)
     return redirect('roaster_dashboard')
 
 
@@ -185,9 +190,9 @@ def create_connection_request(request, recipient):
 
     conn = Connection.request(request.user, recipient, message=request.POST.get('message', ''))
     notify_connection_event(conn, 'created')
-    record_event(
-        request.user, InteractionEvent.EventType.REQUEST_CONNECTION,
-        target=conn, target_user=recipient,
+    log_event(
+        InteractionEventType.CONNECTION_REQUEST, request=request,
+        target_user=recipient, connection_id=conn.id,
     )
     messages.success(request, "Connection request sent!")
     return conn
@@ -202,17 +207,17 @@ def apply_connection_action(request, connection, action):
     if action == 'accept' and connection.status == Connection.PENDING and is_recipient:
         connection.accept()
         notify_connection_event(connection, 'accepted')
-        record_event(
-            user, InteractionEvent.EventType.ACCEPT_CONNECTION,
-            target=connection, target_user=connection.initiator,
+        log_event(
+            InteractionEventType.CONNECTION_ACCEPTED, request=request, user=user,
+            target_user=connection.initiator, connection_id=connection.id,
         )
         messages.success(request, "Connection accepted.")
     elif action == 'reject' and connection.status == Connection.PENDING and is_recipient:
         connection.decline()
         notify_connection_event(connection, 'declined')
-        record_event(
-            user, InteractionEvent.EventType.DECLINE_CONNECTION,
-            target=connection, target_user=connection.initiator,
+        log_event(
+            InteractionEventType.CONNECTION_DECLINED, request=request, user=user,
+            target_user=connection.initiator, connection_id=connection.id,
         )
         messages.info(request, "Request declined.")
     elif action == 'withdraw' and connection.status == Connection.PENDING and is_initiator:
@@ -369,7 +374,13 @@ def connection_buckets(user):
     qs = (
         Connection.objects
         .filter(Q(user_a=user) | Q(user_b=user))
-        .select_related('user_a', 'user_b', 'initiator')
+        .select_related(
+            'user_a', 'user_b', 'initiator',
+            # Templates label every row from the other side's profile; without
+            # these each row costs an extra query.
+            'user_a__farmer_profile', 'user_a__roaster_profile',
+            'user_b__farmer_profile', 'user_b__roaster_profile',
+        )
     )
     incoming, sent, active = [], [], []
     for conn in qs:
@@ -403,6 +414,12 @@ def farmer_view(request, user_id):
 
     farmer_profile = get_object_or_404(Farmer, user__id=user_id)
 
+    if request.user.id != user_id:
+        log_event(
+            InteractionEventType.PROFILE_VIEW, request=request,
+            target_user=farmer_profile.user, target_group='farmer',
+        )
+
     try:
         farmer_photos = FarmerPhoto.objects.filter(user=farmer_profile.user)
         farmer_stories = Story.objects.filter(user=farmer_profile.user)
@@ -422,19 +439,13 @@ def farmer_view(request, user_id):
         messages.error(request, "Something went wrong loading this profile. Please try again later.")
         return redirect('connections')
 
-    if not is_own_profile:
-        record_view(
-            request.user, InteractionEvent.EventType.VIEW_PROFILE,
-            farmer_profile.user, target=farmer_profile,
-            country=farmer_profile.country, story_count=farmer_stories.count(),
+    if not is_own_profile and farmer_stories:
+        log_event(
+            InteractionEventType.STORY_VIEW, request=request,
+            target_user=farmer_profile.user,
+            story_count=farmer_stories.count(),
+            total_story_length=sum(len(s.story_text or '') for s in farmer_stories),
         )
-        if farmer_stories:
-            record_view(
-                request.user, InteractionEvent.EventType.VIEW_STORY,
-                farmer_profile.user, target=farmer_stories[0],
-                story_count=farmer_stories.count(),
-                total_story_length=sum(len(s.story_text or '') for s in farmer_stories),
-            )
 
     return render(request, 'base/farmer_view.html', {
         'farmer_profile': farmer_profile,
