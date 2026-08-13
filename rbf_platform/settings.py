@@ -40,7 +40,11 @@ if 'DEBUG' in os.environ:
 else:
     DEBUG = 'RENDER' not in os.environ
 
-ALLOWED_HOSTS = ['www.coffeecircuit.org', 'coffeecircuit.org']
+ALLOWED_HOSTS = ['www.coffeecircuit.org', 'coffeecircuit.org','cc.ianjorin.dev']
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://cc.ianjorin.dev",
+]
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
