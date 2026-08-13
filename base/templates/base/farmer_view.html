@@ -1,5 +1,6 @@
 {% extends 'base/main.html' %}
 {% load static %}
+{% load image_constraints %}
 
 {% block content %}
 
@@ -302,8 +303,9 @@
         <div class="modal-body">
           <div class="mb-3">
             <label for="headerImageInput" class="form-label">Upload Header Image</label>
-            <input type="file" class="form-control" id="headerImageInput" name="header_image" accept="image/*" required>
-            <small class="text-muted">Recommended size: 1200x300px</small>
+            {% include 'base/partials/current_image.html' with image=farmer_profile.header_image label='header image' wide=True %}
+            <input type="file" class="form-control" id="headerImageInput" name="header_image" {% image_file_attrs %} required>
+            {% image_upload_help 'header' %}
           </div>
         </div>
         <div class="modal-footer">

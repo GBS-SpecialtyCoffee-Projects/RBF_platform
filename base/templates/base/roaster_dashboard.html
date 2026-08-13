@@ -1,5 +1,6 @@
 {% extends 'base/main.html' %}
 {% load static %}
+{% load image_constraints %}
 
 {% block content %}
 {% include 'base/partials/navbar_app.html' %}
@@ -257,7 +258,9 @@
                     <div class="mb-3">
                         <label for="profile_picture" class="form-label">Profile Picture</label>
                         {{ roaster_info_form.profile_picture.errors }}
+                        {% include 'base/partials/current_image.html' with image=roaster_profile.profile_picture label='profile picture' %}
                         {{ roaster_info_form.profile_picture }} <!-- This should render a file input element -->
+                        {% image_upload_help 'profile' %}
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -310,6 +313,7 @@
                     <div class="mb-3">
                         {{ roaster_photo_form.photo.errors }}
                         {{ roaster_photo_form.photo }}
+                        {% image_upload_help 'gallery' %}
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -418,8 +422,9 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="headerImageInput" class="form-label">Upload Header Image</label>
-                        <input type="file" class="form-control" id="headerImageInput" name="header_image" accept="image/*" required>
-                        <small class="text-muted">Recommended size: 1200x300px</small>
+                        {% include 'base/partials/current_image.html' with image=roaster_profile.header_image label='header image' wide=True %}
+                        <input type="file" class="form-control" id="headerImageInput" name="header_image" {% image_file_attrs %} required>
+                        {% image_upload_help 'header' %}
                     </div>
                 </div>
                 <div class="modal-footer">

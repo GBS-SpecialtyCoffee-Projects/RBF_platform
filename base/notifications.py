@@ -155,7 +155,10 @@ def notify_forum_meeting_event(meeting, event):
             invitee,
             subject=f"{proposer_name} proposed a meeting time",
             template='base/emails/forum_meeting_proposed.html',
-            context=base_context,
+            context={
+                **base_context,
+                'invitee_needs_signup': meeting.invitee_needs_signup(),
+            },
         )
     elif event in ('confirmed', 'declined'):
         _send(

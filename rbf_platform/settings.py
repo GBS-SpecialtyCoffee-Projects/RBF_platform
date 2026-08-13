@@ -80,6 +80,8 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    # Needs the messages framework, so it must come after MessageMiddleware.
+    'base.middleware.uploads.OversizedUploadMiddleware',
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'django.middleware.locale.LocaleMiddleware',
     'base.middleware.auth.AuthMiddleware',
