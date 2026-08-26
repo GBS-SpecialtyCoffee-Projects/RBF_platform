@@ -8,6 +8,9 @@ pip install -r requirements.txt
 # Convert static asset files
 python manage.py collectstatic --no-input
 
+# Build the translation catalogs (.po -> .mo) that email rendering reads
+python manage.py compilemessages --ignore=env
+
 # Apply any outstanding database migrations
 python manage.py migrate
 

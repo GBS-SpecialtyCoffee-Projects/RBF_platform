@@ -1,15 +1,16 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck, FarmerHeaderImageForm, MeetingRequestForm
+from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, FarmerPhotoForm, RoasterForm, RoasterPhotoForm, FarmerProfileForm,FarmerProfilePhotoForm, RoasterProfileForm, OrientationTasksForm, StoryTellingCheck, VideoCommTipsCheck, VideoIntlCheck, VideoPerceptionsCheck, VideoPricingCheck, VideoRelationshipsCheck, FarmerHeaderImageForm, MeetingRequestForm, PreferredLanguageForm
 from base.models import Roaster, RoasterPhoto, MeetingRequest, Connection, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore,Forum,InteractionEventType,ProfileChangeSource
 from base.notifications import notify_meeting_event, notify_connection_event
 from base.analytics import log_event
 from base.profile_history import record_form_change, record_photo_change
 from base.views.roaster import create_connection_request, apply_connection_action, connection_buckets
+from base.views.meetings import annotate_connection_meetings
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
@@ -49,8 +50,10 @@ def farmer_dashboard(request):
 
     if request.method == 'POST' and 'main_form' in request.POST:
         form = FarmerProfileForm(request.POST, instance=farmer_profile)
-        if form.is_valid():
+        language_form = PreferredLanguageForm(request.POST, instance=request.user)
+        if form.is_valid() and language_form.is_valid():
             form.save()
+            language_form.save()
             return redirect('farmer_dashboard')
     elif request.method == 'POST' and 'story_form' in request.POST:
         form = FarmerStoryForm(request.POST, instance=farmer_profile)
@@ -58,8 +61,8 @@ def farmer_dashboard(request):
             form.save()
             return redirect('farmer_dashboard')
     else:
-        print('in else')
         main_form = FarmerProfileForm(instance=farmer_profile)
+        language_form = PreferredLanguageForm(instance=request.user)
         dp_form = FarmerProfilePhotoForm(instance=farmer_profile)
         story_form = FarmerStoryForm(instance=farmer_story)
         add_story_form = FarmerAddStoryForm()
@@ -78,7 +81,8 @@ def farmer_dashboard(request):
         'unused_count': farmer_photos_unadded,
         'pending_meetings': pending_meetings,
         'can_request_meetings': can_request_meetings,
-        'main_form': main_form, 
+        'main_form': main_form,
+        'language_form': language_form,
         'story_form': story_form,
         'add_story_form': add_story_form,
         'photo_form': photo_form,
@@ -91,6 +95,7 @@ def connections(request):
         return redirect('roaster_dashboard')
 
     incoming, sent, active = connection_buckets(request.user)
+    annotate_connection_meetings(request.user, active)
     return render(request, 'base/farmer_connections.html', {
         'incoming_connections': incoming,
         'sent_connections': sent,
@@ -103,7 +108,7 @@ def connection_roasters(request):
     if request.user.group != 'farmer':
         return redirect('roaster_dashboard')
 
-    roasters = Roaster.objects.filter(is_details_filled=True)
+    roasters = Roaster.discoverable()
     form = MeetingRequestForm()
     show_modal = False
 
@@ -155,7 +160,7 @@ def connection_roasters(request):
 
     # Available countries for filter dropdown
     available_countries = (
-        Roaster.objects.filter(is_details_filled=True)
+        Roaster.discoverable()
         .values_list('country', flat=True)
         .distinct()
         .order_by('country')
@@ -225,24 +230,25 @@ def edit_farmer_details(request):
         return redirect('roaster_dashboard')
     
     farmer_profile = Farmer.objects.filter(user=request.user).first()
-    print(request.method)
-    
+
     if request.method == 'POST' and 'main_form' in request.POST:
-        form = FarmerProfileForm(request.POST, instance=farmer_profile)
-        if form.is_valid():
-            print('in valid')
-            form.save()
+        main_form = FarmerProfileForm(request.POST, instance=farmer_profile)
+        language_form = PreferredLanguageForm(request.POST, instance=request.user)
+        if main_form.is_valid() and language_form.is_valid():
+            main_form.save()
+            language_form.save()
             record_form_change(
-                form, user=request.user, source=ProfileChangeSource.PROFILE_EDIT,
+                main_form, user=request.user,
+                source=ProfileChangeSource.PROFILE_EDIT,
             )
             return redirect('farmer_dashboard')
-        else:
-            print(form.errors)
     else:
         main_form = FarmerProfileForm(instance=farmer_profile)
+        language_form = PreferredLanguageForm(instance=request.user)
 
-    return render(request, 'base/farmer_details_edit.html',{
-        'main_form': main_form
+    return render(request, 'base/farmer_details_edit.html', {
+        'main_form': main_form,
+        'language_form': language_form,
     })
 
 def upload_photo(request):
@@ -312,6 +318,8 @@ def roaster_view(request, user_id):
         return redirect('roaster_dashboard')
 
     roaster_profile = get_object_or_404(Roaster, user__id=user_id)
+    if roaster_profile.user.is_staff and request.user.id != user_id:
+        raise Http404
 
     if request.user.id != user_id:
         log_event(

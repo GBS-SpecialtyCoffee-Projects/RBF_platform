@@ -1,10 +1,11 @@
 {% extends 'base/emails/_base_email.html' %}
+{% load i18n %}
 {% block content %}
-<p style="margin:0 0 16px 0;">Hi {{ requestee_name }},</p>
-<p style="margin:0 0 16px 0;"><strong>{{ requester_name }}</strong> sent you a meeting request on Coffee Circuit.</p>
-<p style="margin:0 0 16px 0;"><strong>Proposed time:</strong> {{ meeting_request.proposed_date|date:"l, F j, Y \a\t g:i A" }} EST</p>
+<p style="margin:0 0 16px 0;">{% blocktrans with name=requestee_name %}Hi {{ name }},{% endblocktrans %}</p>
+<p style="margin:0 0 16px 0;">{% blocktrans with name=requester_name %}<strong>{{ name }}</strong> sent you a meeting request on Coffee Circuit.{% endblocktrans %}</p>
+<p style="margin:0 0 16px 0;">{% blocktrans with time=meeting_request.proposed_date|date:"l, F j, Y \a\t g:i A" %}<strong>Proposed time:</strong> {{ time }} EST{% endblocktrans %}</p>
 {% if meeting_request.message %}
-<p style="margin:0 0 16px 0;"><strong>Message:</strong><br>{{ meeting_request.message|linebreaksbr }}</p>
+<p style="margin:0 0 16px 0;"><strong>{% trans "Message:" %}</strong><br>{{ meeting_request.message|linebreaksbr }}</p>
 {% endif %}
-<p style="margin:0;">Sign in to your dashboard to accept or decline the request.</p>
+<p style="margin:0;">{% trans "Sign in to your dashboard to accept or decline the request." %}</p>
 {% endblock %}

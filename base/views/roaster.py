@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm, RoasterHeaderImageForm
+from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm, MeetingRequestForm,RoasterProfileForm, RoasterInfoForm, RoasterBioForm,RoasterSourcingForm, RoasterHeaderImageForm, PreferredLanguageForm
 from base.models import Farmer, Language, MeetingRequest, Connection, RoasterPhoto,Roaster, FarmerPhoto, BuyerFunctions,Story,Season,ProcessingMethod,CupScore,Forum
 from base.notifications import notify_meeting_event, notify_connection_event
 from base.models import InteractionEventType
 from base.analytics import log_event
+from base.views.meetings import annotate_connection_meetings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib import messages
@@ -13,7 +14,7 @@ import random
 
 logger = logging.getLogger(__name__)
 from django.urls import reverse
-from django.http import HttpResponseNotAllowed, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseNotAllowed, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Prefetch, Q
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -27,7 +28,6 @@ def roaster_dashboard(request):
     if roaster_profile and roaster_profile.is_details_filled == False:
         return redirect('roaster_details')
 
-    farmers = Farmer.objects.all()
     roaster_photos = RoasterPhoto.objects.filter(user=request.user)
     roaster_functions = BuyerFunctions.objects.filter(roaster=roaster_profile)
 
@@ -38,11 +38,14 @@ def roaster_dashboard(request):
 
     if request.method == 'POST' and 'roaster_info_form' in request.POST:
         roaster_info_form = RoasterInfoForm(request.POST, request.FILES, instance=roaster_profile)
-        if roaster_info_form.is_valid():
+        language_form = PreferredLanguageForm(request.POST, instance=request.user)
+        if roaster_info_form.is_valid() and language_form.is_valid():
             roaster_info_form.save()
+            language_form.save()
             return redirect('roaster_dashboard')
     else:
         roaster_info_form = RoasterInfoForm(instance=roaster_profile)
+        language_form = PreferredLanguageForm(instance=request.user)
 
     # Handle the bio form
     if request.method == 'POST' and 'roaster_bio_form' in request.POST:
@@ -79,7 +82,6 @@ def roaster_dashboard(request):
         roaster_sourcing_form = RoasterSourcingForm(instance=roaster_profile)
 
     return render(request, 'base/roaster_dashboard.html', {
-        'farmers': farmers,
         'incoming_connections': incoming_connections,
         'sent_connections': sent_connections,
         'active_connections': active_connections,
@@ -88,6 +90,7 @@ def roaster_dashboard(request):
         'can_request_meetings': can_request_meetings,
         'total_meetings_used': total_meetings_used,
         'roaster_info_form': roaster_info_form,
+        'language_form': language_form,
         'roaster_bio_form': roaster_bio_form,
         'roaster_photo_form': roaster_photo_form,
         'roaster_sourcing_form': roaster_sourcing_form,
@@ -175,6 +178,14 @@ def create_connection_request(request, recipient):
         messages.error(request, "Connections must be between a farmer and a roaster.")
         return None
 
+    if request.user.is_staff:
+        messages.error(request, "Admin accounts cannot send connection requests.")
+        return None
+
+    if recipient.is_staff:
+        messages.error(request, "This account is not available for connections.")
+        return None
+
     existing = Connection.between(request.user, recipient)
     if existing and existing.status in Connection.LIVE_STATUSES:
         messages.error(request, "You already have a pending request or connection with this user.")
@@ -256,10 +267,10 @@ def connection_farmers(request):
     if request.user.group != 'roaster':
         return redirect('farmer_dashboard')
 
-    farmers = Farmer.objects.prefetch_related(
+    farmers = Farmer.discoverable().prefetch_related(
         'cup_scores_received', 'processing_method', 'farmer_stories',
         'main_roles',
-    ).filter(farmer_stories__isnull=False).distinct()
+    ).distinct()
     form = MeetingRequestForm()
     show_modal = False  # Initially, the modal should not be shown
 
@@ -319,7 +330,7 @@ def connection_farmers(request):
 
     # Available countries for filter dropdown
     available_countries = (
-        Farmer.objects.filter(farmer_stories__isnull=False)
+        Farmer.discoverable()
         .values_list('country', flat=True)
         .distinct()
         .order_by('country')
@@ -400,6 +411,7 @@ def connections(request):
         return redirect('farmer_dashboard')
 
     incoming, sent, active = connection_buckets(request.user)
+    annotate_connection_meetings(request.user, active)
     return render(request, 'base/connections.html', {
         'incoming_connections': incoming,
         'sent_connections': sent,
@@ -413,6 +425,8 @@ def farmer_view(request, user_id):
         return redirect('farmer_dashboard')
 
     farmer_profile = get_object_or_404(Farmer, user__id=user_id)
+    if farmer_profile.user.is_staff and request.user.id != user_id:
+        raise Http404
 
     if request.user.id != user_id:
         log_event(

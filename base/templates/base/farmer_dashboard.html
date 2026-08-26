@@ -530,8 +530,12 @@
             <div class="input-group mb-3">
                 {{ main_form.processing_description }}
             </div>
-       
-            
+            {{ language_form.preferred_language.label }}
+            <div class="input-group mb-3">
+                {{ language_form.preferred_language }}
+            </div>
+
+
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

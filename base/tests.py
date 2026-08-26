@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
+from django.db.models import Q
 from django.test.utils import CaptureQueriesContext
 from django.template.defaultfilters import filesizeformat
 from django.test import TestCase, override_settings
@@ -32,7 +33,11 @@ from base.models import (
     InteractionEventType, Language, MeetingRequest, Message, ProfileChange,
     ProfileChangeSource, Resource, Roaster, Story,
 )
-from base.notifications import notify_meeting_event
+from base.notifications import (
+    notify_admin_message, notify_connection_event, notify_forum_meeting_event,
+    notify_meeting_event, notify_signup,
+)
+from base.views.forms import PreferredLanguageForm
 
 
 User = get_user_model()
@@ -779,6 +784,166 @@ class ForumMeetingTests(TestCase):
         self.client.post(reverse('respond_meeting', args=[meeting.id, 'cancel']))
         meeting.refresh_from_db()
         self.assertEqual(meeting.status, ForumMeeting.CANCELLED)
+
+    def test_candidate_windows_ignores_taken_windows(self):
+        # The conversation-independent half must keep offering a window that
+        # proposable_windows() drops for this conversation.
+        self._propose()
+        self.assertIn(self.window, ForumMeeting.candidate_windows(self.roaster))
+        self.assertNotIn(
+            self.window,
+            ForumMeeting.proposable_windows(self.conversation, self.roaster),
+        )
+
+    def test_propose_returns_to_referring_page(self):
+        self.client.force_login(self.roaster)
+        resp = self.client.post(
+            reverse('propose_meeting', args=[self.farmer.id]),
+            {'window_id': self.window.id},
+            HTTP_REFERER=reverse('connections'),
+        )
+        self.assertRedirects(
+            resp, reverse('connections'), fetch_redirect_response=False,
+        )
+
+    def test_respond_returns_to_referring_page(self):
+        self._propose()
+        meeting = ForumMeeting.objects.get()
+        self.client.force_login(self.farmer)
+        resp = self.client.post(
+            reverse('respond_meeting', args=[meeting.id, 'confirm']),
+            HTTP_REFERER=reverse('farmer_connections'),
+        )
+        self.assertRedirects(
+            resp, reverse('farmer_connections'), fetch_redirect_response=False,
+        )
+
+
+class ConnectionMeetingsPageTests(TestCase):
+    """Meetings can be proposed and answered from the connections pages."""
+
+    def setUp(self):
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        self.farmer = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        Roaster.objects.create(
+            user=self.roaster, firstname='Roni', lastname='Roaster',
+            company_name='Beans & Co', is_details_filled=True,
+        )
+        Farmer.objects.create(
+            user=self.farmer, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+        Connection.request(self.roaster, self.farmer).accept()
+        self.forum = Forum.objects.create(title='Spring Forum', status=Forum.PUBLISHED)
+        start = timezone.now() + timedelta(days=7)
+        self.window = ForumWindow.objects.create(
+            forum=self.forum, label='Morning',
+            starts_at=start, ends_at=start + timedelta(hours=2),
+        )
+        ForumSignup.objects.create(forum=self.forum, user=self.roaster)
+
+    def _propose(self):
+        self.client.force_login(self.roaster)
+        return self.client.post(
+            reverse('propose_meeting', args=[self.farmer.id]),
+            {'window_id': self.window.id},
+            HTTP_REFERER=reverse('connections'),
+        )
+
+    def test_proposer_sees_window_option_on_connections_page(self):
+        self.client.force_login(self.roaster)
+        resp = self.client.get(reverse('connections'))
+        self.assertContains(resp, 'Propose a time')
+        self.assertContains(resp, f'value="{self.window.id}"')
+
+    def test_unsigned_up_invitee_sees_signup_and_confirm(self):
+        self._propose()
+        self.client.force_login(self.farmer)
+        resp = self.client.get(reverse('farmer_connections'))
+        self.assertContains(resp, 'Sign up &amp; confirm')
+
+    def test_invitee_confirms_from_connections_page_and_joins_forum(self):
+        self._propose()
+        meeting = ForumMeeting.objects.get()
+
+        self.client.force_login(self.farmer)
+        resp = self.client.post(
+            reverse('respond_meeting', args=[meeting.id, 'confirm']),
+            HTTP_REFERER=reverse('farmer_connections'),
+        )
+
+        self.assertRedirects(
+            resp, reverse('farmer_connections'), fetch_redirect_response=False,
+        )
+        meeting.refresh_from_db()
+        self.assertEqual(meeting.status, ForumMeeting.CONFIRMED)
+        self.assertTrue(
+            ForumSignup.objects.filter(forum=self.forum, user=self.farmer).exists()
+        )
+
+    def test_taken_window_is_not_offered_again(self):
+        self._propose()
+        self.client.force_login(self.roaster)
+        resp = self.client.get(reverse('connections'))
+        self.assertNotContains(resp, f'value="{self.window.id}"')
+        self.assertContains(resp, 'Spring Forum')
+
+    def test_both_connections_pages_render_the_three_tabs(self):
+        for user, url_name in (
+            (self.roaster, 'connections'), (self.farmer, 'farmer_connections'),
+        ):
+            with self.subTest(page=url_name):
+                self.client.force_login(user)
+                resp = self.client.get(reverse(url_name))
+                for pane in ('connected-pane', 'incoming-pane', 'sent-pane'):
+                    self.assertContains(resp, f'id="{pane}"')
+                # Connected is the landing tab, so its pane is the shown one.
+                self.assertContains(
+                    resp, 'tab-pane fade show active" id="connected-pane"',
+                )
+                # One connection, no requests either way: a single count pill.
+                self.assertContains(resp, '<span class="tab-count">1</span>')
+                self.assertNotContains(resp, '<span class="tab-count">0</span>')
+
+    def test_meeting_data_does_not_cost_a_query_per_connection(self):
+        self._propose()
+        self.client.force_login(self.roaster)
+        with CaptureQueriesContext(connection) as first:
+            self.client.get(reverse('connections'))
+
+        for i in range(3):
+            other = User.objects.create(
+                email=f'f{i}@example.com', group='farmer', username=f'f{i}',
+            )
+            Farmer.objects.create(
+                user=other, firstname=f'F{i}', lastname='Farmer',
+                is_details_filled=True,
+            )
+            Connection.request(self.roaster, other).accept()
+            conversation = Conversation.objects.create(
+                roaster=self.roaster, farmer=other,
+            )
+            ForumMeeting.objects.create(
+                conversation=conversation, window=self.window,
+                proposed_by=self.roaster,
+            )
+
+        with CaptureQueriesContext(connection) as later:
+            self.client.get(reverse('connections'))
+
+        self.assertEqual(len(later), len(first))
+
+    def test_page_survives_connection_without_conversation(self):
+        # No Conversation row exists until someone opens the chat thread.
+        self.assertFalse(Conversation.objects.exists())
+        self.client.force_login(self.roaster)
+        resp = self.client.get(reverse('connections'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Propose a time')
 
 
 class EndedForumHiddenTests(TestCase):
@@ -2486,14 +2651,17 @@ class MeetingInviteSignsUpInviteeTests(TestCase):
         self.assertEqual(meeting.status, ForumMeeting.DECLINED)
         self.assertFalse(self._farmer_signed_up())
 
-    def test_confirming_does_not_enrol_into_a_closed_forum(self):
+    def test_confirming_is_refused_when_the_forum_has_closed(self):
+        # The confirm button promises a signup, so if the forum stopped
+        # accepting joins between proposal and response, refuse rather than
+        # confirm someone into a forum they cannot be part of.
         self._propose()
         meeting = ForumMeeting.objects.get()
         self.forum.status = Forum.CANCELLED
         self.forum.save()
         self._confirm(meeting)
         meeting.refresh_from_db()
-        self.assertEqual(meeting.status, ForumMeeting.CONFIRMED)
+        self.assertEqual(meeting.status, ForumMeeting.PROPOSED)
         self.assertFalse(self._farmer_signed_up())
 
     def test_already_signed_up_invitee_is_unaffected(self):
@@ -2529,3 +2697,439 @@ class MeetingInviteSignsUpInviteeTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         body = mail.outbox[0].body
         self.assertIn('confirming this time signs you up', body.lower())
+
+
+class StaffAccountVisibilityTests(TestCase):
+    """Accounts elevated to platform admin drop out of the marketplace.
+
+    They keep their own dashboard access and any connections formed before
+    elevation; they simply stop being discoverable or connectable.
+    """
+
+    def setUp(self):
+        self.language = Language.objects.create(name='English')
+
+        self.roaster_user = self._make_user('roaster@example.com', 'roaster')
+        Roaster.objects.create(
+            user=self.roaster_user, firstname='Roni', lastname='Roaster',
+            company_name='Beans & Co', country='Kenya', is_details_filled=True,
+        )
+        self.farmer_user = self._make_user('farmer@example.com', 'farmer')
+        self.farmer = self._make_farmer(self.farmer_user, 'Fiona', 'Ethiopia')
+
+        # A farmer and a roaster who have since been made platform admins.
+        self.staff_farmer_user = self._make_user(
+            'stafffarmer@example.com', 'farmer', is_staff=True,
+        )
+        self.staff_farmer = self._make_farmer(
+            self.staff_farmer_user, 'Sam', 'Colombia',
+        )
+        self.staff_roaster_user = self._make_user(
+            'staffroaster@example.com', 'roaster', is_staff=True,
+        )
+        Roaster.objects.create(
+            user=self.staff_roaster_user, firstname='Stan', lastname='Staff',
+            company_name='Staff Roastery', country='Brazil',
+            is_details_filled=True,
+        )
+
+    def _make_user(self, email, group, is_staff=False):
+        user = User.objects.create(
+            email=email, group=group, username=email.split('@')[0],
+            is_staff=is_staff,
+        )
+        user.set_password('pw')
+        user.save()
+        return user
+
+    def _make_farmer(self, user, firstname, country):
+        farmer = Farmer.objects.create(
+            user=user, firstname=firstname, lastname='Farmer',
+            farm_name=f'{firstname} Farm', country=country,
+            is_details_filled=True,
+        )
+        Story.objects.create(
+            user=user, farmer=farmer, language=self.language,
+            story_text=f'{firstname} grows coffee.',
+        )
+        return farmer
+
+    # -- discovery listings -------------------------------------------------
+
+    def test_staff_farmer_is_hidden_from_farmer_discovery(self):
+        self.client.login(email='roaster@example.com', password='pw')
+        response = self.client.get(reverse('connection_farmers'))
+        self.assertEqual(response.status_code, 200)
+        listed = response.context['farmers']
+        self.assertIn(self.farmer, listed)
+        self.assertNotIn(self.staff_farmer, listed)
+
+    def test_staff_farmer_country_is_hidden_from_the_filter_dropdown(self):
+        self.client.login(email='roaster@example.com', password='pw')
+        response = self.client.get(reverse('connection_farmers'))
+        countries = list(response.context['available_countries'])
+        self.assertIn('Ethiopia', countries)
+        self.assertNotIn('Colombia', countries)
+
+    def test_staff_roaster_is_hidden_from_roaster_discovery(self):
+        self.client.login(email='farmer@example.com', password='pw')
+        response = self.client.get(reverse('connection_roasters'))
+        self.assertEqual(response.status_code, 200)
+        listed_ids = {r.user_id for r in response.context['roasters']}
+        self.assertIn(self.roaster_user.id, listed_ids)
+        self.assertNotIn(self.staff_roaster_user.id, listed_ids)
+
+    def test_staff_roaster_country_is_hidden_from_the_filter_dropdown(self):
+        self.client.login(email='farmer@example.com', password='pw')
+        response = self.client.get(reverse('connection_roasters'))
+        countries = list(response.context['available_countries'])
+        self.assertIn('Kenya', countries)
+        self.assertNotIn('Brazil', countries)
+
+    # -- profile detail pages -----------------------------------------------
+
+    def test_staff_farmer_profile_is_404_for_others(self):
+        self.client.login(email='roaster@example.com', password='pw')
+        response = self.client.get(
+            reverse('farmer_profile', args=[self.staff_farmer_user.id])
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_staff_farmer_can_still_view_own_profile(self):
+        self.client.login(email='stafffarmer@example.com', password='pw')
+        response = self.client.get(
+            reverse('farmer_profile', args=[self.staff_farmer_user.id])
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_staff_roaster_profile_is_404_for_others(self):
+        self.client.login(email='farmer@example.com', password='pw')
+        response = self.client.get(
+            reverse('roaster_profile', args=[self.staff_roaster_user.id])
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_staff_roaster_can_still_view_own_profile(self):
+        self.client.login(email='staffroaster@example.com', password='pw')
+        response = self.client.get(
+            reverse('roaster_profile', args=[self.staff_roaster_user.id])
+        )
+        self.assertEqual(response.status_code, 200)
+
+    # -- new connection requests --------------------------------------------
+
+    def test_connection_request_to_a_staff_account_is_rejected(self):
+        self.client.login(email='roaster@example.com', password='pw')
+        self.client.post(
+            reverse('connection_farmers'),
+            {'user_id': self.staff_farmer_user.id, 'message': 'Hi'},
+        )
+        self.assertFalse(
+            Connection.objects.filter(
+                Q(user_a=self.staff_farmer_user) | Q(user_b=self.staff_farmer_user)
+            ).exists()
+        )
+
+    def test_staff_account_cannot_send_a_connection_request(self):
+        self.client.login(email='stafffarmer@example.com', password='pw')
+        self.client.post(
+            reverse('connection_roasters'),
+            {'user_id': self.roaster_user.id, 'message': 'Hi'},
+        )
+        self.assertIsNone(
+            Connection.between(self.staff_farmer_user, self.roaster_user)
+        )
+
+    def test_connection_request_to_a_normal_account_still_works(self):
+        self.client.login(email='roaster@example.com', password='pw')
+        self.client.post(
+            reverse('connection_farmers'),
+            {'user_id': self.farmer_user.id, 'message': 'Hi'},
+        )
+        self.assertIsNotNone(
+            Connection.between(self.roaster_user, self.farmer_user)
+        )
+
+    # -- ties formed before elevation survive --------------------------------
+
+    def test_connection_predating_elevation_keeps_its_chat_thread(self):
+        self.staff_farmer_user.is_staff = False
+        self.staff_farmer_user.save(update_fields=['is_staff'])
+        conn = Connection.request(self.roaster_user, self.staff_farmer_user)
+        conn.accept()
+        self.staff_farmer_user.is_staff = True
+        self.staff_farmer_user.save(update_fields=['is_staff'])
+
+        self.client.login(email='roaster@example.com', password='pw')
+        response = self.client.get(
+            reverse('chat_thread', args=[self.staff_farmer_user.id])
+        )
+        self.assertEqual(response.status_code, 200)
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    # Spanish is switched off in settings until the copy is complete; enabling
+    # it here also proves that one-line switch-on works.
+    LANGUAGES=[('en', 'English'), ('es', 'Spanish')],
+)
+class PreferredLanguageEmailTests(TestCase):
+    """Emails render in the recipient's preferred language."""
+
+    def setUp(self):
+        self.roaster_user = self._make_user('roaster@example.com', 'roaster')
+        Roaster.objects.create(
+            user=self.roaster_user, firstname='Roni', lastname='Roaster',
+            company_name='Beans & Co', is_details_filled=True,
+        )
+        self.farmer_user = self._make_user('farmer@example.com', 'farmer')
+        Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+
+    def _make_user(self, email, group, language='en'):
+        user = User.objects.create(
+            email=email, group=group, username=email.split('@')[0],
+            preferred_language=language,
+        )
+        user.set_password('pw')
+        user.save()
+        return user
+
+    def _set_language(self, user, language):
+        user.preferred_language = language
+        user.save(update_fields=['preferred_language'])
+
+    # -- body language follows the recipient ---------------------------------
+
+    def test_spanish_user_gets_a_spanish_body(self):
+        self._set_language(self.farmer_user, 'es')
+        notify_signup(self.farmer_user)
+        body = mail.outbox[0].body
+        self.assertIn('Te damos la bienvenida a Coffee Circuit', body)
+        self.assertNotIn('Welcome to Coffee Circuit — the place', body)
+
+    def test_english_user_still_gets_english(self):
+        notify_signup(self.farmer_user)
+        body = mail.outbox[0].body
+        self.assertIn('Welcome to Coffee Circuit — the place', body)
+        self.assertNotIn('Te damos la bienvenida', body)
+
+    def test_connection_request_body_follows_the_recipient_not_the_sender(self):
+        self._set_language(self.farmer_user, 'es')
+        conn = Connection.request(self.roaster_user, self.farmer_user)
+        notify_connection_event(conn, 'created')
+
+        sent = mail.outbox[0]
+        self.assertEqual(sent.to, [self.farmer_user.email])
+        self.assertIn('quiere conectar contigo', sent.body)
+
+    def test_default_when_no_preference_is_set(self):
+        self.farmer_user.preferred_language = ''
+        self.farmer_user.save(update_fields=['preferred_language'])
+        notify_signup(self.farmer_user)
+        self.assertIn('Welcome to Coffee Circuit — the place', mail.outbox[0].body)
+
+    # -- untranslated strings fall back rather than erroring ------------------
+
+    def test_subject_is_translated_too_not_just_the_body(self):
+        self._set_language(self.farmer_user, 'es')
+        notify_signup(self.farmer_user)
+        sent = mail.outbox[0]
+        self.assertEqual(sent.subject, 'Te damos la bienvenida al Coffee Circuit')
+        self.assertIn('Te damos la bienvenida a Coffee Circuit', sent.body)
+
+    def test_string_with_no_spanish_copy_falls_back_to_english(self):
+        """A translated email can still contain an untranslated line."""
+        self._set_language(self.farmer_user, 'es')
+        notify_signup(self.farmer_user)
+        # The shared footer has no Spanish copy in the spreadsheet yet.
+        self.assertIn('Connecting coffee roasters with producers.', mail.outbox[0].body)
+
+    def test_language_with_no_catalog_at_all_falls_back(self):
+        self._set_language(self.farmer_user, 'fr')
+        notify_signup(self.farmer_user)
+        self.assertIn('Welcome to Coffee Circuit — the place', mail.outbox[0].body)
+
+    # -- each recipient of a two-party email gets their own language ----------
+
+    def test_each_party_gets_their_own_language(self):
+        self._set_language(self.farmer_user, 'es')
+        conn = Connection.request(self.roaster_user, self.farmer_user)
+        notify_connection_event(conn, 'created')   # -> farmer, Spanish
+        conn.accept()
+        notify_connection_event(conn, 'accepted')  # -> roaster, English
+
+        to_farmer, to_roaster = mail.outbox[0], mail.outbox[1]
+        self.assertEqual(to_farmer.to, [self.farmer_user.email])
+        self.assertIn('quiere conectar contigo', to_farmer.body)
+        self.assertEqual(to_roaster.to, [self.roaster_user.email])
+        self.assertIn('accepted your connection request', to_roaster.body)
+
+    # -- admin-composed mail is passed through untouched ----------------------
+
+    def test_forum_subject_carries_the_forum_name_in_both_languages(self):
+        """The Spanish subject names the forum, so the English one must too.
+
+        gettext rejects a translation introducing a placeholder the source
+        string lacks, which is why %(forum)s exists on both sides.
+        """
+        conn = Connection.between(self.roaster_user, self.farmer_user)
+        if conn is None:
+            conn = Connection.request(self.roaster_user, self.farmer_user)
+            conn.accept()
+        conversation = Conversation.objects.create(
+            roaster=self.roaster_user, farmer=self.farmer_user,
+        )
+        forum = Forum.objects.create(title='Spring Forum', status=Forum.PUBLISHED)
+        start = timezone.now() + timedelta(days=7)
+        window = ForumWindow.objects.create(
+            forum=forum, label='Morning',
+            starts_at=start, ends_at=start + timedelta(hours=2),
+        )
+        ForumSignup.objects.create(forum=forum, user=self.farmer_user)
+        meeting = ForumMeeting.objects.create(
+            conversation=conversation, window=window,
+            proposed_by=self.roaster_user, status=ForumMeeting.PROPOSED,
+        )
+
+        self._set_language(self.farmer_user, 'es')
+        notify_forum_meeting_event(meeting, 'proposed')
+        self.assertEqual(
+            mail.outbox[0].subject,
+            'Roni Roaster te invitó a una reunión en el Spring Forum',
+        )
+
+        mail.outbox.clear()
+        self._set_language(self.farmer_user, 'en')
+        notify_forum_meeting_event(meeting, 'proposed')
+        self.assertEqual(
+            mail.outbox[0].subject,
+            'Roni Roaster proposed a meeting time for Spring Forum',
+        )
+
+    def test_admin_message_subject_is_never_translated(self):
+        admin = User.objects.create(
+            email='admin@example.com', username='admin', is_staff=True,
+        )
+        self._set_language(self.farmer_user, 'es')
+        record = AdminEmail.objects.create(
+            recipient=self.farmer_user, sent_by=admin,
+            subject='A subject an admin typed', body='Body an admin typed',
+        )
+        notify_admin_message(record)
+        sent = mail.outbox[0]
+        self.assertEqual(sent.subject, 'A subject an admin typed')
+        self.assertIn('Body an admin typed', sent.body)
+        # The template chrome around it still follows the recipient.
+        self.assertIn('Hola Fiona Farmer,', sent.body)
+
+
+class PreferredLanguageFormTests(TestCase):
+    """The onboarding and edit forms collect and persist the preference."""
+
+    def setUp(self):
+        self.user = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmer',
+        )
+        self.user.set_password('pw')
+        self.user.save()
+        # Completed profile, else AuthMiddleware bounces every page but the
+        # details form back to onboarding.
+        Farmer.objects.create(
+            user=self.user, firstname='Fiona', lastname='Farmer',
+            is_details_filled=True,
+        )
+
+    @override_settings(LANGUAGES=[('en', 'English'), ('es', 'Spanish')])
+    def test_details_page_offers_the_languages_from_settings(self):
+        self.client.login(email='farmer@example.com', password='pw')
+        response = self.client.get(reverse('farmer_details'))
+        self.assertEqual(response.status_code, 200)
+        form = response.context['language_form']
+        self.assertEqual(
+            list(form.fields['preferred_language'].widget.choices),
+            [('en', 'English'), ('es', 'Spanish')],
+        )
+
+    @override_settings(LANGUAGES=[('en', 'English'), ('es', 'Spanish')])
+    def test_choice_is_saved_onto_the_user(self):
+        form = PreferredLanguageForm({'preferred_language': 'es'}, instance=self.user)
+        self.assertTrue(form.is_valid())
+        form.save()
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.preferred_language, 'es')
+
+    def test_default_is_english(self):
+        self.assertEqual(self.user.preferred_language, 'en')
+
+    @override_settings(LANGUAGES=[('en', 'English'), ('es', 'Spanish')])
+    def test_edit_page_renders_and_saves_the_preference(self):
+        self.client.login(email='farmer@example.com', password='pw')
+        response = self.client.get(reverse('edit_farmer_details'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="preferred_language"')
+
+        self.client.post(reverse('edit_farmer_details'), {
+            'main_form': '1', 'farm_name': 'Finca Nueva',
+            'country': 'Guatemala', 'state': 'Sacatepéquez', 'city': 'Antigua',
+            'preferred_language': 'es',
+        })
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.preferred_language, 'es')
+
+    @override_settings(LANGUAGES=[('en', 'English'), ('es', 'Spanish')])
+    def test_roaster_dashboard_renders_and_saves_the_preference(self):
+        roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roaster',
+        )
+        roaster.set_password('pw')
+        roaster.save()
+        Roaster.objects.create(
+            user=roaster, firstname='Roni', lastname='Roaster',
+            company_name='Beans & Co', is_details_filled=True,
+        )
+
+        self.client.login(email='roaster@example.com', password='pw')
+        response = self.client.get(reverse('roaster_dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="preferred_language"')
+
+        self.client.post(reverse('roaster_dashboard'), {
+            'roaster_info_form': '1', 'firstname': 'Roni', 'lastname': 'Roaster',
+            'job_title': 'Head Buyer', 'preferred_language': 'es',
+        })
+        roaster.refresh_from_db()
+        self.assertEqual(roaster.preferred_language, 'es')
+
+    @override_settings(LANGUAGES=[('en', 'English'), ('es', 'Spanish')])
+    def test_submit_without_the_field_leaves_the_preference_alone(self):
+        """A partial submit must not invalidate the save or wipe the choice."""
+        self.user.preferred_language = 'es'
+        self.user.save(update_fields=['preferred_language'])
+
+        self.client.login(email='farmer@example.com', password='pw')
+        self.client.post(reverse('edit_farmer_details'), {
+            'main_form': '1', 'farm_name': 'Sin Idioma',
+            'country': 'Guatemala', 'state': 'Sacatepéquez', 'city': 'Antigua',
+        })
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.preferred_language, 'es')
+        self.assertEqual(self.user.farmer_profile.farm_name, 'Sin Idioma')
+
+    @override_settings(LANGUAGES=[('en', 'English'), ('es', 'Spanish')])
+    def test_dashboard_edit_modal_renders_and_saves_the_preference(self):
+        self.client.login(email='farmer@example.com', password='pw')
+        response = self.client.get(reverse('farmer_dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="preferred_language"')
+
+        self.client.post(reverse('farmer_dashboard'), {
+            'main_form': '1', 'farm_name': 'Finca Nueva',
+            'country': 'Guatemala', 'state': 'Sacatepéquez', 'city': 'Antigua',
+            'preferred_language': 'es',
+        })
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.preferred_language, 'es')

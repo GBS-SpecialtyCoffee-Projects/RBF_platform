@@ -262,6 +262,12 @@
                         {{ roaster_info_form.profile_picture }} <!-- This should render a file input element -->
                         {% image_upload_help 'profile' %}
                     </div>
+
+                    <div class="mb-3">
+                        <label for="{{ language_form.preferred_language.id_for_label }}" class="form-label">{{ language_form.preferred_language.label }}</label>
+                        {{ language_form.preferred_language.errors }}
+                        {{ language_form.preferred_language }}
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
