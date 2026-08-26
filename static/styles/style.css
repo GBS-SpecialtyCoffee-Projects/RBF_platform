@@ -125,6 +125,69 @@ h1.landing-text{
 } */
 
 
+/* Underline tab bar for the connections pages. Bootstrap 5.0 has no
+   nav-underline, so the flat/underlined look is defined here. */
+.connection-tabs {
+    border-bottom: 1px solid #dee2e6;
+    flex-wrap: nowrap;
+}
+
+.connection-tabs .nav-link {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    color: #212529;
+    font-weight: 600;
+    /* No bottom padding: the label carries it, so its underline lands on the
+       tab bar's own border rather than floating above it. */
+    padding: 0.85rem 1rem 0;
+    margin-bottom: -1px;
+    text-align: center;
+    white-space: nowrap;
+    width: 100%;
+}
+
+/* Sized to the text, so the indicator sits under the heading, not the tab. */
+.connection-tabs .tab-label {
+    border-bottom: 4px solid transparent;
+    border-radius: 2px;
+    display: inline-block;
+    padding-bottom: 0.75rem;
+}
+
+.connection-tabs .nav-link:hover,
+.connection-tabs .nav-link:focus {
+    background-color: rgba(0, 0, 0, 0.03);
+    color: #212529;
+}
+
+.connection-tabs .nav-link.active {
+    background: none;
+    color: #000;
+    font-weight: 700;
+}
+
+.connection-tabs .nav-link.active .tab-label {
+    border-bottom-color: #5C87B2;
+}
+
+/* Red notification pill. Hidden at zero by the template, so it always means
+   "there is something here". */
+.connection-tabs .tab-count {
+    background-color: #dc3545;
+    border-radius: 10rem;
+    color: #fff;
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-left: 0.35rem;
+    min-width: 1.3rem;
+    padding: 0.25rem 0.4rem;
+    text-align: center;
+    vertical-align: middle;
+}
+
 .btn-blue{
     --bs-btn-font-weight: 600;
     --bs-btn-color: var(--bs-white);

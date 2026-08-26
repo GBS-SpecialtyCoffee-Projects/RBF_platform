@@ -2,7 +2,10 @@ from django.shortcuts import render, redirect
 from base.views.forms import FarmerPhotoForm, RoasterForm, RoasterPhotoForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
-from .forms import SignupForm, SigninForm, PasswordResetForm, FarmerForm, StoryForm
+from .forms import (
+    SignupForm, SigninForm, PasswordResetForm, FarmerForm, StoryForm,
+    PreferredLanguageForm,
+)
 from base.views.country_codes import COUNTRY_CODE_CHOICES
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
@@ -15,7 +18,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from .tokens import account_activation_token
 from base.models import User, Farmer, Roaster, Language, InteractionEventType
 from base.analytics import log_event
-from base.notifications import _display_name, notify_signup
+from base.notifications import _display_name, _user_language, notify_signup
 from django.utils import translation
 from django.conf import settings
 from django.http import JsonResponse
@@ -94,8 +97,10 @@ def farmer_details(request):
             'language': story_language
         }
         story_form = StoryForm(story_data)
-        if farmer_form.is_valid() and story_form.is_valid():
+        language_form = PreferredLanguageForm(request.POST, instance=request.user)
+        if farmer_form.is_valid() and story_form.is_valid() and language_form.is_valid():
             farmer_form.save()
+            language_form.save()
             farmer.is_details_filled = True
             farmer.save()
             story = story_form.save(commit=False)
@@ -113,8 +118,10 @@ def farmer_details(request):
     else:
         story_form = StoryForm()
         farmer_form = FarmerForm(instance=farmer)
+        language_form = PreferredLanguageForm(instance=request.user)
     return render(request, 'base/farmer_signup.html', {
         'farmer_form': farmer_form, 'story_form': story_form,
+        'language_form': language_form,
         'country_code_choices': COUNTRY_CODE_CHOICES,
     })
 
@@ -126,8 +133,10 @@ def roaster_details(request):
 
     if request.method == 'POST':
         form = RoasterForm(request.POST, request.FILES, instance=roaster)
-        if form.is_valid():
+        language_form = PreferredLanguageForm(request.POST, instance=request.user)
+        if form.is_valid() and language_form.is_valid():
             form.save()
+            language_form.save()
             roaster.is_details_filled = True
             roaster.save()
             return redirect('roaster_dashboard')
@@ -137,9 +146,11 @@ def roaster_details(request):
                     messages.error(request, f"{field}: {error}")
     else:
         form = RoasterForm(instance=roaster)
+        language_form = PreferredLanguageForm(instance=request.user)
 
     return render(request, 'base/roaster_signup.html', {
         'form': form,
+        'language_form': language_form,
         'country_code_choices': COUNTRY_CODE_CHOICES,
     })
 
@@ -228,14 +239,15 @@ def verify_email(request):
     if email:
         try:
             user = User.objects.get(email=email)
-            mail_subject = 'Password reset verification'
-            message = render_to_string('base/template_verify_email.html', {
-                'recipient_name': _display_name(user),
-                'domain': get_current_site(request).domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': default_token_generator.make_token(user),
-                'protocol': 'https' if request.is_secure() else 'http'
-            })
+            with translation.override(_user_language(user)):
+                mail_subject = translation.gettext('Password reset verification')
+                message = render_to_string('base/template_verify_email.html', {
+                    'recipient_name': _display_name(user),
+                    'domain': get_current_site(request).domain,
+                    'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                    'token': default_token_generator.make_token(user),
+                    'protocol': 'https' if request.is_secure() else 'http'
+                })
             email_message = EmailMultiAlternatives(
                 mail_subject, strip_tags(message), to=[user.email]
             )

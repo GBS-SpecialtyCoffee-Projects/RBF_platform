@@ -1,0 +1,295 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Coffee Circuit\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-24 22:12+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: base/notifications.py:103
+msgid "Welcome to Coffee Circuit"
+msgstr "Te damos la bienvenida al Coffee Circuit"
+
+#: base/notifications.py:125 base/notifications.py:209
+#, python-format
+msgid "%(name)s wants to connect with you"
+msgstr "%(name)s quiere conectar contigo"
+
+#: base/notifications.py:136
+#, python-format
+msgid "%(name)s accepted your connection request"
+msgstr "%(name)s aceptó tu solicitud de conexión"
+
+#: base/notifications.py:138
+#, python-format
+msgid "%(name)s declined your connection request"
+msgstr "%(name)s rechazó tu solicitud de conexión"
+
+#: base/notifications.py:171
+#, python-format
+msgid "%(name)s proposed a meeting time for %(forum)s"
+msgstr "%(name)s te invitó a una reunión en el %(forum)s"
+
+#: base/notifications.py:185
+#, python-format
+msgid "%(name)s confirmed your meeting time for %(forum)s"
+msgstr "%(name)s confirmó la reunión que le propusiste en el %(forum)s"
+
+#: base/notifications.py:187
+#, python-format
+msgid "%(name)s declined your meeting time for %(forum)s"
+msgstr "%(name)s rechazó la reunión que propusiste para el %(forum)s"
+
+#: base/notifications.py:220
+#, python-format
+msgid "%(name)s accepted your meeting request"
+msgstr "%(name)s aceptó tu solicitud de reunión"
+
+#: base/notifications.py:222
+#, python-format
+msgid "%(name)s declined your meeting request"
+msgstr "%(name)s rechazó tu solicitud de reunión"
+
+#: base/notifications.py:301
+#, python-format
+msgid "Calendar invite: your %(forum)s meeting"
+msgstr "Invitación de calendario: tu reunión en el %(forum)s"
+
+#: base/templates/base/emails/_base_email.html:28
+msgid "Connecting coffee roasters with producers."
+msgstr ""
+
+#: base/templates/base/emails/admin_message.html:4
+#: base/templates/base/emails/connection_request_created.html:4
+#: base/templates/base/emails/connection_request_decision.html:4
+#: base/templates/base/emails/forum_meeting_decision.html:4
+#: base/templates/base/emails/forum_meeting_proposed.html:4
+#: base/templates/base/emails/meeting_calendar_invite.html:4
+#: base/templates/base/emails/meeting_request_created.html:4
+#: base/templates/base/emails/meeting_request_decision.html:4
+#: base/templates/base/emails/welcome.html:4
+#: base/templates/base/template_verify_email.html:4
+#, python-format
+msgid "Hi %(name)s,"
+msgstr "Hola %(name)s,"
+
+#: base/templates/base/emails/admin_message.html:7
+msgid "— The Coffee Circuit team"
+msgstr ""
+
+#: base/templates/base/emails/connection_request_created.html:5
+#, python-format
+msgid "<strong>%(name)s</strong> wants to connect with you on Coffee Circuit."
+msgstr "<strong>%(name)s</strong> quiere conectar contigo en Coffee Circuit."
+
+#: base/templates/base/emails/connection_request_created.html:7
+#: base/templates/base/emails/meeting_request_created.html:8
+msgid "Message:"
+msgstr "Mensaje:"
+
+#: base/templates/base/emails/connection_request_created.html:9
+#: base/templates/base/emails/meeting_request_created.html:10
+msgid "Sign in to your dashboard to accept or decline the request."
+msgstr ""
+"Inicia sesión y verifica tu tablero para aceptar o rechazar la solicitud."
+
+#: base/templates/base/emails/connection_request_decision.html:6
+#, python-format
+msgid ""
+"<strong>%(name)s</strong> accepted your connection request. You're now "
+"connected."
+msgstr ""
+"<strong>%(name)s</strong> aceptó tu solicitud de conexión. Ahora ambos están "
+"conectados."
+
+#: base/templates/base/emails/connection_request_decision.html:7
+msgid "Sign in to your dashboard to message them and follow up."
+msgstr ""
+"Inicia sesión y verifica tu tablero para empezar a intercambiar mensajes."
+
+#: base/templates/base/emails/connection_request_decision.html:9
+#, python-format
+msgid "<strong>%(name)s</strong> declined your connection request."
+msgstr "<strong>%(name)s</strong> rechazó tu solicitud de conexión."
+
+#: base/templates/base/emails/connection_request_decision.html:10
+msgid ""
+"Don't worry — you can still browse and connect with others from your "
+"dashboard."
+msgstr ""
+"No te preocupes. Todavía puedes buscar y conectar con otros desde tu tablero."
+
+#: base/templates/base/emails/forum_meeting_decision.html:6
+#, python-format
+msgid ""
+"<strong>%(name)s</strong> confirmed your proposed meeting time for <strong>"
+"%(title)s</strong>."
+msgstr ""
+"<strong>%(name)s</strong> confirmó la reunión que le propusiste en el "
+"<strong>%(title)s</strong>."
+
+#: base/templates/base/emails/forum_meeting_decision.html:8
+#, python-format
+msgid ""
+"<strong>%(name)s</strong> declined your proposed meeting time for <strong>"
+"%(title)s</strong>."
+msgstr ""
+"<strong>%(name)s</strong> rechazó la reunión que propusiste para el <strong>"
+"%(title)s</strong>."
+
+#: base/templates/base/emails/forum_meeting_decision.html:11
+#: base/templates/base/emails/forum_meeting_proposed.html:7
+#: base/templates/base/emails/meeting_calendar_invite.html:7
+msgid "When:"
+msgstr "Hora:"
+
+#: base/templates/base/emails/forum_meeting_decision.html:13
+msgid "Open your chat for details."
+msgstr "Abra el chat para ver más."
+
+#: base/templates/base/emails/forum_meeting_proposed.html:5
+#, python-format
+msgid ""
+"<strong>%(name)s</strong> proposed a meeting time for <strong>%(title)s</"
+"strong>."
+msgstr ""
+"<strong>%(name)s</strong> te invitó a una reunión en el <strong>%(title)s</"
+"strong>."
+
+#: base/templates/base/emails/forum_meeting_proposed.html:10
+#, python-format
+msgid ""
+"You're not signed up for %(title)s yet &mdash; confirming this time signs "
+"you up."
+msgstr ""
+
+#: base/templates/base/emails/forum_meeting_proposed.html:12
+msgid "Open your chat to confirm or decline the time."
+msgstr "Abra el chat para confirmar o rechazar la hora."
+
+#: base/templates/base/emails/meeting_calendar_invite.html:5
+#, python-format
+msgid ""
+"Your meeting with <strong>%(name)s</strong> for <strong>%(title)s</strong> "
+"is confirmed. A calendar invite is attached to this email."
+msgstr ""
+"Tu reunión con <strong>%(name)s</strong> en el <strong>%(title)s</strong> "
+"está confirmada. La invitación de calendario se encuentra en el anexo de "
+"este correo."
+
+#: base/templates/base/emails/meeting_calendar_invite.html:11
+msgid "Join:"
+msgstr "Unirse:"
+
+#: base/templates/base/emails/meeting_calendar_invite.html:14
+msgid "Add the attached invite to your calendar so you don't miss it."
+msgstr "Agrega la invitación a tu calendario para no perderla."
+
+#: base/templates/base/emails/meeting_request_created.html:5
+#, python-format
+msgid "<strong>%(name)s</strong> sent you a meeting request on Coffee Circuit."
+msgstr ""
+"<strong>%(name)s</strong> te envió una solicitud de reunión en el Coffee "
+"Circuit."
+
+#: base/templates/base/emails/meeting_request_created.html:6
+#: base/templates/base/emails/meeting_request_decision.html:7
+#, python-format
+msgid "<strong>Proposed time:</strong> %(time)s EST"
+msgstr "<strong>Hora propuesta:</strong> %(time)s hora de Nueva York"
+
+#: base/templates/base/emails/meeting_request_decision.html:6
+#, python-format
+msgid "<strong>%(name)s</strong> accepted your meeting request."
+msgstr "<strong>%(name)s</strong> aceptó tu solicitud de reunión."
+
+#: base/templates/base/emails/meeting_request_decision.html:8
+msgid "Sign in to your dashboard to view the details and follow up."
+msgstr "Ingresa a tu cuenta para ver los detalles y hacer seguimiento."
+
+#: base/templates/base/emails/meeting_request_decision.html:10
+#, python-format
+msgid "<strong>%(name)s</strong> declined your meeting request."
+msgstr "<strong>%(name)s</strong> rechazó tu solicitud de reunión."
+
+#: base/templates/base/emails/meeting_request_decision.html:11
+msgid ""
+"Don't worry — you can still browse other connections from your dashboard."
+msgstr ""
+"No te preocupes — aún puedes ver otras conexiones desde tu cuenta y "
+"solicitar otra reunión."
+
+#: base/templates/base/emails/welcome.html:5
+msgid ""
+"Welcome to Coffee Circuit — the place where coffee roasters and producers "
+"find each other."
+msgstr ""
+"Te damos la bienvenida a Coffee Circuit, el lugar donde tostadores y "
+"productores pueden encontrarse."
+
+#: base/templates/base/emails/welcome.html:7
+msgid ""
+"To get started, finish your profile and share your story so roasters can "
+"discover you."
+msgstr ""
+"Para empezar, completa tu perfil y comparte tu historia para que los "
+"tostadores puedan encontrarte."
+
+#: base/templates/base/emails/welcome.html:9
+msgid ""
+"To get started, finish your profile and start browsing producers to connect "
+"with."
+msgstr ""
+"Para empezar, finaliza tu perfil y empieza a buscar productores con quienes "
+"te interesa conectar."
+
+#: base/templates/base/template_verify_email.html:5
+msgid ""
+"We received a request to reset your Coffee Circuit password. Click the "
+"button below to choose a new one:"
+msgstr ""
+"Recibimos una solicitud para cambiar la clave de tu cuenta en el Coffee "
+"Circuit. Haz clic en el botón de abajo para elegir una clave nueva:"
+
+#: base/templates/base/template_verify_email.html:9
+msgid "Reset my password"
+msgstr "Cambiar mi clave"
+
+#: base/templates/base/template_verify_email.html:13
+msgid "If the button doesn't work, copy and paste this link into your browser:"
+msgstr "Si el botón no funciona, copia y pega este enlace en tu navegador:"
+
+#: base/templates/base/translation_test.html:6
+msgid "this is going to be a translation test"
+msgstr ""
+
+#: base/templates/base/translation_test.html:9
+msgid "translate this to Chinese"
+msgstr ""
+
+#: base/validators.py:86
+#, python-format
+msgid ""
+"That image is %(size)s, which is over the %(limit)s limit. Please resize it "
+"or upload a smaller image."
+msgstr ""
+
+#: base/validators.py:99
+#, python-format
+msgid "Please upload a %(formats)s image."
+msgstr ""
+
+#: base/views/account.py:243
+msgid "Password reset verification"
+msgstr "Verificación del cambio de clave"

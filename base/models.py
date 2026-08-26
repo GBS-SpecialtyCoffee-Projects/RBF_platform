@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django_countries import countries
 from rbf_platform.storage_backends import ProfileStorage,PhotoStorage, ProfileStorageRoaster,get_profile_storage, get_roaster_profile_storage, get_photo_storage
 from base.validators import validate_uploaded_image
@@ -43,6 +44,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     updated_date = models.DateTimeField(auto_now=True)
     last_login = models.DateTimeField(blank=True, null=True)
     group = models.CharField(max_length=30, choices=GROUP_CHOICES)
+    # Locale code (e.g. 'en', 'es') used for the emails we send this user.
+    # Choices come from settings.LANGUAGES on the form, so adding a language
+    # never needs a migration.
+    preferred_language = models.CharField(max_length=10, default='en')
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
 
@@ -202,6 +207,11 @@ class Farmer(models.Model):
             1 for field in self.ORIENTATION_TASK_FIELDS if not getattr(self, field)
         )
 
+    @classmethod
+    def discoverable(cls):
+        """Farmers buyers may browse: has published a story, not a platform admin."""
+        return cls.objects.filter(farmer_stories__isnull=False).exclude(user__is_staff=True)
+
     def __str__(self):
         return f'{self.firstname} {self.lastname} - {self.farm_name}'
 class Roaster(models.Model):
@@ -237,6 +247,11 @@ class Roaster(models.Model):
     header_image = models.ImageField(storage=get_roaster_profile_storage, blank=True, null=True, validators=[validate_uploaded_image])
     is_details_filled = models.BooleanField(default=False)
     sourcing_prefs_filled = models.BooleanField(default=False)
+
+    @classmethod
+    def discoverable(cls):
+        """Buyers farmers may browse: profile details filled, not a platform admin."""
+        return cls.objects.filter(is_details_filled=True).exclude(user__is_staff=True)
 
     @property
     def display_name(self):
@@ -819,9 +834,13 @@ class Forum(models.Model):
     def is_signed_up(self, user):
         return self.signups.filter(user=user).exists()
 
-    @property
+    @cached_property
     def next_window_start(self):
-        """Start time of the soonest future window, or None."""
+        """Start time of the soonest future window, or None.
+
+        Cached because list pages render the same forum against many rows, and
+        templates read it twice per use (once to test, once to print).
+        """
         window = self.windows.filter(starts_at__gt=timezone.now()).first()
         return window.starts_at if window else None
 
@@ -899,7 +918,8 @@ class ForumSignup(models.Model):
 
 class ForumMeeting(models.Model):
     """A proposed/confirmed meeting between two connected users during a
-    specific ForumWindow that both are signed up for."""
+    specific ForumWindow the proposer is signed up for. The invitee joins the
+    forum by confirming (see accept_signup)."""
 
     PROPOSED = 'proposed'
     CONFIRMED = 'confirmed'
@@ -959,10 +979,11 @@ class ForumMeeting(models.Model):
         self.save(update_fields=['status', 'updated_at'])
 
     @classmethod
-    def proposable_windows(cls, conversation, proposer):
-        """Future windows `proposer` can offer: from published forums *they*
-        are signed up for, minus windows already holding a live meeting in this
-        conversation. Past windows (and so ended forums) are excluded.
+    def candidate_windows(cls, proposer):
+        """Future windows from published forums `proposer` is signed up for.
+
+        Conversation-independent, so list pages can evaluate it once for many
+        connections. Past windows (and so ended forums) are excluded.
 
         The invitee does not need to be signed up - confirming the meeting
         signs them up for the forum (see ForumMeeting.accept_signup).
@@ -970,15 +991,22 @@ class ForumMeeting(models.Model):
         proposer_forum_ids = ForumSignup.objects.filter(
             user=proposer, forum__status=Forum.PUBLISHED,
         ).values_list('forum_id', flat=True)
-        taken = cls.objects.filter(
+        return ForumWindow.objects.filter(
+            forum_id__in=proposer_forum_ids, starts_at__gt=timezone.now(),
+        ).select_related('forum')
+
+    @classmethod
+    def taken_window_ids(cls, conversation):
+        """Windows already holding a live meeting in `conversation`."""
+        return cls.objects.filter(
             conversation=conversation, status__in=cls.LIVE_STATUSES,
         ).values_list('window_id', flat=True)
-        return (
-            ForumWindow.objects.filter(
-                forum_id__in=proposer_forum_ids, starts_at__gt=timezone.now(),
-            )
-            .exclude(id__in=taken)
-            .select_related('forum')
+
+    @classmethod
+    def proposable_windows(cls, conversation, proposer):
+        """`candidate_windows` minus windows already taken in this conversation."""
+        return cls.candidate_windows(proposer).exclude(
+            id__in=cls.taken_window_ids(conversation)
         )
 
     def invitee_needs_signup(self):

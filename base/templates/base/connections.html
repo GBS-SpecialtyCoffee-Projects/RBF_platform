@@ -21,75 +21,103 @@
 
         <h3 class="mb-3">My Connections</h3>
 
-        <!-- Incoming requests -->
         <div class="card shadow-sm mb-4">
-            <div class="card-header fw-semibold">Requests to you ({{ incoming_connections|length }})</div>
-            <div class="card-body">
-                {% for conn in incoming_connections %}
-                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded border">
-                        <div>
-                            <a href="{% url 'farmer_profile' conn.other_user.id %}"><strong>{{ conn.other_user.farmer_profile.firstname }} {{ conn.other_user.farmer_profile.lastname }}</strong></a>
-                            {% if conn.message %}<div class="text-muted small">{{ conn.message|truncatewords:30 }}</div>{% endif %}
-                        </div>
-                        <div class="d-flex">
-                            <form method="post" action="{% url 'manage_meeting_request' conn.id 'accept' %}" class="me-2">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-success">Accept</button>
-                            </form>
-                            <form method="post" action="{% url 'manage_meeting_request' conn.id 'reject' %}">
-                                {% csrf_token %}
-                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Reject</button>
-                            </form>
-                        </div>
-                    </div>
-                {% empty %}
-                    <p class="text-muted mb-0">No incoming requests.</p>
-                {% endfor %}
-            </div>
-        </div>
+            <ul class="nav connection-tabs" id="connectionTabs" role="tablist">
+                <li class="nav-item flex-fill text-center" role="presentation">
+                    <button class="nav-link active" id="connected-tab" data-bs-toggle="tab"
+                            data-bs-target="#connected-pane" type="button" role="tab"
+                            aria-controls="connected-pane" aria-selected="true">
+                        <span class="tab-label">Connected {% if active_connections %}<span class="tab-count">{{ active_connections|length }}</span>{% endif %}</span>
+                    </button>
+                </li>
+                <li class="nav-item flex-fill text-center" role="presentation">
+                    <button class="nav-link" id="incoming-tab" data-bs-toggle="tab"
+                            data-bs-target="#incoming-pane" type="button" role="tab"
+                            aria-controls="incoming-pane" aria-selected="false">
+                        <span class="tab-label">Requests to you {% if incoming_connections %}<span class="tab-count">{{ incoming_connections|length }}</span>{% endif %}</span>
+                    </button>
+                </li>
+                <li class="nav-item flex-fill text-center" role="presentation">
+                    <button class="nav-link" id="sent-tab" data-bs-toggle="tab"
+                            data-bs-target="#sent-pane" type="button" role="tab"
+                            aria-controls="sent-pane" aria-selected="false">
+                        <span class="tab-label">Requests you sent {% if sent_connections %}<span class="tab-count">{{ sent_connections|length }}</span>{% endif %}</span>
+                    </button>
+                </li>
+            </ul>
 
-        <!-- Sent requests -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header fw-semibold">Requests you sent ({{ sent_connections|length }})</div>
-            <div class="card-body">
-                {% for conn in sent_connections %}
-                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded border">
-                        <div>
-                            <a href="{% url 'farmer_profile' conn.other_user.id %}"><strong>{{ conn.other_user.farmer_profile.firstname }} {{ conn.other_user.farmer_profile.lastname }}</strong></a>
-                            <span class="badge bg-secondary ms-2">Pending</span>
-                        </div>
-                        <form method="post" action="{% url 'manage_meeting_request' conn.id 'withdraw' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-secondary">Withdraw</button>
-                        </form>
-                    </div>
-                {% empty %}
-                    <p class="text-muted mb-0">You haven't sent any requests. <a href="{% url 'connection_farmers' %}">Browse producers</a> to get started.</p>
-                {% endfor %}
-            </div>
-        </div>
+            <div class="card-body tab-content">
 
-        <!-- Active connections -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header fw-semibold">Connected ({{ active_connections|length }})</div>
-            <div class="card-body">
-                {% for conn in active_connections %}
-                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded border">
-                        <div>
-                            <a href="{% url 'farmer_profile' conn.other_user.id %}"><strong>{{ conn.other_user.farmer_profile.firstname }} {{ conn.other_user.farmer_profile.lastname }}</strong></a>
-                            <span class="badge bg-success ms-2">Connected</span>
+                <!-- Active connections -->
+                <div class="tab-pane fade show active" id="connected-pane" role="tabpanel" aria-labelledby="connected-tab">
+                    {% for conn in active_connections %}
+                        <div class="mb-2 p-2 rounded border">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a href="{% url 'farmer_profile' conn.other_user.id %}"><strong>{{ conn.other_user.farmer_profile.firstname }} {{ conn.other_user.farmer_profile.lastname }}</strong></a>
+                                    <span class="badge bg-success ms-2">Connected</span>
+                                </div>
+                                <div class="d-flex">
+                                    <a href="{% url 'chat_thread' conn.other_user.id %}" class="btn btn-sm btn-primary me-2">Message</a>
+                                    <form method="post" action="{% url 'manage_meeting_request' conn.id 'disconnect' %}">
+                                        {% csrf_token %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Disconnect</button>
+                                    </form>
+                                </div>
+                            </div>
+                            {% if conn.live_meetings or conn.proposable_windows %}
+                            <div class="mt-2 pt-2 border-top">
+                                {% include 'base/partials/connection_meetings.html' with other_user=conn.other_user meetings=conn.live_meetings proposable_windows=conn.proposable_windows forum_to_join=upcoming_forum %}
+                            </div>
+                            {% endif %}
                         </div>
-                        <div class="d-flex">
-                            <a href="{% url 'chat_thread' conn.other_user.id %}" class="btn btn-sm btn-primary me-2">Message</a>
-                            <form method="post" action="{% url 'manage_meeting_request' conn.id 'disconnect' %}">
+                    {% empty %}
+                        <p class="text-muted mb-0">No active connections yet.</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Incoming requests -->
+                <div class="tab-pane fade" id="incoming-pane" role="tabpanel" aria-labelledby="incoming-tab">
+                    {% for conn in incoming_connections %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded border">
+                            <div>
+                                <a href="{% url 'farmer_profile' conn.other_user.id %}"><strong>{{ conn.other_user.farmer_profile.firstname }} {{ conn.other_user.farmer_profile.lastname }}</strong></a>
+                                {% if conn.message %}<div class="text-muted small">{{ conn.message|truncatewords:30 }}</div>{% endif %}
+                            </div>
+                            <div class="d-flex">
+                                <form method="post" action="{% url 'manage_meeting_request' conn.id 'accept' %}" class="me-2">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                                </form>
+                                <form method="post" action="{% url 'manage_meeting_request' conn.id 'reject' %}">
+                                    {% csrf_token %}
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Reject</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted mb-0">No incoming requests.</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Sent requests -->
+                <div class="tab-pane fade" id="sent-pane" role="tabpanel" aria-labelledby="sent-tab">
+                    {% for conn in sent_connections %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded border">
+                            <div>
+                                <a href="{% url 'farmer_profile' conn.other_user.id %}"><strong>{{ conn.other_user.farmer_profile.firstname }} {{ conn.other_user.farmer_profile.lastname }}</strong></a>
+                                <span class="badge bg-secondary ms-2">Pending</span>
+                            </div>
+                            <form method="post" action="{% url 'manage_meeting_request' conn.id 'withdraw' %}">
                                 {% csrf_token %}
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectConfirmModal">Disconnect</button>
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Withdraw</button>
                             </form>
                         </div>
-                    </div>
-                {% empty %}
-                    <p class="text-muted mb-0">No active connections yet.</p>
-                {% endfor %}
+                    {% empty %}
+                        <p class="text-muted mb-0">You haven't sent any requests. <a href="{% url 'connection_farmers' %}">Browse producers</a> to get started.</p>
+                    {% endfor %}
+                </div>
+
             </div>
         </div>
     </div>

@@ -1,6 +1,8 @@
 {% extends 'base/emails/_base_email.html' %}
+{% load i18n %}
 {% block content %}
-<p style="margin:0 0 16px 0;">Hi {{ recipient_name }},</p>
+<p style="margin:0 0 16px 0;">{% blocktrans with name=recipient_name %}Hi {{ name }},{% endblocktrans %}</p>
+{# The body is composed by an admin, so it is sent through verbatim, untranslated. #}
 <div style="margin:0 0 16px 0;">{{ admin_email.body|linebreaks }}</div>
-<p style="margin:0;">— The Coffee Circuit team</p>
+<p style="margin:0;">{% trans "— The Coffee Circuit team" %}</p>
 {% endblock %}

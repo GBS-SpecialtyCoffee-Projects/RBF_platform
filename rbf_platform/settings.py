@@ -60,6 +60,8 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     # 'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # Django requires LocaleMiddleware after SessionMiddleware, before CommonMiddleware.
+    'django.middleware.locale.LocaleMiddleware',
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -67,7 +69,6 @@ MIDDLEWARE = [
     # Needs the messages framework, so it must come after MessageMiddleware.
     'base.middleware.uploads.OversizedUploadMiddleware',
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'django.middleware.locale.LocaleMiddleware',
     'base.middleware.auth.AuthMiddleware',
     'base.middleware.audit.AuditMiddleware',
 ]
@@ -178,15 +179,17 @@ LANGUAGE_CODE = 'en-us'
 USE_I18N = True
 USE_TZ = True
 
+# Languages a user may pick as their preferred email language. Adding one here
+# is the whole switch-on: the details-page dropdown reads this at render time.
+# Each needs a catalog at base/locale/<code>/LC_MESSAGES/django.po; anything
+# untranslated there falls back to English.
 LANGUAGES = [
     ('en', 'English'),
-    ('zh-hans', 'Simplified Chinese'),
+    ('es', 'Spanish'),
 ]
 
 
 TIME_ZONE = "UTC"
-
-USE_I18N = True
 
 USE_TZ = True
 
@@ -253,7 +256,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 #AUTHENTICATION_BACKENDS = ['base.backend.EmailBackend']
 LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale'),
+    os.path.join(BASE_DIR, 'base', 'locale'),
 ]
 
 

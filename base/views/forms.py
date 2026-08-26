@@ -1,6 +1,7 @@
 # forms.py
 
 from django import forms
+from django.conf import settings
 from base.models import FarmerPhoto,Roaster, RoasterPhoto, User, Farmer, MeetingRequest,Story, Resource, Forum, ForumWindow, AdminEmail
 from base.validators import IMAGE_INPUT_ATTRS
 from django.utils.translation import gettext_lazy as _
@@ -589,6 +590,37 @@ class StoryForm(forms.ModelForm):
         labels = {
             "story_text": "Story text",
             'language': 'Story Language',}
+
+
+class PreferredLanguageForm(forms.ModelForm):
+    """The language we email this user in.
+
+    Choices are read from settings.LANGUAGES at render time, so adding a
+    language is a settings change with no migration and no form change.
+    """
+
+    class Meta:
+        model = User
+        fields = ['preferred_language']
+        labels = {'preferred_language': 'Preferred Communication language'}
+        widgets = {
+            'preferred_language': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['preferred_language'].widget.choices = settings.LANGUAGES
+        # Optional so that a submit which omits the field -- a partial form, or
+        # a caller that predates it -- leaves the preference alone instead of
+        # invalidating the whole page's save.
+        self.fields['preferred_language'].required = False
+
+    def clean_preferred_language(self):
+        return (
+            self.cleaned_data.get('preferred_language')
+            or self.instance.preferred_language
+            or settings.LANGUAGE_CODE
+        )
 
 
 class ResourceForm(forms.ModelForm):
