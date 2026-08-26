@@ -1,10 +1,11 @@
 {% extends 'base/emails/_base_email.html' %}
+{% load i18n %}
 {% block content %}
-<p style="margin:0 0 16px 0;">Hi {{ recipient_name }},</p>
-<p style="margin:0 0 16px 0;">Welcome to Coffee Circuit — the place where coffee roasters and producers find each other.</p>
+<p style="margin:0 0 16px 0;">{% blocktrans with name=recipient_name %}Hi {{ name }},{% endblocktrans %}</p>
+<p style="margin:0 0 16px 0;">{% trans "Welcome to Coffee Circuit — the place where coffee roasters and producers find each other." %}</p>
 {% if group == 'farmer' %}
-<p style="margin:0;">To get started, finish your profile and share your story so roasters can discover you.</p>
+<p style="margin:0;">{% trans "To get started, finish your profile and share your story so roasters can discover you." %}</p>
 {% else %}
-<p style="margin:0;">To get started, finish your profile and start browsing producers to connect with.</p>
+<p style="margin:0;">{% trans "To get started, finish your profile and start browsing producers to connect with." %}</p>
 {% endif %}
 {% endblock %}

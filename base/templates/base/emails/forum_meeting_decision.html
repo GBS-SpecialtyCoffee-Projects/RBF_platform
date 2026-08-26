@@ -1,13 +1,14 @@
 {% extends 'base/emails/_base_email.html' %}
+{% load i18n %}
 {% block content %}
-<p style="margin:0 0 16px 0;">Hi {{ proposer_name }},</p>
+<p style="margin:0 0 16px 0;">{% blocktrans with name=proposer_name %}Hi {{ name }},{% endblocktrans %}</p>
+{% if event == 'confirmed' %}
+<p style="margin:0 0 16px 0;">{% blocktrans with name=invitee_name title=forum.title %}<strong>{{ name }}</strong> confirmed your proposed meeting time for <strong>{{ title }}</strong>.{% endblocktrans %}</p>
+{% else %}
+<p style="margin:0 0 16px 0;">{% blocktrans with name=invitee_name title=forum.title %}<strong>{{ name }}</strong> declined your proposed meeting time for <strong>{{ title }}</strong>.{% endblocktrans %}</p>
+{% endif %}
 <p style="margin:0 0 16px 0;">
-    <strong>{{ invitee_name }}</strong>
-    {% if event == 'confirmed' %}confirmed{% else %}declined{% endif %}
-    your proposed meeting time for <strong>{{ forum.title }}</strong>.
+    <strong>{% trans "When:" %}</strong> {{ window.starts_at|date:"M d, Y H:i" }} &ndash; {{ window.ends_at|date:"H:i" }}
 </p>
-<p style="margin:0 0 16px 0;">
-    <strong>When:</strong> {{ window.starts_at|date:"M d, Y H:i" }} &ndash; {{ window.ends_at|date:"H:i" }}
-</p>
-<p style="margin:0;">Open your chat for details.</p>
+<p style="margin:0;">{% trans "Open your chat for details." %}</p>
 {% endblock %}

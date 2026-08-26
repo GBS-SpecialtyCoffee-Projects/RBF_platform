@@ -1,14 +1,15 @@
 {% extends 'base/emails/_base_email.html' %}
+{% load i18n %}
 {% block content %}
-<p style="margin:0 0 16px 0;">Hi {{ recipient_name }},</p>
-<p style="margin:0 0 16px 0;">Your meeting with <strong>{{ other_name }}</strong> for <strong>{{ forum.title }}</strong> is confirmed. A calendar invite is attached to this email.</p>
+<p style="margin:0 0 16px 0;">{% blocktrans with name=recipient_name %}Hi {{ name }},{% endblocktrans %}</p>
+<p style="margin:0 0 16px 0;">{% blocktrans with name=other_name title=forum.title %}Your meeting with <strong>{{ name }}</strong> for <strong>{{ title }}</strong> is confirmed. A calendar invite is attached to this email.{% endblocktrans %}</p>
 <p style="margin:0 0 16px 0;">
-    <strong>When:</strong> {{ window.starts_at|date:"M d, Y H:i" }} &ndash; {{ window.ends_at|date:"H:i" }}
+    <strong>{% trans "When:" %}</strong> {{ window.starts_at|date:"M d, Y H:i" }} &ndash; {{ window.ends_at|date:"H:i" }}
 </p>
 {% if meeting.meeting_link %}
 <p style="margin:0 0 16px 0;">
-    <strong>Join:</strong> <a href="{{ meeting.meeting_link }}">{{ meeting.meeting_link }}</a>
+    <strong>{% trans "Join:" %}</strong> <a href="{{ meeting.meeting_link }}">{{ meeting.meeting_link }}</a>
 </p>
 {% endif %}
-<p style="margin:0;">Add the attached invite to your calendar so you don't miss it.</p>
+<p style="margin:0;">{% trans "Add the attached invite to your calendar so you don't miss it." %}</p>
 {% endblock %}
