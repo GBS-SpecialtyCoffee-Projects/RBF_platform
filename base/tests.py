@@ -1382,7 +1382,7 @@ class AdminStaffAccessTests(TestCase):
 
     STAFF_PAGES = [
         'admin_dashboard', 'admin_farmers', 'admin_roasters', 'admin_users',
-        'admin_create', 'admin_audit_log', 'admin_pending_requests',
+        'admin_audit_log', 'admin_pending_requests',
         'admin_interactions', 'admin_resources', 'admin_forums', 'admin_meetings',
     ]
 
@@ -1408,24 +1408,19 @@ class AdminStaffAccessTests(TestCase):
                 resp = self.client.get(reverse(name))
                 self.assertEqual(resp.status_code, 302)
 
-    def test_staff_can_toggle_another_admin(self):
-        other = User.objects.create(
-            email='other@example.com', username='other', is_staff=True,
-        )
-        self.client.force_login(self.staff)
-        self.client.post(reverse('admin_toggle', args=[other.id]))
-        other.refresh_from_db()
-        self.assertFalse(other.is_staff)
 
-    def test_superuser_accounts_stay_protected_from_toggle(self):
-        superuser = User.objects.create(
-            email='super@example.com', username='super',
-            is_staff=True, is_superuser=True,
+class DjangoAdminUserChangeTests(TestCase):
+    """Superusers can open a user in Django admin to grant staff access."""
+
+    def test_user_change_page_loads(self):
+        superuser = User.objects.create_superuser(
+            email='super@example.com', password='pass', username='super',
         )
-        self.client.force_login(self.staff)
-        self.client.post(reverse('admin_toggle', args=[superuser.id]))
-        superuser.refresh_from_db()
-        self.assertTrue(superuser.is_staff)
+        self.client.force_login(superuser)
+        resp = self.client.get(
+            reverse('admin:base_user_change', args=[superuser.id])
+        )
+        self.assertEqual(resp.status_code, 200)
 
 
 class AdminPendingRequestsTests(TestCase):

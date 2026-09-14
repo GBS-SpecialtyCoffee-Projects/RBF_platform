@@ -24,7 +24,7 @@ from base.models import (
 from base.notifications import notify_admin_message, notify_meeting_calendar_invite
 from base.profile_history import record_field_change, record_form_change
 from .forms import (
-    FarmerForm, RoasterForm, SigninForm, AdminCreateForm, ResourceForm,
+    FarmerForm, RoasterForm, SigninForm, ResourceForm,
     ForumForm, ForumWindowFormSet, AdminEmailForm,
 )
 
@@ -251,42 +251,6 @@ def admin_roaster_detail(request, user_id):
 def admin_users(request):
     admins = User.objects.filter(is_staff=True).order_by('-date_joined')
     return render(request, 'base/platform_admin/admins.html', {'admins': admins})
-
-
-@admin_required
-def admin_create(request):
-    if request.method == 'POST':
-        form = AdminCreateForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            user = User.objects.create_user(
-                email=email,
-                password=form.cleaned_data['password'],
-                username=email,
-            )
-            user.is_staff = True
-            user.save(update_fields=['is_staff'])
-            messages.success(request, f'Admin account created for {user.email}.')
-            return redirect('admin_users')
-    else:
-        form = AdminCreateForm()
-    return render(request, 'base/platform_admin/admin_create.html', {'form': form})
-
-
-@admin_required
-def admin_toggle(request, user_id):
-    if request.method == 'POST':
-        user = get_object_or_404(User, id=user_id)
-        if user == request.user:
-            messages.error(request, 'You cannot change your own admin status.')
-        elif user.is_superuser:
-            messages.error(request, 'Cannot modify a super admin.')
-        else:
-            user.is_staff = not user.is_staff
-            user.save(update_fields=['is_staff'])
-            status = 'granted' if user.is_staff else 'revoked'
-            messages.success(request, f'Admin access {status} for {user.email}.')
-    return redirect('admin_users')
 
 
 @admin_required
