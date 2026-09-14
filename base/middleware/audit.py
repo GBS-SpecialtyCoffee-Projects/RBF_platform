@@ -24,8 +24,6 @@ URL_ACTIONS = {
     'roaster_details': AuditAction.COMPLETE_DETAILS,
     'admin_farmer_detail': AuditAction.UPDATE_PROFILE,
     'admin_roaster_detail': AuditAction.UPDATE_PROFILE,
-    'admin_create': AuditAction.CREATE_ADMIN,
-    'admin_toggle': AuditAction.TOGGLE_ADMIN,
 }
 
 
