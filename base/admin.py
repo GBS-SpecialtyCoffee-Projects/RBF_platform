@@ -14,6 +14,7 @@ class CustomUserAdmin(BaseUserAdmin):
         ('Permissions', {'fields': ('is_staff', 'is_superuser')}),
         ('Important dates', {'fields': ('last_login', 'date_joined', 'updated_date')}),
     )
+    readonly_fields = ('date_joined', 'updated_date')
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
