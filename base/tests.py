@@ -1423,6 +1423,69 @@ class DjangoAdminUserChangeTests(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
+class AdminPendingMeetingsTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create(
+            email='staff@example.com', username='staff', is_staff=True,
+        )
+        self.roaster = User.objects.create(
+            email='roaster@example.com', group='roaster', username='roasteruser',
+        )
+        self.farmer = User.objects.create(
+            email='farmer@example.com', group='farmer', username='farmeruser',
+        )
+        self.conversation = Conversation.objects.create(
+            roaster=self.roaster, farmer=self.farmer,
+        )
+        self.forum = Forum.objects.create(title='Harvest', status=Forum.PUBLISHED)
+
+    def _meeting(self, offset_days, status, proposed_by=None):
+        now = timezone.now()
+        window = ForumWindow.objects.create(
+            forum=self.forum,
+            starts_at=now + timedelta(days=offset_days),
+            ends_at=now + timedelta(days=offset_days, hours=1),
+        )
+        return ForumMeeting.objects.create(
+            conversation=self.conversation, window=window,
+            proposed_by=proposed_by or self.roaster, status=status,
+        )
+
+    def _rows(self):
+        self.client.force_login(self.staff)
+        resp = self.client.get(reverse('admin_pending_meetings'))
+        self.assertEqual(resp.status_code, 200)
+        return list(resp.context['meetings'])
+
+    def test_lists_only_upcoming_proposed_meetings(self):
+        pending = self._meeting(2, ForumMeeting.PROPOSED)
+        self._meeting(3, ForumMeeting.CONFIRMED)
+        self._meeting(4, ForumMeeting.DECLINED)
+        self._meeting(-1, ForumMeeting.PROPOSED)  # window already passed
+
+        self.assertEqual([m.id for m in self._rows()], [pending.id])
+
+    def test_longest_waiting_first(self):
+        first = self._meeting(2, ForumMeeting.PROPOSED)
+        second = self._meeting(3, ForumMeeting.PROPOSED)
+        ForumMeeting.objects.filter(id=first.id).update(
+            created_at=timezone.now() - timedelta(days=5),
+        )
+
+        self.assertEqual([m.id for m in self._rows()], [first.id, second.id])
+
+    def test_shows_who_must_respond(self):
+        self._meeting(2, ForumMeeting.PROPOSED, proposed_by=self.farmer)
+
+        row = self._rows()[0]
+        self.assertEqual(row.invitee, self.roaster)
+
+    def test_non_staff_redirected(self):
+        self.client.force_login(self.roaster)
+        resp = self.client.get(reverse('admin_pending_meetings'))
+        self.assertEqual(resp.status_code, 302)
+
+
 class AdminPendingRequestsTests(TestCase):
     def setUp(self):
         self.staff = User.objects.create(
@@ -1571,6 +1634,36 @@ class AdminEngagementTests(TestCase):
         for email in ('roaster@example.com', 'meeter@example.com'):
             self.assertEqual(rows[email].meetings_scheduled, 1)
             self.assertEqual(rows[email].meetings_pending, 1)
+
+    def test_dashboard_counts_upcoming_forum_meetings(self):
+        conversation = Conversation.objects.create(
+            roaster=self.roaster, farmer=self._farmer('dash'),
+        )
+        forum = Forum.objects.create(title='Harvest', status=Forum.PUBLISHED)
+        now = timezone.now()
+
+        def meeting(offset_days, status):
+            window = ForumWindow.objects.create(
+                forum=forum,
+                starts_at=now + timedelta(days=offset_days),
+                ends_at=now + timedelta(days=offset_days, hours=1),
+            )
+            ForumMeeting.objects.create(
+                conversation=conversation, window=window,
+                proposed_by=self.roaster, status=status,
+            )
+
+        meeting(1, ForumMeeting.CONFIRMED)
+        meeting(2, ForumMeeting.CONFIRMED)
+        meeting(3, ForumMeeting.PROPOSED)
+        meeting(-1, ForumMeeting.CONFIRMED)  # past: excluded
+        meeting(4, ForumMeeting.DECLINED)
+
+        self.client.force_login(self.staff)
+        resp = self.client.get(reverse('admin_dashboard'))
+        self.assertEqual(
+            resp.context['meeting_counts'], {'pending': 1, 'confirmed': 2},
+        )
 
     def test_user_with_no_activity_shows_zeros(self):
         self._farmer('quiet')

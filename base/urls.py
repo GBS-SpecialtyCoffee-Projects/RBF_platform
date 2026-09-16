@@ -26,6 +26,7 @@ urlpatterns = [
     path('platform-admin/forums/<int:forum_id>/edit/', platform_admin.admin_forum_edit, name='admin_forum_edit'),
     path('platform-admin/forums/<int:forum_id>/delete/', platform_admin.admin_forum_delete, name='admin_forum_delete'),
     path('platform-admin/meetings/', platform_admin.admin_meetings, name='admin_meetings'),
+    path('platform-admin/meetings/pending/', platform_admin.admin_pending_meetings, name='admin_pending_meetings'),
     path('platform-admin/meetings/<int:meeting_id>/send-invite/', platform_admin.admin_meeting_send_invite, name='admin_meeting_send_invite'),
     path('', account.landing_page, name='landing_page'),
     path('onboarding/', account.farmer_onboarding, name='onboarding'),
