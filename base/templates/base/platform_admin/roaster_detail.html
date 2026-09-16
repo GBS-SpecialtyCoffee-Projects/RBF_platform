@@ -25,11 +25,16 @@
             <div class="text-muted small">{{ roaster.firstname }} {{ roaster.lastname }} &bull; {{ roaster.job_title }}</div>
             <div class="text-muted small">{{ roaster.user.email }}</div>
         </div>
-        <div class="ms-auto">
+        <div class="ms-auto d-flex gap-2 flex-wrap">
             {% if roaster.is_details_filled %}
                 <span class="badge bg-success fs-6 px-3 py-2">Profile Complete</span>
             {% else %}
                 <span class="badge bg-warning text-dark fs-6 px-3 py-2">Profile Incomplete</span>
+            {% endif %}
+            {% if roaster.is_profile_published %}
+                <span class="badge bg-info fs-6 px-3 py-2">Published</span>
+            {% else %}
+                <span class="badge bg-secondary fs-6 px-3 py-2">Unpublished</span>
             {% endif %}
         </div>
     </div>
@@ -160,9 +165,13 @@
                 <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="form_type" value="status">
-                    <div class="form-check mb-4">
+                    <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" name="is_details_filled" id="is_details_filled" {% if roaster.is_details_filled %}checked{% endif %}>
                         <label class="form-check-label" for="is_details_filled">Profile complete</label>
+                    </div>
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" name="is_profile_published" id="is_profile_published" {% if roaster.is_profile_published %}checked{% endif %}>
+                        <label class="form-check-label" for="is_profile_published">Profile published</label>
                     </div>
                     <button type="submit" class="btn btn-sm btn-outline-primary">Update Status</button>
                 </form>

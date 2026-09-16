@@ -238,6 +238,9 @@ class RoasterForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Sourcing preference: optional so onboarding never requires it.
         self.fields['min_lot_size'].required = False
+        # Buyers not involved in purchase decisions have no volume to report,
+        # so this must never block account creation.
+        self.fields['purchase_volume'].required = False
 
 class RoasterPhotoForm(forms.ModelForm):
     class Meta:
@@ -477,6 +480,7 @@ class RoasterSourcingForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Sourcing preference: optional so editing the profile never requires it.
         self.fields['min_lot_size'].required = False
+        self.fields['purchase_volume'].required = False
 
 class FarmerStoryForm(forms.ModelForm):
     class Meta:

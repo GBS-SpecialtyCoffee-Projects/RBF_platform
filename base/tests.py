@@ -37,7 +37,7 @@ from base.notifications import (
     notify_admin_message, notify_connection_event, notify_forum_meeting_event,
     notify_meeting_event, notify_signup,
 )
-from base.views.forms import PreferredLanguageForm
+from base.views.forms import PreferredLanguageForm, RoasterForm, RoasterSourcingForm
 
 
 User = get_user_model()
@@ -112,6 +112,7 @@ class RoasterViewTests(TestCase):
             firstname='Fiona',
             lastname='Farmer',
             is_details_filled=True,
+            is_profile_published=True,
         )
         Roaster.objects.create(
             user=self.roaster_user,
@@ -119,6 +120,7 @@ class RoasterViewTests(TestCase):
             lastname='Roaster',
             company_name='Beans & Co',
             is_details_filled=True,
+            is_profile_published=True,
         )
 
     def test_farmer_can_view_roaster_profile(self):
@@ -2555,6 +2557,7 @@ class ConnectionNamingTests(TestCase):
         Farmer.objects.create(
             user=self.farmer_user, firstname='Fiona', lastname='Farmer',
             is_details_filled=True,
+            is_profile_published=True,
         )
         self.roaster_user = User.objects.create(
             email='buyer@example.com', group='roaster', username='buyer',
@@ -2564,6 +2567,7 @@ class ConnectionNamingTests(TestCase):
             job_title='Head of Sourcing', company_name='Acme Coffee Co',
             city='Portland', country='United States of America',
             is_details_filled=True,
+            is_profile_published=True,
         )
         self.client.force_login(self.farmer_user)
 
@@ -2801,6 +2805,7 @@ class StaffAccountVisibilityTests(TestCase):
         Roaster.objects.create(
             user=self.roaster_user, firstname='Roni', lastname='Roaster',
             company_name='Beans & Co', country='Kenya', is_details_filled=True,
+            is_profile_published=True,
         )
         self.farmer_user = self._make_user('farmer@example.com', 'farmer')
         self.farmer = self._make_farmer(self.farmer_user, 'Fiona', 'Ethiopia')
@@ -2818,7 +2823,7 @@ class StaffAccountVisibilityTests(TestCase):
         Roaster.objects.create(
             user=self.staff_roaster_user, firstname='Stan', lastname='Staff',
             company_name='Staff Roastery', country='Brazil',
-            is_details_filled=True,
+            is_details_filled=True, is_profile_published=True,
         )
 
     def _make_user(self, email, group, is_staff=False):
@@ -2834,7 +2839,7 @@ class StaffAccountVisibilityTests(TestCase):
         farmer = Farmer.objects.create(
             user=user, firstname=firstname, lastname='Farmer',
             farm_name=f'{firstname} Farm', country=country,
-            is_details_filled=True,
+            is_details_filled=True, is_profile_published=True,
         )
         Story.objects.create(
             user=user, farmer=farmer, language=self.language,
@@ -3221,3 +3226,571 @@ class PreferredLanguageFormTests(TestCase):
         })
         self.user.refresh_from_db()
         self.assertEqual(self.user.preferred_language, 'es')
+
+
+class RoasterPurchaseInvolvementTests(TestCase):
+    """A buyer who is not involved in purchase decisions still gets an account.
+
+    They simply start out unpublished, and so are not discoverable.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create(
+            email='buyer@example.com', group='roaster', username='buyer',
+        )
+        self.user.set_password('pw')
+        self.user.save()
+        Roaster.objects.create(user=self.user)
+
+    def _details(self, involvement, **extra):
+        data = {
+            'firstname': 'Riley', 'lastname': 'Buyer', 'job_title': 'Owner',
+            'company_name': 'Beans & Co', 'country': 'Kenya',
+            'state': 'Nairobi', 'city': 'Nairobi',
+            'coffee_purchase_involvement': involvement,
+            'company_description': 'We roast.', 'company_approach': 'Direct.',
+            'company_goals': 'Find producers.',
+        }
+        data.update(extra)
+        return data
+
+    def test_form_is_valid_without_a_purchase_volume(self):
+        form = RoasterForm(self._details('False'))
+        self.assertTrue(form.is_valid(), form.errors.as_json())
+        self.assertIs(form.cleaned_data['coffee_purchase_involvement'], False)
+
+    def test_answering_no_creates_the_account_unpublished(self):
+        self.client.login(email='buyer@example.com', password='pw')
+        response = self.client.post(reverse('roaster_details'), self._details('False'))
+
+        self.assertRedirects(response, reverse('roaster_dashboard'))
+        roaster = self.user.roaster_profile
+        roaster.refresh_from_db()
+        self.assertTrue(roaster.is_details_filled)
+        self.assertFalse(roaster.is_profile_published)
+
+    def test_answering_yes_still_waits_for_admin_verification(self):
+        self.client.login(email='buyer@example.com', password='pw')
+        self.client.post(
+            reverse('roaster_details'), self._details('True', purchase_volume='1200'),
+        )
+        roaster = self.user.roaster_profile
+        roaster.refresh_from_db()
+        self.assertTrue(roaster.is_details_filled)
+        self.assertFalse(roaster.is_profile_published)
+
+    def test_sourcing_form_does_not_require_purchase_volume(self):
+        """So a 'No' buyer can still edit their profile from the dashboard."""
+        form = RoasterSourcingForm({
+            'company_name': 'Beans & Co', 'country': 'Kenya',
+            'state': 'Nairobi', 'city': 'Nairobi',
+            'company_description': 'x', 'company_approach': 'y',
+            'company_goals': 'z',
+        })
+        self.assertTrue(form.is_valid(), form.errors.as_json())
+
+
+class ProfileVisibilityTests(TestCase):
+    """is_profile_published is the single gate on being discovered."""
+
+    def setUp(self):
+        self.language = Language.objects.create(name='English')
+
+        self.farmer_user = self._user('farmer@example.com', 'farmer')
+        self.farmer = Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            farm_name='Finca Fiona', country='Ethiopia',
+            is_details_filled=True, is_profile_published=True,
+        )
+        Story.objects.create(
+            user=self.farmer_user, farmer=self.farmer, language=self.language,
+            story_text='Fiona grows coffee.',
+        )
+        self.roaster_user = self._user('roaster@example.com', 'roaster')
+        self.roaster = Roaster.objects.create(
+            user=self.roaster_user, firstname='Roni', lastname='Roaster',
+            company_name='Beans & Co', country='Kenya',
+            is_details_filled=True, is_profile_published=True,
+        )
+
+    def _user(self, email, group):
+        user = User.objects.create(
+            email=email, group=group, username=email.split('@')[0],
+        )
+        user.set_password('pw')
+        user.save()
+        return user
+
+    # -- discoverable() -----------------------------------------------------
+
+    def test_unpublished_farmer_is_not_discoverable(self):
+        self.assertIn(self.farmer, Farmer.discoverable())
+        self.farmer.is_profile_published = False
+        self.farmer.save()
+        self.assertNotIn(self.farmer, Farmer.discoverable())
+
+    def test_unpublished_roaster_is_not_discoverable(self):
+        self.assertIn(self.roaster, Roaster.discoverable())
+        self.roaster.is_profile_published = False
+        self.roaster.save()
+        self.assertNotIn(self.roaster, Roaster.discoverable())
+
+    def test_a_story_alone_no_longer_makes_a_farmer_discoverable(self):
+        """The old behaviour: signup created a story and you went live."""
+        self.farmer.is_profile_published = False
+        self.farmer.save()
+        self.assertTrue(self.farmer.farmer_stories.exists())
+        self.assertNotIn(self.farmer, Farmer.discoverable())
+
+    # -- direct profile URLs stay readable ('lists only') -------------------
+
+    def test_unpublished_farmer_profile_still_renders_by_direct_link(self):
+        self.farmer.is_profile_published = False
+        self.farmer.save()
+        self.client.login(email='roaster@example.com', password='pw')
+        response = self.client.get(
+            reverse('farmer_profile', args=[self.farmer_user.id])
+        )
+        self.assertEqual(response.status_code, 200)
+
+    # -- discovery pages ----------------------------------------------------
+
+    def test_unpublished_roaster_is_redirected_from_discovery(self):
+        self.roaster.is_profile_published = False
+        self.roaster.save()
+        self.client.login(email='roaster@example.com', password='pw')
+        response = self.client.get(reverse('connection_farmers'))
+        self.assertRedirects(response, reverse('roaster_dashboard'))
+
+    def test_unpublished_farmer_is_redirected_from_discovery(self):
+        self.farmer.is_profile_published = False
+        self.farmer.save()
+        self.client.login(email='farmer@example.com', password='pw')
+        response = self.client.get(reverse('connection_roasters'))
+        self.assertRedirects(response, reverse('farmer_dashboard'))
+
+    def test_published_user_reaches_discovery(self):
+        self.client.login(email='roaster@example.com', password='pw')
+        self.assertEqual(
+            self.client.get(reverse('connection_farmers')).status_code, 200,
+        )
+
+    # -- connecting ---------------------------------------------------------
+
+    def test_unpublished_user_cannot_send_a_request(self):
+        self.roaster.is_profile_published = False
+        self.roaster.save()
+        self.client.login(email='roaster@example.com', password='pw')
+        self.client.post(reverse('request_meeting', args=[self.farmer_user.id]))
+        self.assertEqual(Connection.objects.count(), 0)
+
+    def test_unpublished_recipient_can_still_accept(self):
+        """Unpublishing must not strand a request that is already pending."""
+        conn = Connection.request(self.roaster_user, self.farmer_user)
+        self.farmer.is_profile_published = False
+        self.farmer.save()
+
+        self.client.login(email='farmer@example.com', password='pw')
+        self.client.post(
+            reverse('manage_connection_request', args=[conn.id, 'accept'])
+        )
+        conn.refresh_from_db()
+        self.assertEqual(conn.status, Connection.ACTIVE)
+
+    # -- farmers can no longer publish themselves ---------------------------
+
+    def test_farmer_dashboard_has_no_publish_button(self):
+        self.client.login(email='farmer@example.com', password='pw')
+        response = self.client.get(reverse('farmer_dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Publish Profile')
+        self.assertNotContains(response, 'Unpublish Profile')
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    EMAIL_FROM='noreply@coffeecircuit.test',
+)
+class ConnectionWithdrawTests(TestCase):
+    """Withdrawing a connection request, and requesting again afterwards."""
+
+    def setUp(self):
+        self.farmer_user = self._user('farmer@example.com', 'farmer')
+        Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', lastname='Farmer',
+            farm_name='Finca', is_details_filled=True, is_profile_published=True,
+        )
+        self.roaster_user = self._user('roaster@example.com', 'roaster')
+        Roaster.objects.create(
+            user=self.roaster_user, firstname='Roni', lastname='Roaster',
+            company_name='Beans & Co', is_details_filled=True,
+            is_profile_published=True,
+        )
+
+    def _user(self, email, group):
+        user = User.objects.create(
+            email=email, group=group, username=email.split('@')[0],
+        )
+        user.set_password('pw')
+        user.save()
+        return user
+
+    def _login(self, user):
+        self.client.login(email=user.email, password='pw')
+
+    def _request(self, sender, recipient, message=''):
+        self._login(sender)
+        return self.client.post(
+            reverse('request_meeting', args=[recipient.id]), {'message': message},
+        )
+
+    def _act(self, user, conn, action):
+        self._login(user)
+        return self.client.post(
+            reverse('manage_meeting_request', args=[conn.id, action]), follow=True,
+        )
+
+    def _messages(self, response):
+        return [str(m) for m in response.context['messages']]
+
+    def _conn(self):
+        return Connection.between(self.roaster_user, self.farmer_user)
+
+    # -- basics -------------------------------------------------------------
+
+    def test_sender_can_withdraw(self):
+        self._request(self.roaster_user, self.farmer_user)
+        self._act(self.roaster_user, self._conn(), 'withdraw')
+        self.assertEqual(self._conn().status, Connection.WITHDRAWN)
+
+    def test_double_withdraw_changes_nothing(self):
+        self._request(self.roaster_user, self.farmer_user)
+        conn = self._conn()
+        self._act(self.roaster_user, conn, 'withdraw')
+        response = self._act(self.roaster_user, conn, 'withdraw')
+        self.assertEqual(self._conn().status, Connection.WITHDRAWN)
+        self.assertIn("This request is no longer pending.", self._messages(response))
+
+    def test_outsider_gets_404(self):
+        self._request(self.roaster_user, self.farmer_user)
+        outsider = self._user('other@example.com', 'roaster')
+        self._login(outsider)
+        response = self.client.post(
+            reverse('manage_meeting_request', args=[self._conn().id, 'withdraw'])
+        )
+        self.assertEqual(response.status_code, 404)
+
+    # -- #1: no repeat email within 24h after a withdrawal -------------------
+
+    def test_rerequest_within_24h_of_withdrawing_does_not_email(self):
+        self._request(self.roaster_user, self.farmer_user)
+        self._act(self.roaster_user, self._conn(), 'withdraw')
+        self.assertEqual(len(mail.outbox), 1)
+
+        self._request(self.roaster_user, self.farmer_user)
+        self.assertEqual(self._conn().status, Connection.PENDING)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_rerequest_after_24h_emails_again(self):
+        self._request(self.roaster_user, self.farmer_user)
+        self._act(self.roaster_user, self._conn(), 'withdraw')
+        Connection.objects.filter(pk=self._conn().pk).update(
+            last_notified_at=timezone.now() - timedelta(hours=25)
+        )
+        self._request(self.roaster_user, self.farmer_user)
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_other_person_requesting_after_a_withdrawal_emails(self):
+        self._request(self.roaster_user, self.farmer_user)
+        self._act(self.roaster_user, self._conn(), 'withdraw')
+        self._request(self.farmer_user, self.roaster_user)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[1].to, [self.roaster_user.email])
+
+    def test_rerequest_after_a_decline_still_emails(self):
+        self._request(self.roaster_user, self.farmer_user)
+        self._act(self.farmer_user, self._conn(), 'reject')
+        outbox_before = len(mail.outbox)
+        self._request(self.roaster_user, self.farmer_user)
+        self.assertEqual(self._conn().status, Connection.PENDING)
+        # The request email to the farmer is sent again.
+        self.assertEqual(
+            [m.to for m in mail.outbox[outbox_before:]], [[self.farmer_user.email]],
+        )
+
+    # -- #2: a re-request doesn't reuse the old message ----------------------
+
+    def test_rerequest_does_not_reuse_the_old_message(self):
+        self._request(self.roaster_user, self.farmer_user, message='First try')
+        self._act(self.roaster_user, self._conn(), 'withdraw')
+        Connection.objects.filter(pk=self._conn().pk).update(last_notified_at=None)
+
+        self._request(self.roaster_user, self.farmer_user)
+        self.assertEqual(self._conn().message, '')
+        self.assertNotIn('First try', mail.outbox[-1].body)
+
+    # -- #4: logging ----------------------------------------------------------
+
+    def test_withdraw_is_logged(self):
+        self._request(self.roaster_user, self.farmer_user)
+        self._act(self.roaster_user, self._conn(), 'withdraw')
+        self.assertTrue(InteractionEvent.objects.filter(
+            event_type=InteractionEventType.CONNECTION_WITHDRAWN,
+            user=self.roaster_user, target_user=self.farmer_user,
+        ).exists())
+
+    def test_disconnect_is_logged(self):
+        self._request(self.roaster_user, self.farmer_user)
+        self._act(self.farmer_user, self._conn(), 'accept')
+        self._act(self.farmer_user, self._conn(), 'disconnect')
+        self.assertEqual(self._conn().status, Connection.DISCONNECTED)
+        self.assertTrue(InteractionEvent.objects.filter(
+            event_type=InteractionEventType.CONNECTION_DISCONNECTED,
+            user=self.farmer_user, target_user=self.roaster_user,
+        ).exists())
+
+    # -- #6: an accept and a withdraw can't both win ---------------------------
+
+    def test_accept_and_withdraw_cannot_both_succeed(self):
+        conn = Connection.request(self.roaster_user, self.farmer_user)
+        stale = Connection.objects.get(pk=conn.pk)
+
+        self.assertTrue(conn.accept())
+        self.assertFalse(stale.withdraw())
+        conn.refresh_from_db()
+        self.assertEqual(conn.status, Connection.ACTIVE)
+
+    # -- #7: clear error messages ---------------------------------------------
+
+    def test_unknown_action_message(self):
+        self._request(self.roaster_user, self.farmer_user)
+        response = self._act(self.roaster_user, self._conn(), 'explode')
+        self.assertIn("Unknown action.", self._messages(response))
+        self.assertEqual(self._conn().status, Connection.PENDING)
+
+    def test_recipient_cannot_withdraw_message(self):
+        self._request(self.roaster_user, self.farmer_user)
+        response = self._act(self.farmer_user, self._conn(), 'withdraw')
+        self.assertIn(
+            "Only the person who sent this request can withdraw it.",
+            self._messages(response),
+        )
+        self.assertEqual(self._conn().status, Connection.PENDING)
+
+    def test_sender_cannot_accept_message(self):
+        self._request(self.roaster_user, self.farmer_user)
+        response = self._act(self.roaster_user, self._conn(), 'accept')
+        self.assertIn(
+            "Only the person who received this request can accept or decline it.",
+            self._messages(response),
+        )
+
+    def test_withdraw_after_accept_message(self):
+        self._request(self.roaster_user, self.farmer_user)
+        self._act(self.farmer_user, self._conn(), 'accept')
+        response = self._act(self.roaster_user, self._conn(), 'withdraw')
+        self.assertIn("This request is no longer pending.", self._messages(response))
+        self.assertEqual(self._conn().status, Connection.ACTIVE)
+
+    def test_disconnect_when_not_connected_message(self):
+        self._request(self.roaster_user, self.farmer_user)
+        response = self._act(self.roaster_user, self._conn(), 'disconnect')
+        self.assertIn(
+            "You are not connected with this user.", self._messages(response),
+        )
+
+
+class InteractionFilterTests(TestCase):
+    """Filters on the admin raw-interactions page."""
+
+    def setUp(self):
+        self.admin = User.objects.create(
+            email='admin@example.com', group='roaster', username='admin',
+            is_staff=True,
+        )
+        self.admin.set_password('pw')
+        self.admin.save()
+        self.sender = User.objects.create(
+            email='sender@example.com', group='roaster', username='sender',
+        )
+        self.recipient = User.objects.create(
+            email='recipient+tag@example.com', group='farmer', username='recip',
+        )
+        InteractionEvent.objects.create(
+            event_type=InteractionEventType.MESSAGE_SENT,
+            user=self.sender, target_user=self.recipient,
+        )
+        self.client.force_login(self.admin)
+
+    def _rows(self, **params):
+        response = self.client.get(reverse('admin_interactions'), params)
+        self.assertEqual(response.status_code, 200)
+        return list(response.context['events'])
+
+    def test_sent_message_filter_matches(self):
+        self.assertEqual(len(self._rows(event_type='message_sent')), 1)
+        self.assertEqual(len(self._rows(event_type='login')), 0)
+
+    def test_user_filter_matches_the_actor(self):
+        self.assertEqual(len(self._rows(user='sender@example.com')), 1)
+
+    def test_user_filter_also_matches_the_target(self):
+        """The target's email is shown in the table, so it must be searchable."""
+        self.assertEqual(len(self._rows(user='recipient+tag@example.com')), 1)
+
+    def test_user_filter_ignores_surrounding_whitespace(self):
+        self.assertEqual(len(self._rows(user='  sender@example.com  ')), 1)
+
+    def test_malformed_date_does_not_error(self):
+        self.assertEqual(len(self._rows(date_from='abc')), 1)
+        response = self.client.get(reverse('admin_interactions'), {'from': 'abc'})
+        self.assertEqual(response.status_code, 200)
+
+    def test_date_range_filters(self):
+        today = timezone.localdate()
+        self.assertEqual(len(self._rows(**{'from': today.isoformat()})), 1)
+        self.assertEqual(len(self._rows(**{'to': today.isoformat()})), 1)
+        tomorrow = (today + timedelta(days=1)).isoformat()
+        self.assertEqual(len(self._rows(**{'from': tomorrow})), 0)
+
+    def test_filter_querystring_is_url_encoded(self):
+        response = self.client.get(
+            reverse('admin_interactions'), {'user': 'recipient+tag@example.com'},
+        )
+        self.assertIn('%2Btag', response.context['filter_qs'])
+
+
+class AdminRoasterPublishedFilterTests(TestCase):
+    """Admins can narrow the roaster list to unpublished (hidden) roasters."""
+
+    def setUp(self):
+        admin = User.objects.create(
+            email='admin@example.com', group='roaster', username='admin',
+            is_staff=True,
+        )
+        self.client.force_login(admin)
+        self.published = self._roaster('pub@example.com', 'Open Roasters', True)
+        self.hidden = self._roaster('hidden@example.com', 'Hidden Roasters', False)
+
+    def _roaster(self, email, company, published):
+        user = User.objects.create(
+            email=email, group='roaster', username=email.split('@')[0],
+        )
+        return Roaster.objects.create(
+            user=user, firstname='Roni', lastname='Roaster',
+            company_name=company, is_details_filled=True,
+            is_profile_published=published,
+        )
+
+    def _listed(self, **params):
+        response = self.client.get(reverse('admin_roasters'), params)
+        self.assertEqual(response.status_code, 200)
+        return set(response.context['roasters'])
+
+    def test_no_filter_lists_everyone(self):
+        self.assertEqual(self._listed(), {self.published, self.hidden})
+
+    def test_unpublished_filter(self):
+        self.assertEqual(self._listed(published='no'), {self.hidden})
+
+    def test_published_filter(self):
+        self.assertEqual(self._listed(published='yes'), {self.published})
+
+    def test_filter_combines_with_search(self):
+        self.assertEqual(self._listed(published='no', q='Hidden'), {self.hidden})
+        self.assertEqual(self._listed(published='no', q='Open'), set())
+
+    def test_unknown_value_is_ignored(self):
+        self.assertEqual(self._listed(published='junk'), {self.published, self.hidden})
+
+
+class AdminVerificationTests(TestCase):
+    """New accounts wait unpublished until an admin verifies them."""
+
+    def setUp(self):
+        self.admin = User.objects.create(
+            email='admin@example.com', group='roaster', username='admin',
+            is_staff=True,
+        )
+        self.client.force_login(self.admin)
+
+    def _user(self, email, group, **extra):
+        return User.objects.create(
+            email=email, group=group, username=email.split('@')[0], **extra,
+        )
+
+    def _roaster(self, email, published, filled=True, **user_extra):
+        return Roaster.objects.create(
+            user=self._user(email, 'roaster', **user_extra),
+            firstname='Roni', lastname='Roaster', company_name=email,
+            is_details_filled=filled, is_profile_published=published,
+        )
+
+    def _farmer(self, email, published, filled=True, **user_extra):
+        return Farmer.objects.create(
+            user=self._user(email, 'farmer', **user_extra),
+            firstname='Fiona', lastname='Farmer', farm_name=email,
+            is_details_filled=filled, is_profile_published=published,
+        )
+
+    def test_farmer_signup_leaves_farmer_unpublished(self):
+        language = Language.objects.create(name='English')
+        user = self._user('newfarmer@example.com', 'farmer')
+        user.set_password('pw')
+        user.save()
+        Farmer.objects.create(user=user)
+        self.client.logout()
+        self.client.login(email='newfarmer@example.com', password='pw')
+        self.client.post(reverse('farmer_details'), {
+            'firstname': 'New', 'lastname': 'Farmer', 'farm_name': 'Finca Nueva',
+            'country': 'Colombia', 'state': 'Huila', 'city': 'Pitalito',
+            'bio': 'We grow coffee.', 'phone_number': '123',
+            'country_code': 'Antigua and Barbuda (+1)',
+            'story_text': 'Our story.', 'language': language.id,
+            'is_member_organization': 'False',
+        })
+        farmer = Farmer.objects.get(user=user)
+        self.assertTrue(farmer.is_details_filled)  # signup really completed
+        self.assertFalse(farmer.is_profile_published)
+
+    def test_dashboard_counts_only_finished_unverified_accounts(self):
+        self._farmer('wait-f@example.com', published=False)
+        self._farmer('live-f@example.com', published=True)
+        self._farmer('half-f@example.com', published=False, filled=False)
+        self._farmer('staff-f@example.com', published=False, is_staff=True)
+        self._roaster('wait-r@example.com', published=False)
+        self._roaster('live-r@example.com', published=True)
+
+        response = self.client.get(reverse('admin_dashboard'))
+        self.assertEqual(response.context['awaiting_farmers'], 1)
+        self.assertEqual(response.context['awaiting_roasters'], 1)
+
+    def test_admin_publishing_a_roaster_makes_them_discoverable(self):
+        roaster = self._roaster('wait@example.com', published=False)
+        self.assertNotIn(roaster, Roaster.discoverable())
+
+        self.client.post(
+            reverse('admin_roaster_detail', args=[roaster.user_id]),
+            {'form_type': 'status', 'is_details_filled': 'on', 'is_profile_published': 'on'},
+        )
+        roaster.refresh_from_db()
+        self.assertTrue(roaster.is_profile_published)
+        self.assertIn(roaster, Roaster.discoverable())
+        self.assertEqual(
+            self.client.get(reverse('admin_dashboard')).context['awaiting_roasters'], 0,
+        )
+
+    # -- farmers list filter --------------------------------------------------
+
+    def _listed_farmers(self, **params):
+        response = self.client.get(reverse('admin_farmers'), params)
+        self.assertEqual(response.status_code, 200)
+        return set(response.context['farmers'])
+
+    def test_farmers_published_filter(self):
+        live = self._farmer('live@example.com', published=True)
+        hidden = self._farmer('hidden@example.com', published=False)
+        self.assertEqual(self._listed_farmers(), {live, hidden})
+        self.assertEqual(self._listed_farmers(published='no'), {hidden})
+        self.assertEqual(self._listed_farmers(published='yes'), {live})
+        self.assertEqual(self._listed_farmers(published='junk'), {live, hidden})

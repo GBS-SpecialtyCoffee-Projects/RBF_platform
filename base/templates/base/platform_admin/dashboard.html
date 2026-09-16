@@ -33,6 +33,26 @@
     </div>
 </div>
 
+<!-- Verification queue -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6">
+        <a href="{% url 'admin_farmers' %}?published=no" class="text-decoration-none">
+            <div class="card stat-card p-3">
+                <div class="text-muted small mb-1">Farmers awaiting verification</div>
+                <div class="fs-3 fw-bold {% if awaiting_farmers %}text-danger{% else %}text-muted{% endif %}">{{ awaiting_farmers }}</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6">
+        <a href="{% url 'admin_roasters' %}?published=no" class="text-decoration-none">
+            <div class="card stat-card p-3">
+                <div class="text-muted small mb-1">Roasters awaiting verification</div>
+                <div class="fs-3 fw-bold {% if awaiting_roasters %}text-danger{% else %}text-muted{% endif %}">{{ awaiting_roasters }}</div>
+            </div>
+        </a>
+    </div>
+</div>
+
 <div class="row g-4">
     <!-- Recent farmers -->
     <div class="col-lg-6">

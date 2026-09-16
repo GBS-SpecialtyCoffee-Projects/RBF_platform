@@ -138,6 +138,7 @@ def roaster_details(request):
             form.save()
             language_form.save()
             roaster.is_details_filled = True
+            # New roasters stay unpublished until an admin verifies them.
             roaster.save()
             return redirect('roaster_dashboard')
         else:

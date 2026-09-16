@@ -114,7 +114,11 @@
                             </form>
                         </div>
                     {% empty %}
+                        {% if request.user.is_discoverable %}
                         <p class="text-muted mb-0">You haven't sent any requests. <a href="{% url 'connection_farmers' %}">Browse producers</a> to get started.</p>
+                        {% else %}
+                        <p class="text-muted mb-0">You haven't sent any requests. Publish your profile to start browsing producers.</p>
+                        {% endif %}
                     {% endfor %}
                 </div>
 
