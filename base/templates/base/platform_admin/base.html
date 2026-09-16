@@ -100,7 +100,10 @@
             <i class="fa-solid fa-calendar-days"></i> Forums
         </a>
         <a href="{% url 'admin_meetings' %}" class="nav-link {% block nav_meetings %}{% endblock %}">
-            <i class="fa-solid fa-video"></i> Meetings
+            <i class="fa-solid fa-video"></i>Confirmed Meetings
+        </a>
+        <a href="{% url 'admin_pending_meetings' %}" class="nav-link {% block nav_pending_meetings %}{% endblock %}">
+            <i class="fa-solid fa-hourglass-half"></i> Pending Meetings
         </a>
         <a href="{% url 'admin_emails' %}" class="nav-link {% block nav_emails %}{% endblock %}">
             <i class="fa-solid fa-envelope"></i> Emails

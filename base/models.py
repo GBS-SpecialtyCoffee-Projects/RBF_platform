@@ -1038,6 +1038,21 @@ class ForumMeeting(models.Model):
         )
 
     @classmethod
+    def proposed_upcoming(cls):
+        """Proposed meetings still awaiting the invitee's answer, longest
+        waiting first."""
+        return (
+            cls.objects.filter(
+                status=cls.PROPOSED, window__starts_at__gt=timezone.now(),
+            )
+            .select_related(
+                'conversation', 'conversation__roaster', 'conversation__farmer',
+                'window', 'window__forum', 'proposed_by',
+            )
+            .order_by('created_at')
+        )
+
+    @classmethod
     def confirmed_upcoming(cls):
         """Confirmed meetings whose window is still in the future — the ones
         platform admins need to set up a call for."""
