@@ -16,7 +16,7 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 
 from base.models import (
-    User, Farmer, Roaster, MeetingRequest, Connection, FarmerPhoto, RoasterPhoto,
+    User, Farmer, Roaster, Connection, FarmerPhoto, RoasterPhoto,
     Language, Story, AuditLog, AuditAction, Resource, Forum, ForumMeeting,
     InteractionEvent, InteractionEventType, ProfileChange, ProfileChangeSource,
     AdminEmail,
@@ -65,8 +65,13 @@ def admin_dashboard(request):
     recent_farmers = Farmer.objects.select_related('user').order_by('-created_at')[:5]
     recent_roasters = Roaster.objects.select_related('user').order_by('-created_at')[:5]
 
-    meeting_requests = MeetingRequest.objects.values('status').annotate(count=Count('status'))
-    meeting_counts = {item['status']: item['count'] for item in meeting_requests}
+    upcoming_meetings = ForumMeeting.objects.filter(
+        window__starts_at__gt=timezone.now(),
+    )
+    meeting_counts = {
+        'pending': upcoming_meetings.filter(status=ForumMeeting.PROPOSED).count(),
+        'confirmed': upcoming_meetings.filter(status=ForumMeeting.CONFIRMED).count(),
+    }
 
     context = {
         'total_farmers': total_farmers,
@@ -405,6 +410,17 @@ def admin_meetings(request):
     paginator = Paginator(meetings, 20)
     page = paginator.get_page(request.GET.get('page'))
     return render(request, 'base/platform_admin/meetings.html', {
+        'meetings': page,
+    })
+
+
+@admin_required
+def admin_pending_meetings(request):
+    """Proposed meetings still awaiting the invitee's answer."""
+    meetings = ForumMeeting.proposed_upcoming()
+    paginator = Paginator(meetings, 20)
+    page = paginator.get_page(request.GET.get('page'))
+    return render(request, 'base/platform_admin/pending_meetings.html', {
         'meetings': page,
     })
 
