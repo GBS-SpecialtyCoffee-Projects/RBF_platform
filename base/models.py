@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.conf import settings
@@ -68,6 +70,20 @@ class User(AbstractBaseUser, PermissionsMixin):
     def unread_messages_count(self):
         """Unread chat messages addressed to this user."""
         return Message.unread_count_for(self)
+
+    @property
+    def profile(self):
+        """This user's Farmer or Roaster profile, whichever exists (None for staff)."""
+        return (
+            getattr(self, 'farmer_profile', None)
+            or getattr(self, 'roaster_profile', None)
+        )
+
+    @property
+    def is_discoverable(self):
+        """Whether this user has published, and so may browse and reach out."""
+        profile = self.profile
+        return bool(profile and profile.is_profile_published)
 
 # second table: Farmer is related with User by userid, one userid can only match one farmer profile
 
@@ -209,8 +225,10 @@ class Farmer(models.Model):
 
     @classmethod
     def discoverable(cls):
-        """Farmers buyers may browse: has published a story, not a platform admin."""
-        return cls.objects.filter(farmer_stories__isnull=False).exclude(user__is_staff=True)
+        """Farmers buyers may browse: has a story, published, not a platform admin."""
+        return cls.objects.filter(
+            farmer_stories__isnull=False, is_profile_published=True
+        ).exclude(user__is_staff=True)
 
     def __str__(self):
         return f'{self.firstname} {self.lastname} - {self.farm_name}'
@@ -247,11 +265,14 @@ class Roaster(models.Model):
     header_image = models.ImageField(storage=get_roaster_profile_storage, blank=True, null=True, validators=[validate_uploaded_image])
     is_details_filled = models.BooleanField(default=False)
     sourcing_prefs_filled = models.BooleanField(default=False)
+    is_profile_published = models.BooleanField(default=False)
 
     @classmethod
     def discoverable(cls):
-        """Buyers farmers may browse: profile details filled, not a platform admin."""
-        return cls.objects.filter(is_details_filled=True).exclude(user__is_staff=True)
+        """Buyers farmers may browse: details filled, published, not a platform admin."""
+        return cls.objects.filter(
+            is_details_filled=True, is_profile_published=True
+        ).exclude(user__is_staff=True)
 
     @property
     def display_name(self):
@@ -417,6 +438,9 @@ class Connection(models.Model):
     LIVE_STATUSES = (PENDING, ACTIVE)
     # Cap only *outgoing pending* invites — a spam guard, not a relationship cap.
     MAX_PENDING_SENT = 25
+    # After a withdrawal, the same sender's re-request doesn't email again
+    # within this window, so withdraw/re-request can't spam the recipient.
+    REQUEST_EMAIL_COOLDOWN = timedelta(hours=24)
 
     user_a = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
     user_b = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
@@ -427,6 +451,8 @@ class Connection(models.Model):
         max_length=20, choices=STATUS_CHOICES, default=PENDING, db_index=True
     )
     message = models.TextField(blank=True, null=True)
+    # When the recipient was last emailed about a request from this pair.
+    last_notified_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -482,26 +508,49 @@ class Connection(models.Model):
             conn = cls(user_a=a, user_b=b)
         conn.initiator = initiator
         conn.status = cls.PENDING
-        if message:
-            conn.message = message
+        # Always replace, so a re-request never carries the previous message.
+        conn.message = message
         conn.save()
         return conn
 
+    def should_notify_request(self, sender):
+        """Whether ``sender`` re-opening this row should email the recipient.
+
+        Call on the row as it was *before* re-opening. Skips the email only when
+        the same sender withdrew and was already emailed about within the
+        cooldown; declines and first requests always notify.
+        """
+        return not (
+            self.status == self.WITHDRAWN
+            and self.initiator_id == sender.id
+            and self.last_notified_at
+            and timezone.now() - self.last_notified_at < self.REQUEST_EMAIL_COOLDOWN
+        )
+
+    def _transition(self, expected, new_status):
+        """Change status only if the row is still ``expected``; return success.
+
+        A single conditional UPDATE, so two simultaneous actions (an accept and
+        a withdraw, say) cannot both succeed.
+        """
+        updated = Connection.objects.filter(pk=self.pk, status=expected).update(
+            status=new_status, updated_at=timezone.now()
+        )
+        if updated:
+            self.status = new_status
+        return bool(updated)
+
     def accept(self):
-        self.status = self.ACTIVE
-        self.save(update_fields=['status', 'updated_at'])
+        return self._transition(self.PENDING, self.ACTIVE)
 
     def decline(self):
-        self.status = self.DECLINED
-        self.save(update_fields=['status', 'updated_at'])
+        return self._transition(self.PENDING, self.DECLINED)
 
     def withdraw(self):
-        self.status = self.WITHDRAWN
-        self.save(update_fields=['status', 'updated_at'])
+        return self._transition(self.PENDING, self.WITHDRAWN)
 
     def disconnect(self):
-        self.status = self.DISCONNECTED
-        self.save(update_fields=['status', 'updated_at'])
+        return self._transition(self.ACTIVE, self.DISCONNECTED)
 
     # --- bulk lookups ------------------------------------------------------
     @classmethod
@@ -669,6 +718,8 @@ class InteractionEventType(models.TextChoices):
     CONNECTION_REQUEST = 'connection_request', 'Sent connection request'
     CONNECTION_ACCEPTED = 'connection_accepted', 'Accepted connection'
     CONNECTION_DECLINED = 'connection_declined', 'Declined connection'
+    CONNECTION_WITHDRAWN = 'connection_withdrawn', 'Withdrew connection request'
+    CONNECTION_DISCONNECTED = 'connection_disconnected', 'Disconnected'
     MEETING_PROPOSED = 'meeting_proposed', 'Proposed meeting'
     MESSAGE_SENT = 'message_sent', 'Sent message'
     RESOURCE_VIEW = 'resource_view', 'Viewed resource'

@@ -107,6 +107,8 @@ def connections(request):
 def connection_roasters(request):
     if request.user.group != 'farmer':
         return redirect('roaster_dashboard')
+    if not request.user.is_discoverable:
+        return redirect('farmer_dashboard')
 
     roasters = Roaster.discoverable()
     form = MeetingRequestForm()
@@ -577,12 +579,6 @@ def check_is_complete(farmer):
       else:
           return False
       
-def publish_profile(request):
-     farmer = request.user.farmer_profile
-     
-     farmer.is_profile_published = True
-     farmer.save()
-     return redirect('farmer_dashboard')
-     
-     
+
+
 

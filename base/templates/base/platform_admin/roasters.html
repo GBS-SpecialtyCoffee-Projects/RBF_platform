@@ -9,10 +9,15 @@
 
 <!-- Search -->
 <form method="get" class="mb-4">
-    <div class="input-group" style="max-width: 420px;">
+    <div class="input-group" style="max-width: 570px;">
         <input type="text" name="q" class="form-control" placeholder="Search by name, company, email, country…" value="{{ query }}">
+        <select name="published" class="form-select" style="max-width: 150px;">
+            <option value="" {% if not published %}selected{% endif %}>All</option>
+            <option value="yes" {% if published == 'yes' %}selected{% endif %}>Published</option>
+            <option value="no" {% if published == 'no' %}selected{% endif %}>Unpublished</option>
+        </select>
         <button class="btn btn-primary" type="submit">Search</button>
-        {% if query %}
+        {% if query or published %}
         <a href="{% url 'admin_roasters' %}" class="btn btn-outline-secondary">Clear</a>
         {% endif %}
     </div>
@@ -28,6 +33,7 @@
                     <th>Company</th>
                     <th>Country</th>
                     <th>Profile</th>
+                    <th>Published</th>
                     <th>Joined</th>
                     <th></th>
                 </tr>
@@ -46,6 +52,13 @@
                             <span class="badge bg-warning text-dark">Incomplete</span>
                         {% endif %}
                     </td>
+                    <td>
+                        {% if r.is_profile_published %}
+                            <span class="badge bg-success">Yes</span>
+                        {% else %}
+                            <span class="badge bg-secondary">No</span>
+                        {% endif %}
+                    </td>
                     <td class="text-muted small">{{ r.user.date_joined|date:"M d, Y" }}</td>
                     <td class="text-end pe-3">
                         <a href="{% url 'admin_roaster_detail' r.user.id %}" class="btn btn-sm btn-outline-primary">View / Edit</a>
@@ -53,7 +66,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="text-muted ps-3 py-4">
+                    <td colspan="8" class="text-muted ps-3 py-4">
                         {% if query %}No roasters matching "{{ query }}".{% else %}No roasters yet.{% endif %}
                     </td>
                 </tr>
@@ -68,7 +81,7 @@
     <ul class="pagination pagination-sm justify-content-center mb-0">
         {% if roasters.has_previous %}
         <li class="page-item">
-            <a class="page-link" href="?page={{ roasters.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">Previous</a>
+            <a class="page-link" href="?page={{ roasters.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if published %}&published={{ published|urlencode }}{% endif %}">Previous</a>
         </li>
         {% endif %}
         {% for num in roasters.paginator.page_range %}
@@ -76,13 +89,13 @@
             <li class="page-item active"><span class="page-link">{{ num }}</span></li>
             {% elif num > roasters.number|add:"-3" and num < roasters.number|add:"3" %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">{{ num }}</a>
+                <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if published %}&published={{ published|urlencode }}{% endif %}">{{ num }}</a>
             </li>
             {% endif %}
         {% endfor %}
         {% if roasters.has_next %}
         <li class="page-item">
-            <a class="page-link" href="?page={{ roasters.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Next</a>
+            <a class="page-link" href="?page={{ roasters.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if published %}&published={{ published|urlencode }}{% endif %}">Next</a>
         </li>
         {% endif %}
     </ul>

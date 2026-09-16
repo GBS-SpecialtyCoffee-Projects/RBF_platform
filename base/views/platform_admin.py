@@ -1,7 +1,7 @@
 # base/views/platform_admin.py
 
 import csv
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -10,6 +10,8 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Count, F, Value, IntegerField, OuterRef, Subquery
 from django.db.models.functions import Coalesce, Concat
 from django.http import HttpResponse
+from django.utils.dateparse import parse_date
+from django.utils.http import urlencode
 from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
@@ -73,9 +75,14 @@ def admin_dashboard(request):
         'confirmed': upcoming_meetings.filter(status=ForumMeeting.CONFIRMED).count(),
     }
 
+    # Finished signups an admin hasn't verified (published) yet.
+    awaiting = dict(is_details_filled=True, is_profile_published=False, user__is_staff=False)
+
     context = {
         'total_farmers': total_farmers,
         'total_roasters': total_roasters,
+        'awaiting_farmers': Farmer.objects.filter(**awaiting).count(),
+        'awaiting_roasters': Roaster.objects.filter(**awaiting).count(),
         'recent_farmers': recent_farmers,
         'recent_roasters': recent_roasters,
         'meeting_counts': meeting_counts,
@@ -96,9 +103,16 @@ def admin_farmers(request):
             Q(user__email__icontains=query) |
             Q(country__icontains=query)
         )
+    published = request.GET.get('published', '')
+    if published == 'yes':
+        farmers = farmers.filter(is_profile_published=True)
+    elif published == 'no':
+        farmers = farmers.filter(is_profile_published=False)
     paginator = Paginator(farmers, 20)
     page = paginator.get_page(request.GET.get('page'))
-    return render(request, 'base/platform_admin/farmers.html', {'farmers': page, 'query': query})
+    return render(request, 'base/platform_admin/farmers.html', {
+        'farmers': page, 'query': query, 'published': published,
+    })
 
 
 @admin_required
@@ -114,9 +128,17 @@ def admin_roasters(request):
             Q(user__email__icontains=query) |
             Q(country__icontains=query)
         )
+    # Lets admins find roasters hidden from farmers; anything else means all.
+    published = request.GET.get('published', '')
+    if published == 'yes':
+        roasters = roasters.filter(is_profile_published=True)
+    elif published == 'no':
+        roasters = roasters.filter(is_profile_published=False)
     paginator = Paginator(roasters, 20)
     page = paginator.get_page(request.GET.get('page'))
-    return render(request, 'base/platform_admin/roasters.html', {'roasters': page, 'query': query})
+    return render(request, 'base/platform_admin/roasters.html', {
+        'roasters': page, 'query': query, 'published': published,
+    })
 
 
 def _send_admin_email(request, recipient, form):
@@ -229,8 +251,15 @@ def admin_roaster_detail(request, user_id):
             form = RoasterForm(instance=roaster)
 
         elif request.POST.get('form_type') == 'status':
+            was_published = roaster.is_profile_published
             roaster.is_details_filled = 'is_details_filled' in request.POST
-            roaster.save(update_fields=['is_details_filled'])
+            roaster.is_profile_published = 'is_profile_published' in request.POST
+            roaster.save(update_fields=['is_details_filled', 'is_profile_published'])
+            record_field_change(
+                roaster.user, source=ProfileChangeSource.ADMIN,
+                field='is_profile_published', old=was_published,
+                new=roaster.is_profile_published, changed_by=request.user,
+            )
             messages.success(request, 'Account status updated.')
             return redirect('admin_roaster_detail', user_id=user_id)
 
@@ -506,16 +535,29 @@ def _filtered_interactions(request):
     event_type = request.GET.get('event_type', '')
     if event_type:
         events = events.filter(event_type=event_type)
-    date_from = request.GET.get('from', '')
+    # Parse the dates rather than handing raw GET input to the ORM, which 500s
+    # on anything unparseable. Compare against created_at directly so the
+    # column index is usable — __date__gte forces a per-row cast.
+    date_from = parse_date(request.GET.get('from', ''))
     if date_from:
-        events = events.filter(created_at__date__gte=date_from)
-    date_to = request.GET.get('to', '')
+        events = events.filter(created_at__gte=_start_of_day(date_from))
+    date_to = parse_date(request.GET.get('to', ''))
     if date_to:
-        events = events.filter(created_at__date__lte=date_to)
-    user_query = request.GET.get('user', '')
+        events = events.filter(created_at__lt=_start_of_day(date_to + timedelta(days=1)))
+    user_query = request.GET.get('user', '').strip()
     if user_query:
-        events = events.filter(user__email__icontains=user_query)
+        # Match either side of the interaction: the target's email is shown in
+        # the table, so searching for it should find the row.
+        events = events.filter(
+            Q(user__email__icontains=user_query)
+            | Q(target_user__email__icontains=user_query)
+        )
     return events
+
+
+def _start_of_day(value):
+    """Midnight on ``value`` in the active timezone, as an aware datetime."""
+    return timezone.make_aware(datetime.combine(value, time.min))
 
 
 @admin_required
@@ -547,15 +589,18 @@ def admin_interactions(request):
 
     paginator = Paginator(events, 50)
     page = paginator.get_page(request.GET.get('page'))
+    filters = {
+        'event_type': request.GET.get('event_type', ''),
+        'from': request.GET.get('from', ''),
+        'to': request.GET.get('to', ''),
+        'user': request.GET.get('user', ''),
+    }
     return render(request, 'base/platform_admin/interactions.html', {
         'events': page,
         'event_type_choices': InteractionEventType.choices,
-        'filters': {
-            'event_type': request.GET.get('event_type', ''),
-            'from': request.GET.get('from', ''),
-            'to': request.GET.get('to', ''),
-            'user': request.GET.get('user', ''),
-        },
+        'filters': filters,
+        # Pre-encoded so an email containing '+' survives paging and export.
+        'filter_qs': urlencode({k: v for k, v in filters.items() if v}),
     })
 
 
