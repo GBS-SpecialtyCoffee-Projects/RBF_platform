@@ -309,21 +309,6 @@
         </div>
     </div>
 
-    <div class="text-center mt-3 mb-5">
-        {% if farmer_profile.profile_completed and farmer_profile.is_profile_published %}
-        <a class="btn btn-primary" href="">Unpublish Profile</a>
-        {% else %}
-        {% if farmer_profile.profile_completed %}
-        <a href="{% url 'publish_profile' %}" class="btn btn-primary">Publish Profile</a>
-        {% else %}
-        <button class="btn btn-primary disable" data-bs-toggle="modal" data-bs-target="#profModal">Publish Profile</button>
-        {% endif %}
-        
-
-        {% endif %}
-        
-
-    </div>
 </div>
 
 

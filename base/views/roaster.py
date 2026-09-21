@@ -8,6 +8,8 @@ from base.views.meetings import annotate_connection_meetings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib import messages
+from django.db import IntegrityError, transaction
+from django.utils import timezone
 import logging
 import os
 import random
@@ -186,6 +188,10 @@ def create_connection_request(request, recipient):
         messages.error(request, "This account is not available for connections.")
         return None
 
+    if not request.user.is_discoverable:
+        messages.error(request, "Publish your profile before sending connection requests.")
+        return None
+
     existing = Connection.between(request.user, recipient)
     if existing and existing.status in Connection.LIVE_STATUSES:
         messages.error(request, "You already have a pending request or connection with this user.")
@@ -199,8 +205,21 @@ def create_connection_request(request, recipient):
         )
         return None
 
-    conn = Connection.request(request.user, recipient, message=request.POST.get('message', ''))
-    notify_connection_event(conn, 'created')
+    notify = existing is None or existing.should_notify_request(request.user)
+    try:
+        with transaction.atomic():
+            conn = Connection.request(
+                request.user, recipient, message=request.POST.get('message', '')
+            )
+    except IntegrityError:
+        # A simultaneous first request for this pair won the unique constraint.
+        messages.error(request, "You already have a pending request or connection with this user.")
+        return None
+
+    if notify:
+        notify_connection_event(conn, 'created')
+        conn.last_notified_at = timezone.now()
+        conn.save(update_fields=['last_notified_at'])
     log_event(
         InteractionEventType.CONNECTION_REQUEST, request=request,
         target_user=recipient, connection_id=conn.id,
@@ -209,36 +228,65 @@ def create_connection_request(request, recipient):
     return conn
 
 
+NOT_PENDING = "This request is no longer pending."
+NOT_CONNECTED = "You are not connected with this user."
+
+# action -> (transition method, required status, error when status is wrong)
+CONNECTION_ACTIONS = {
+    'accept': ('accept', Connection.PENDING, NOT_PENDING),
+    'reject': ('decline', Connection.PENDING, NOT_PENDING),
+    'withdraw': ('withdraw', Connection.PENDING, NOT_PENDING),
+    'disconnect': ('disconnect', Connection.ACTIVE, NOT_CONNECTED),
+}
+
+
+def _connection_action_error(connection, action, user):
+    """Why ``user`` can't take ``action`` on ``connection``, or None if they can."""
+    if action not in CONNECTION_ACTIONS:
+        return "Unknown action."
+    if action == 'withdraw' and connection.initiator_id != user.id:
+        return "Only the person who sent this request can withdraw it."
+    if action in ('accept', 'reject') and connection.recipient.id != user.id:
+        return "Only the person who received this request can accept or decline it."
+    _, required_status, state_error = CONNECTION_ACTIONS[action]
+    if connection.status != required_status:
+        return state_error
+    return None
+
+
 def apply_connection_action(request, connection, action):
     """Shared accept / reject / withdraw / disconnect handling with guards."""
     user = request.user
-    is_recipient = connection.recipient.id == user.id
-    is_initiator = connection.initiator_id == user.id
+    error = _connection_action_error(connection, action, user)
+    if error:
+        messages.error(request, error)
+        return _redirect_back(request)
 
-    if action == 'accept' and connection.status == Connection.PENDING and is_recipient:
-        connection.accept()
+    method, _, state_error = CONNECTION_ACTIONS[action]
+    if not getattr(connection, method)():
+        # Someone else changed the row between our read and our write.
+        messages.error(request, state_error)
+        return _redirect_back(request)
+
+    if action == 'accept':
         notify_connection_event(connection, 'accepted')
-        log_event(
-            InteractionEventType.CONNECTION_ACCEPTED, request=request, user=user,
-            target_user=connection.initiator, connection_id=connection.id,
-        )
+        event, target = InteractionEventType.CONNECTION_ACCEPTED, connection.initiator
         messages.success(request, "Connection accepted.")
-    elif action == 'reject' and connection.status == Connection.PENDING and is_recipient:
-        connection.decline()
+    elif action == 'reject':
         notify_connection_event(connection, 'declined')
-        log_event(
-            InteractionEventType.CONNECTION_DECLINED, request=request, user=user,
-            target_user=connection.initiator, connection_id=connection.id,
-        )
+        event, target = InteractionEventType.CONNECTION_DECLINED, connection.initiator
         messages.info(request, "Request declined.")
-    elif action == 'withdraw' and connection.status == Connection.PENDING and is_initiator:
-        connection.withdraw()
+    elif action == 'withdraw':
+        event, target = InteractionEventType.CONNECTION_WITHDRAWN, connection.recipient
         messages.info(request, "Request withdrawn.")
-    elif action == 'disconnect' and connection.status == Connection.ACTIVE:
-        connection.disconnect()
-        messages.info(request, "Disconnected.")
     else:
-        messages.error(request, "That action isn't available for this connection.")
+        event, target = InteractionEventType.CONNECTION_DISCONNECTED, connection.other(user)
+        messages.info(request, "Disconnected.")
+
+    log_event(
+        event, request=request, user=user,
+        target_user=target, connection_id=connection.id,
+    )
     return _redirect_back(request)
 
 
@@ -266,6 +314,8 @@ def delete_roaster_photo(request, photo_id):
 def connection_farmers(request):
     if request.user.group != 'roaster':
         return redirect('farmer_dashboard')
+    if not request.user.is_discoverable:
+        return redirect('roaster_dashboard')
 
     farmers = Farmer.discoverable().prefetch_related(
         'cup_scores_received', 'processing_method', 'farmer_stories',

@@ -72,7 +72,6 @@ urlpatterns = [
     path('farmer/switch_story/<int:language_id>/', farmer.switch_story, name='switch_story'),
     path('farmer/update_story/', farmer.update_story, name='update_story'),
     path('farmer/add_story/', farmer.add_story, name='add_story'),
-    path('farmer/publish_profile/', farmer.publish_profile, name='publish_profile'),
     path('roaster/switch_story/<int:language_id>/<int:user_id>/', roaster.switch_story, name='switch_story2'),
     path('resources/', resources.resource_list, name='resource_list'),
     path('resources/<slug:slug>/', resources.resource_detail, name='resource_detail'),

@@ -13,7 +13,6 @@ URL_ACTIONS = {
     'add_roaster_photo': AuditAction.UPLOAD_PHOTO,
     'add_story': AuditAction.ADD_STORY,
     'update_story': AuditAction.UPDATE_STORY,
-    'publish_profile': AuditAction.PUBLISH_PROFILE,
     'request_meeting': AuditAction.REQUEST_MEETING,
     'connection_farmers': AuditAction.REQUEST_MEETING,
     'connection_roasters': AuditAction.REQUEST_MEETING,
