@@ -14,6 +14,8 @@ from pathlib import Path
 import os
 import dj_database_url
 from dotenv import load_dotenv
+from redis.backoff import ExponentialBackoff
+from redis.retry import Retry
 from email.utils import formataddr, parseaddr
 
 load_dotenv()
@@ -99,7 +101,14 @@ if REDIS_URL:
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {"hosts": [REDIS_URL]},
+            "CONFIG": {
+                "hosts": [{
+                    "address": REDIS_URL,
+                    "socket_keepalive": True,
+                    "health_check_interval": 30,
+                    "retry": Retry(ExponentialBackoff(), 3),
+                }],
+            },
         },
     }
 else:
