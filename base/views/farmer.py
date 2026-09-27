@@ -3,6 +3,7 @@ from base.views.forms import FarmerAddStoryForm, FarmerStoryForm, FarmerForm, Fa
 from base.models import Roaster, RoasterPhoto, MeetingRequest, Connection, Farmer,FarmerPhoto,Story,Language,Season,ProcessingMethod,CupScore,Forum,InteractionEventType,ProfileChangeSource
 from base.notifications import notify_meeting_event, notify_connection_event
 from base.analytics import log_event
+from base.onboarding_tour import steps_for
 from base.profile_history import record_form_change, record_photo_change
 from base.views.roaster import create_connection_request, apply_connection_action, connection_buckets
 from base.views.meetings import annotate_connection_meetings
@@ -87,7 +88,9 @@ def farmer_dashboard(request):
         'add_story_form': add_story_form,
         'photo_form': photo_form,
         'dp_form': dp_form,
-        'languages': languages
+        'languages': languages,
+        'tour_steps': steps_for(request.user),
+        'tour_autostart': request.user.tour_completed_at is None,
     })
 
 def connections(request):

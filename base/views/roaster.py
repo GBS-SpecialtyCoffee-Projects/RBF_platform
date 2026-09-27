@@ -4,6 +4,7 @@ from base.models import Farmer, Language, MeetingRequest, Connection, RoasterPho
 from base.notifications import notify_meeting_event, notify_connection_event
 from base.models import InteractionEventType
 from base.analytics import log_event
+from base.onboarding_tour import steps_for
 from base.views.meetings import annotate_connection_meetings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -96,8 +97,9 @@ def roaster_dashboard(request):
         'roaster_bio_form': roaster_bio_form,
         'roaster_photo_form': roaster_photo_form,
         'roaster_sourcing_form': roaster_sourcing_form,
-        'functions': roaster_functions
-
+        'functions': roaster_functions,
+        'tour_steps': steps_for(request.user),
+        'tour_autostart': request.user.tour_completed_at is None,
     })
 
 

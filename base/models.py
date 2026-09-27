@@ -50,6 +50,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Choices come from settings.LANGUAGES on the form, so adding a language
     # never needs a migration.
     preferred_language = models.CharField(max_length=10, default='en')
+    # When the user finished or dismissed the dashboard onboarding tour;
+    # null means it still auto-starts on their next dashboard visit.
+    tour_completed_at = models.DateTimeField(blank=True, null=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
 

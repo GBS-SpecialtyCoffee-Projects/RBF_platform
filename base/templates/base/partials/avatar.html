@@ -1,0 +1,31 @@
+{% comment %}
+A profile's picture, with a stand-in when it has none: the person's initials on
+a colour derived from their name, or a neutral glyph when there is no name yet.
+
+Rendered through the {% avatar %} tag so every call site stays in step - the
+markup used to be copied into six templates and had drifted at each one.
+
+Usage:
+  {% load avatar %}
+  {% avatar roaster_profile size=90 border=True style="margin-top: -45px;" %}
+
+The name is always shown beside the avatar, so the stand-in is decorative.
+{% endcomment %}
+{% if image %}
+<img class="rounded-circle{% if border %} border border-info{% endif %}"
+     src="{{ image.url }}" alt="" width="{{ size }}" height="{{ size }}"
+     style="object-fit: cover; {{ style }}">
+{% else %}
+<div class="rounded-circle d-inline-flex align-items-center justify-content-center{% if border %} border border-info{% endif %}"
+     style="width: {{ size }}px; height: {{ size }}px; background-color: {{ color }}; {{ style }}"
+     aria-hidden="true">
+    {% if initials %}
+    <span style="color: #fff; font-size: {{ font_size }}px; font-weight: 600; line-height: 1;">{{ initials }}</span>
+    {% else %}
+    <svg xmlns="http://www.w3.org/2000/svg" width="{{ font_size }}" height="{{ font_size }}"
+         fill="#fff" viewBox="0 0 16 16">
+        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2 1H6a4 4 0 0 0-4 4 2 2 0 0 0 2 2h8a2 2 0 0 0 2-2 4 4 0 0 0-4-4"/>
+    </svg>
+    {% endif %}
+</div>
+{% endif %}

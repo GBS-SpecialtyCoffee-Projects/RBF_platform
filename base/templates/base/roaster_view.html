@@ -1,5 +1,6 @@
 {% extends 'base/main.html' %}
 {% load static %}
+{% load avatar %}
 
 {% block content %}
 
@@ -19,11 +20,7 @@
                 <div>
                     <div class="position-relative d-flex justify-content-center py-2">
                         <div style="margin-top: -40px;">
-                            {% if roaster_profile.profile_picture %}
-                                <img class="rounded-circle border border-info" style="object-fit: cover;" width="110px" height="110px" src="{{ roaster_profile.profile_picture.url }}" alt="">
-                            {% else %}
-                                <img class="rounded-circle border border-info" style="object-fit: cover;" width="110px" height="110px" src="{% static 'img/placeholder.png' %}" alt="">
-                            {% endif %}
+                            {% avatar roaster_profile size=110 border=True %}
                         </div>
                         <div class="ms-2 mt-1">
                             <div class="d-flex align-items-center">

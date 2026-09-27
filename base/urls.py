@@ -55,6 +55,7 @@ urlpatterns = [
     path('farmer/details/', account.farmer_details, name='farmer_details'),
     path('roaster/details/', account.roaster_details, name='roaster_details'),
     path('farmer_orientation/', farmer.farmer_orientation, name='farmer_orientation'),
+    path('tour/complete/', account.complete_tour, name='complete_tour'),
     #    path('signout/', account.signout_view, name='signout'),
     path('update_profile/', farmer.update_profile, name='update_profile'),
     path('update_header_image/', farmer.update_header_image, name='update_header_image'),

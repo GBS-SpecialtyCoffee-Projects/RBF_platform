@@ -25,6 +25,8 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.contrib.auth.tokens import default_token_generator
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_POST
+from django.utils import timezone
 from django.db import IntegrityError
 import re
 
@@ -328,4 +330,12 @@ def farmer_orientation(request):
     return render(request, 'base/farmer_orientation.html')
 
 
+@require_POST
+def complete_tour(request):
+    """Record that the user finished or dismissed the dashboard tour.
 
+    Auth is enforced by AuthMiddleware, like the rest of the app's views.
+    """
+    request.user.tour_completed_at = timezone.now()
+    request.user.save(update_fields=['tour_completed_at'])
+    return HttpResponse(status=204)

@@ -21,16 +21,16 @@ logged-in user's group. Active link is derived from the resolved url name.
           </li>
           {% if request.user.is_discoverable %}
           <li class="nav-item">
-            <a class="nav-link me-5 {% if active == 'connection_farmers' %}active fw-bold{% endif %}" href="{% url 'connection_farmers' %}">FARMERS</a>
+            <a data-tour="browse" class="nav-link me-5 {% if active == 'connection_farmers' %}active fw-bold{% endif %}" href="{% url 'connection_farmers' %}">FARMERS</a>
           </li>
           {% endif %}
           <li class="nav-item">
-            <a class="nav-link me-5 {% if active == 'connections' %}active fw-bold{% endif %}" href="{% url 'connections' %}">CONNECTIONS
+            <a data-tour="connections" class="nav-link me-5 {% if active == 'connections' %}active fw-bold{% endif %}" href="{% url 'connections' %}">CONNECTIONS
               {% with pc=request.user.pending_connections_count %}{% if pc %}<span class="badge bg-danger">{{ pc }}</span>{% endif %}{% endwith %}
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link me-5 {% if active == 'chat_list' or active == 'chat_thread' %}active fw-bold{% endif %}" href="{% url 'chat_list' %}">MESSAGES
+            <a data-tour="messages" class="nav-link me-5 {% if active == 'chat_list' or active == 'chat_thread' %}active fw-bold{% endif %}" href="{% url 'chat_list' %}">MESSAGES
               {% with um=request.user.unread_messages_count %}{% if um %}<span class="badge bg-danger">{{ um }}</span>{% endif %}{% endwith %}
             </a>
           </li>
@@ -39,7 +39,7 @@ logged-in user's group. Active link is derived from the resolved url name.
             <a class="nav-link me-5 {% if active == 'farmer_dashboard' %}active fw-bold{% endif %}" href="{% url 'farmer_dashboard' %}">DASHBOARD</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link me-5 {% if active == 'farmer_orientation' %}active fw-bold{% endif %}" href="{% url 'farmer_orientation' %}">ONBOARDING
+            <a data-tour="onboarding" class="nav-link me-5 {% if active == 'farmer_orientation' %}active fw-bold{% endif %}" href="{% url 'farmer_orientation' %}">ONBOARDING
               {% with pending=request.user.farmer_profile.pending_orientation_tasks %}
               {% if pending %}<span class="badge bg-danger">{{ pending }}</span>{% endif %}
               {% endwith %}
@@ -47,21 +47,21 @@ logged-in user's group. Active link is derived from the resolved url name.
           </li>
           {% if request.user.is_discoverable %}
           <li class="nav-item">
-            <a class="nav-link me-5 {% if active == 'connection_roasters' %}active fw-bold{% endif %}" href="{% url 'connection_roasters' %}">ROASTERS</a>
+            <a data-tour="browse" class="nav-link me-5 {% if active == 'connection_roasters' %}active fw-bold{% endif %}" href="{% url 'connection_roasters' %}">ROASTERS</a>
           </li>
           {% endif %}
           <li class="nav-item">
-            <a class="nav-link me-5 {% if active == 'farmer_connections' %}active fw-bold{% endif %}" href="{% url 'farmer_connections' %}">CONNECTIONS
+            <a data-tour="connections" class="nav-link me-5 {% if active == 'farmer_connections' %}active fw-bold{% endif %}" href="{% url 'farmer_connections' %}">CONNECTIONS
               {% with pc=request.user.pending_connections_count %}{% if pc %}<span class="badge bg-danger">{{ pc }}</span>{% endif %}{% endwith %}
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link me-5 {% if active == 'chat_list' or active == 'chat_thread' %}active fw-bold{% endif %}" href="{% url 'chat_list' %}">MESSAGES
+            <a data-tour="messages" class="nav-link me-5 {% if active == 'chat_list' or active == 'chat_thread' %}active fw-bold{% endif %}" href="{% url 'chat_list' %}">MESSAGES
               {% with um=request.user.unread_messages_count %}{% if um %}<span class="badge bg-danger">{{ um }}</span>{% endif %}{% endwith %}
             </a>
           </li>
         {% endif %}
-        <li class="nav-item me-5">
+        <li class="nav-item me-5" data-tour="translate">
           <div id="google_translate_element"></div>
         </li>
         <li class="nav-item">
