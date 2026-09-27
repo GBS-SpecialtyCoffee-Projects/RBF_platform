@@ -1,0 +1,13 @@
+{% load static %}
+{% comment %}
+Dashboard onboarding tour. Expects `tour_steps` (from base.onboarding_tour)
+and `tour_autostart` in the context; see static/js/onboarding_tour.js.
+{% endcomment %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.8.0/dist/driver.css" integrity="sha384-XUGWln86d3kDvw/W1Qbii8QQyeWs2LcFYfGhYrmSZ0ZiXxowttKpfdhPdLE+WMFx" crossorigin="anonymous">
+{{ tour_steps|json_script:"tour-steps" }}
+<div id="tour-config" hidden
+     data-autostart="{{ tour_autostart|yesno:'true,false' }}"
+     data-complete-url="{% url 'complete_tour' %}"
+     data-csrf-token="{{ csrf_token }}"></div>
+<script src="https://cdn.jsdelivr.net/npm/driver.js@1.8.0/dist/driver.js.iife.js" integrity="sha384-ZD4UAn12lO2plEJ4lonOHO0fRSCgq0VAuoDx6/rglijDjzDYIXgCexIVu3PFJpJf" crossorigin="anonymous"></script>
+<script src="{% static 'js/onboarding_tour.js' %}"></script>

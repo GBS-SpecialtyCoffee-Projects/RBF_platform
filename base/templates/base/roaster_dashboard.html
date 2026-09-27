@@ -1,5 +1,6 @@
 {% extends 'base/main.html' %}
 {% load static %}
+{% load avatar %}
 {% load image_constraints %}
 
 {% block content %}
@@ -27,16 +28,12 @@
             <div style="overflow: visible;">
                 <div class="d-flex justify-content-center py-2">
                     <div class="position-relative z-2">
-                         {% if roaster_profile.profile_picture %}
-                        <img class="rounded-circle border border-info" width="90px" height="90px" src="{{roaster_profile.profile_picture.url}}" alt="" style="margin-top: -45px; object-fit: cover;">
-                         {% else %}
-                        <img class="rounded-circle border border-info" width="90px" height="90px" src="{% static 'img/placeholder.png' %}" alt="" style="margin-top: -45px; object-fit: cover;">
-                         {% endif %}
+                        {% avatar roaster_profile size=90 border=True style="margin-top: -45px;" %}
                     </div>
                     <div class="ms-4 mt-4">
                         <div class="d-flex">
                             <h3 class="mb-0">{{roaster_profile.firstname}} {{roaster_profile.lastname}}</h3>
-                            <a href="#editProfileModal" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            <a data-tour="profile" href="#editProfileModal" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                                 <svg class="ms-2 mt-1" xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="green" class="bi bi-pencil-fill" viewBox="0 0 16 16">
                                     <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
                                 </svg>
@@ -50,6 +47,10 @@
     </div>
     </div>
 
+    <div class="container pt-3 text-end">
+        <button type="button" id="start-tour" class="btn btn-outline-secondary btn-sm">Take the tour</button>
+    </div>
+
     <div class="container pt-2">
         <div class="row">
             <!-- About Section and Photos -->
@@ -57,7 +58,7 @@
                 <div class="px-4 py-4 rounded shadow-sm dashboard-pane scrollable" style="background-color: white;">
                     <div class="d-flex align-items-center">
                         <h2>{{roaster_profile.company_name}}</h2>
-                        <button class="btn btn-sm btn-primary ms-2 mb-3" data-bs-toggle="modal" data-bs-target="#editdetailsModal">Edit Profile</button>
+                        <button data-tour="details" class="btn btn-sm btn-primary ms-2 mb-3" data-bs-toggle="modal" data-bs-target="#editdetailsModal">Edit Profile</button>
                     </div>
                     <div class="gap-3">
                         <span class="fw-light">Job Title: </span>
@@ -117,7 +118,7 @@
             </div>
             <div class="col-md-6 mt-3">
 
-                <div class="px-4 py-2 rounded shadow-sm dashboard-pane d-flex flex-column" style="background-color: white;">
+                <div data-tour="dashboard-connections" class="px-4 py-2 rounded shadow-sm dashboard-pane d-flex flex-column" style="background-color: white;">
                     <div class="d-flex justify-content-between align-items-center">
                         <h2 class="mb-0">Connections</h2>
                         <a href="{% url 'connections' %}" class="btn btn-sm btn-link p-0">View all</a>
@@ -182,7 +183,7 @@
     <div class="container pt-2">
         <div class="row">
             <div class="col-md-6 mt-3">
-                <div class="px-4 py-3 rounded shadow-sm" style="background-color: white;">
+                <div data-tour="photos" class="px-4 py-3 rounded shadow-sm" style="background-color: white;">
                     <h2>Photos</h2>
                     <div class="row mt-2">
                         {% if roaster_photos %}
@@ -442,4 +443,8 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+{% include 'base/partials/tour.html' %}
 {% endblock %}

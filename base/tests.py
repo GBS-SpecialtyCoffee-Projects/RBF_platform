@@ -12,6 +12,7 @@ from django.db import connection
 from django.db.models import Q
 from django.test.utils import CaptureQueriesContext
 from django.template.defaultfilters import filesizeformat
+from django.template import Context, Template
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -32,6 +33,8 @@ from base.models import (
     InteractionEventType, Language, MeetingRequest, Message, ProfileChange,
     ProfileChangeSource, Resource, Roaster, Story,
 )
+from base.onboarding_tour import steps_for
+from base.templatetags.avatar import AVATAR_COLORS, AVATAR_NEUTRAL, avatar
 from base.notifications import (
     notify_admin_message, notify_connection_event, notify_forum_meeting_event,
     notify_meeting_event, notify_signup,
@@ -3588,3 +3591,131 @@ class AdminVerificationTests(TestCase):
         self.assertEqual(self._listed_farmers(published='no'), {hidden})
         self.assertEqual(self._listed_farmers(published='yes'), {live})
         self.assertEqual(self._listed_farmers(published='junk'), {live, hidden})
+
+
+class OnboardingTourTests(TestCase):
+    def setUp(self):
+        self.farmer_user = User.objects.create(email='f@example.com', group='farmer')
+        self.farmer_user.set_password('pw')
+        self.farmer_user.save()
+        self.farmer = Farmer.objects.create(
+            user=self.farmer_user, firstname='Fiona', is_details_filled=True,
+        )
+        self.roaster_user = User.objects.create(email='r@example.com', group='roaster')
+        self.roaster_user.set_password('pw')
+        self.roaster_user.save()
+        Roaster.objects.create(
+            user=self.roaster_user, firstname='Roni', company_name='Beans',
+            is_details_filled=True, is_profile_published=True,
+        )
+
+    @staticmethod
+    def _anchors(user):
+        return [step.get('element') for step in steps_for(user)]
+
+    def test_complete_tour_sets_timestamp(self):
+        self.client.login(email='f@example.com', password='pw')
+        response = self.client.post(reverse('complete_tour'))
+        self.assertEqual(response.status_code, 204)
+        self.farmer_user.refresh_from_db()
+        self.assertIsNotNone(self.farmer_user.tour_completed_at)
+
+    def test_complete_tour_rejects_get(self):
+        self.client.login(email='f@example.com', password='pw')
+        self.assertEqual(self.client.get(reverse('complete_tour')).status_code, 405)
+
+    def test_complete_tour_requires_login(self):
+        response = self.client.post(reverse('complete_tour'))
+        self.assertRedirects(response, reverse('signin'), fetch_redirect_response=False)
+
+    def test_dashboard_autostarts_until_completed(self):
+        self.client.login(email='f@example.com', password='pw')
+        response = self.client.get(reverse('farmer_dashboard'))
+        self.assertTrue(response.context['tour_autostart'])
+        self.assertContains(response, 'id="tour-steps"')
+        self.farmer_user.tour_completed_at = timezone.now()
+        self.farmer_user.save()
+        response = self.client.get(reverse('farmer_dashboard'))
+        self.assertFalse(response.context['tour_autostart'])
+
+    def test_roaster_dashboard_includes_tour(self):
+        self.client.login(email='r@example.com', password='pw')
+        response = self.client.get(reverse('roaster_dashboard'))
+        self.assertTrue(response.context['tour_autostart'])
+        self.assertContains(response, 'id="start-tour"')
+
+    def test_browse_step_only_when_published(self):
+        self.assertNotIn('[data-tour="browse"]', self._anchors(self.farmer_user))
+        self.farmer.is_profile_published = True
+        self.farmer.save()
+        self.farmer_user.refresh_from_db()
+        self.assertIn('[data-tour="browse"]', self._anchors(self.farmer_user))
+
+    def test_onboarding_step_only_for_farmers(self):
+        self.assertIn('[data-tour="onboarding"]', self._anchors(self.farmer_user))
+        self.assertNotIn('[data-tour="onboarding"]', self._anchors(self.roaster_user))
+
+
+class AvatarTagTests(TestCase):
+    """The stand-in shown when a profile has no picture of its own."""
+
+    def setUp(self):
+        self.user = User.objects.create(
+            email='ray@example.com', group='roaster', username='ray',
+        )
+
+    @staticmethod
+    def _render(profile, **kwargs):
+        args = ' '.join(f'{k}={v}' for k, v in kwargs.items())
+        return Template(
+            '{% load avatar %}{% avatar profile ' + args + ' %}'
+        ).render(Context({'profile': profile}))
+
+    def test_picture_is_used_when_there_is_one(self):
+        roaster = Roaster.objects.create(
+            user=self.user, company_name='Acme', firstname='Ray',
+            lastname='Roaster', profile_picture='roasters/ray.jpg',
+        )
+        html = self._render(roaster)
+        self.assertIn(roaster.profile_picture.url, html)
+        self.assertNotIn('>RR<', html)
+
+    def test_monogram_stands_in_for_a_missing_picture(self):
+        roaster = Roaster.objects.create(
+            user=self.user, company_name='Acme', firstname='Ray',
+            lastname='Roaster',
+        )
+        html = self._render(roaster)
+        self.assertIn('>RR<', html)
+        # The old fallback put a photograph of strangers in the frame.
+        self.assertNotIn('placeholder.png', html)
+
+    def test_colour_is_stable_and_varies_by_name(self):
+        # Derived with crc32, not hash(), so it survives a process restart.
+        ray = Roaster(firstname='Ray', lastname='Roaster')
+        self.assertEqual(avatar(ray)['color'], avatar(ray)['color'])
+        self.assertNotEqual(
+            avatar(ray)['color'],
+            avatar(Roaster(firstname='Ana', lastname='Ortiz'))['color'],
+        )
+        self.assertIn(avatar(ray)['color'], AVATAR_COLORS)
+
+    def test_nameless_profile_falls_back_to_a_neutral_glyph(self):
+        # A brand-new profile has no name to build a monogram from.
+        context = avatar(Roaster(user=self.user))
+        self.assertEqual(context['initials'], '')
+        self.assertEqual(context['color'], AVATAR_NEUTRAL)
+        self.assertIn('<svg', self._render(Roaster(user=self.user)))
+
+    def test_farmers_and_roasters_render_the_same_way(self):
+        farmer_user = User.objects.create(
+            email='ana@example.com', group='farmer', username='ana',
+        )
+        farmer = Farmer.objects.create(
+            user=farmer_user, firstname='Ana', lastname='Ortiz',
+        )
+        roaster = Roaster.objects.create(
+            user=self.user, company_name='Acme', firstname='Ana',
+            lastname='Ortiz',
+        )
+        self.assertEqual(self._render(farmer), self._render(roaster))
